@@ -255,7 +255,7 @@ func (p *player) SetPos(pos pixel.Vec) {
 }
 
 func (p *player) SetInput(input *protocol.InputSnapshot) {
-	if input == nil || !p.Exists() {
+	if input == nil {
 		return
 	}
 	var moveSpeed float64

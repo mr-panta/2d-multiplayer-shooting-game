@@ -2,6 +2,7 @@ build/client:
 	make build/client/macos
 	make build/client/windows
 	mkdir -p bundle
+	rm -rf bundle/*
 	mv bin/* bundle
 	cp -R asset bundle
 

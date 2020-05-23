@@ -29,8 +29,8 @@ const (
 
 // network
 const (
-	TCPIP = "34.87.23.164"
-	// TCPIP    = ""
+	// TCPIP = "34.87.23.164"
+	TCPIP    = ""
 	TCPPortA = ":4999"
 	TCPPortB = ":4998"
 )
@@ -61,4 +61,22 @@ const (
 	ItemObject   = 2
 	WeaponObject = 3
 	BulletObject = 4
+	TreeObject   = 5
 )
+
+// tree type
+const (
+	TreeTypeA = "A"
+	TreeTypeB = "B"
+	TreeTypeC = "C"
+	TreeTypeD = "D"
+	TreeTypeE = "E"
+)
+
+var TreeTypes = []string{
+	TreeTypeA,
+	TreeTypeB,
+	TreeTypeC,
+	TreeTypeD,
+	TreeTypeE,
+}

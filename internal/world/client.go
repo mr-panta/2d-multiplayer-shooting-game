@@ -5,8 +5,6 @@ import (
 	"sort"
 	"time"
 
-	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
-
 	"github.com/faiface/pixel"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
@@ -14,8 +12,8 @@ import (
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/entity/item"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/entity/weapon"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
+	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/util"
-	"golang.org/x/image/colornames"
 )
 
 const (
@@ -69,7 +67,6 @@ func (w *world) Render() {
 	})
 	// Render
 	w.win.Clear(color.RGBA{0xb0, 0xbb, 0x8d, 0xff})
-	w.renderOrigin()
 	for _, obj := range renderObjects {
 		obj.Render(w.win, w.GetCameraViewPos())
 	}
@@ -104,6 +101,8 @@ func (w *world) addObject(ss *protocol.ObjectSnapshot) (o common.Object) {
 		return w.addWeapon(ss)
 	case config.BulletObject:
 		return w.addBullet(ss)
+	case config.TreeObject:
+		return w.addTree(ss)
 	}
 	return nil
 }
@@ -111,16 +110,6 @@ func (w *world) addObject(ss *protocol.ObjectSnapshot) (o common.Object) {
 func (w *world) removeObject(id string) {
 	// logger.Debugf(nil, "remove_object:%s", id)
 	w.objectDB.Delete(id)
-}
-
-func (w *world) renderOrigin() { // For debugging
-	if w.origin != nil {
-		w.origin.Clear()
-		w.origin.Color = colornames.Red
-		w.origin.Push(pixel.ZV.Sub(w.GetCameraViewPos()))
-		w.origin.Circle(8, 0)
-		w.origin.Draw(w.win)
-	}
 }
 
 func (w *world) isInScreen(r pixel.Rect) bool {
@@ -246,4 +235,13 @@ func (w *world) addBullet(snapshot *protocol.ObjectSnapshot) common.Bullet {
 	bullet := weapon.NewBullet(w, snapshot.ID)
 	w.objectDB.Set(bullet)
 	return bullet
+}
+
+// Tree
+
+func (w *world) addTree(ss *protocol.ObjectSnapshot) common.Tree {
+	// logger.Debugf(nil, "add_tree:%s", ss.ID)
+	tree := entity.NewTree(w, ss.ID)
+	w.objectDB.Set(tree)
+	return tree
 }

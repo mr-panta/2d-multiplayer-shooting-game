@@ -62,4 +62,5 @@ type ObjectSnapshot struct {
 	Item   *ItemSnapshot   `json:"item,omitempty"`
 	Weapon *WeaponSnapshot `json:"weapon,omitempty"`
 	Bullet *BulletSnapshot `json:"bullet,omitempty"`
+	Tree   *TreeSnapshot   `json:"tree,omitempty"`
 }

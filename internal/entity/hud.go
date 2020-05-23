@@ -109,8 +109,8 @@ func (h *Hud) renderHP(win *pixelgl.Window) {
 	txt.LineHeight = atlas.LineHeight()
 	txt.Color = color.Black
 	fmt.Fprintf(txt, "HP: %d", int(math.Ceil(h.hp)))
-	m := pixel.IM.Scaled(txt.Orig, 2)
-	txt.Draw(win, m.Moved(shadowOffset.Scaled(2)))
+	m := pixel.IM.Scaled(txt.Orig, 4)
+	txt.Draw(win, m.Moved(shadowOffset.Scaled(4)))
 	txt.Color = hudHPColor
 	fmt.Fprintf(txt, "\rHP: %d", int(math.Ceil(h.hp)))
 	txt.Draw(win, m)
@@ -127,8 +127,8 @@ func (h *Hud) renderAmmo(win *pixelgl.Window) {
 	txt.LineHeight = atlas.LineHeight()
 	txt.Color = color.Black
 	fmt.Fprintf(txt, "%d / %d", h.mag, h.ammo)
-	m := pixel.IM.Moved(pixel.V(-txt.Bounds().W(), 0)).Scaled(txt.Orig, 2)
-	txt.Draw(win, m.Moved(shadowOffset.Scaled(2)))
+	m := pixel.IM.Moved(pixel.V(-txt.Bounds().W(), 0)).Scaled(txt.Orig, 4)
+	txt.Draw(win, m.Moved(shadowOffset.Scaled(4)))
 	txt.Color = hudAmmoColor
 	fmt.Fprintf(txt, "\r%d / %d", h.mag, h.ammo)
 	txt.Draw(win, m)
@@ -146,8 +146,8 @@ func (h *Hud) renderRespawnCountdown(win *pixelgl.Window) {
 		txt.LineHeight = atlas.LineHeight()
 		txt.Color = color.Black
 		fmt.Fprintf(txt, "%d", h.respawnCountdown)
-		m := pixel.IM.Moved(pixel.V(-txt.Bounds().W()/2, 0)).Scaled(txt.Bounds().Center(), 4)
-		txt.Draw(win, m.Moved(shadowOffset.Scaled(4)))
+		m := pixel.IM.Moved(pixel.V(-txt.Bounds().W()/2, 0)).Scaled(txt.Bounds().Center(), 8)
+		txt.Draw(win, m.Moved(shadowOffset.Scaled(8)))
 		txt.Color = hudAmmoColor
 		fmt.Fprintf(txt, "\r%d", h.respawnCountdown)
 		txt.Draw(win, m)

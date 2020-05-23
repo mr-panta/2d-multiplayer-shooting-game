@@ -151,13 +151,15 @@ func (p *player) SetSnapshot(tick int64, snapshot *protocol.ObjectSnapshot) {
 func (p *player) ServerUpdate(tick int64) {
 	now := ticktime.GetServerTime()
 	// Check item
-	for _, o := range p.world.GetObjectDB().SelectAll() {
-		if o.GetType() != config.ItemObject || !o.GetShape().Intersects(p.getCollider()) {
-			continue
-		}
-		item := o.(common.Item)
-		if ok := item.UsedBy(p); ok {
-			p.world.GetObjectDB().Delete(item.GetID())
+	if p.Exists() {
+		for _, o := range p.world.GetObjectDB().SelectAll() {
+			if o.GetType() != config.ItemObject || !o.GetShape().Intersects(p.getCollider()) {
+				continue
+			}
+			item := o.(common.Item)
+			if ok := item.UsedBy(p); ok {
+				p.world.GetObjectDB().Delete(item.GetID())
+			}
 		}
 	}
 	// Update weapon

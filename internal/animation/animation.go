@@ -15,6 +15,7 @@ var (
 	weaponSheet    *pixel.PictureData
 	characterSheet *pixel.PictureData
 	itemSheet      *pixel.PictureData
+	treeSheet      *pixel.PictureData
 )
 
 func LoadAllSprite() (err error) {
@@ -32,6 +33,9 @@ func LoadAllSprite() (err error) {
 		return err
 	}
 	if err := loadItemSprite(assetPath); err != nil {
+		return err
+	}
+	if err := loadTreeSprite(assetPath); err != nil {
 		return err
 	}
 	return nil
@@ -80,5 +84,19 @@ func loadItemSprite(assetPath string) error {
 		return err
 	}
 	itemSheet = pixel.PictureDataFromImage(img)
+	return nil
+}
+
+func loadTreeSprite(assetPath string) error {
+	file, err := os.Open(fmt.Sprintf("%s/tree.png", assetPath))
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	img, _, err := image.Decode(file)
+	if err != nil {
+		return err
+	}
+	treeSheet = pixel.PictureDataFromImage(img)
 	return nil
 }

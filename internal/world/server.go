@@ -4,7 +4,6 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/mr-panta/go-logger"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/entity"
@@ -13,6 +12,7 @@ import (
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/util"
+	"github.com/mr-panta/go-logger"
 )
 
 const (
@@ -107,4 +107,20 @@ func (w *world) spawnAmmoItem() common.Item {
 func (w *world) spawnAmmoSMItem() common.Item {
 	itemID := util.GenerateID()
 	return item.NewItemAmmoSM(w, itemID)
+}
+
+// Tree
+
+func (w *world) createTrees() {
+	for i := 0; i < w.treeAmount; i++ {
+		treeID := util.GenerateID()
+		logger.Debugf(nil, "create_tree:%s", treeID)
+		tree := entity.NewTree(w, treeID)
+		w.objectDB.Set(tree)
+		pos := util.RandomVec(w.field)
+		index := int(rand.Uint32()) % len(config.TreeTypes)
+		treeType := config.TreeTypes[index]
+		right := rand.Int()%2 != 0
+		tree.SetState(pos, treeType, right)
+	}
 }

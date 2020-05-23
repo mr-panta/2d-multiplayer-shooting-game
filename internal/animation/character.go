@@ -73,7 +73,6 @@ func (c *Character) draw(win *pixelgl.Window) {
 }
 
 func (c *Character) drawShadow(win *pixelgl.Window) {
-	// win.SetSmooth(false)
 	matrix := pixel.IM.Moved(c.Pos)
 	c.shadowImd.Clear()
 	c.shadowImd.Color = characterShadowColor

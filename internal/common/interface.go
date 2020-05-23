@@ -111,6 +111,11 @@ type Bullet interface {
 	Fire(playerID string, initPos, dir pixel.Vec, speed, maxRange, damage, length float64)
 }
 
+type Tree interface {
+	Object
+	SetState(pos pixel.Vec, treeType string, right bool)
+}
+
 // Game Interface
 
 type Hud interface {

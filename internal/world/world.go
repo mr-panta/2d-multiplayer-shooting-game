@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/faiface/pixel"
-	"github.com/faiface/pixel/imdraw"
 	"github.com/faiface/pixel/pixelgl"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/entity"
@@ -12,14 +11,19 @@ import (
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/util"
 )
 
+var (
+	worldField      = pixel.R(0, 0, 4000, 4000)
+	worldTreeAmount = 100
+)
+
 type world struct {
 	// common
-	field    pixel.Rect
-	objectDB common.ObjectDB
+	field      pixel.Rect
+	objectDB   common.ObjectDB
+	treeAmount int
 	// client
 	core         common.Core
 	win          *pixelgl.Window
-	origin       *imdraw.IMDraw
 	currRawInput *common.RawInput
 	prevRawInput *common.RawInput
 	mainPlayerID string
@@ -34,21 +38,24 @@ type world struct {
 func New(core common.Core) common.World {
 	world := &world{
 		// common
-		field:    pixel.R(-240, -240, 240, 240),
-		objectDB: common.NewObjectDB(),
+		field:      worldField,
+		objectDB:   common.NewObjectDB(),
+		treeAmount: worldTreeAmount,
 		// client
 		currRawInput: &common.RawInput{},
 		prevRawInput: &common.RawInput{},
 		// server
 		nextItemTime: ticktime.GetServerTime(),
 	}
-	// client
 	if core != nil {
+		// client
 		world.core = core
 		world.win = core.GetWindow()
-		world.origin = imdraw.New(nil)
 		world.hud = entity.NewHud(world)
 		world.scope = entity.NewScope(world)
+	} else {
+		// server
+		world.createTrees()
 	}
 	return world
 }

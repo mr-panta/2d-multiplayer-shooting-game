@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/faiface/pixel"
+	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/animation"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/entity"
@@ -65,8 +66,10 @@ func (w *world) Render() {
 		}
 		return renderObjects[i].GetZ() < renderObjects[j].GetZ()
 	})
-	// Render
 	w.win.Clear(color.RGBA{0xb0, 0xbb, 0x8d, 0xff})
+	// Render fields
+	w.renderFields()
+	// Render objects
 	for _, obj := range renderObjects {
 		obj.Render(w.win, w.GetCameraViewPos())
 	}
@@ -85,7 +88,7 @@ func (w *world) SetSnapshot(tick int64, snapshot *protocol.WorldSnapshot) {
 		o.SetSnapshot(tick, ss)
 	}
 	for _, o := range w.objectDB.SelectAll() {
-		if !existsMap[o.GetID()] {
+		if o.GetType() != 0 && o.GetType() != config.TreeObject && !existsMap[o.GetID()] {
 			w.removeObject(o.GetID())
 		}
 	}
@@ -237,11 +240,41 @@ func (w *world) addBullet(snapshot *protocol.ObjectSnapshot) common.Bullet {
 	return bullet
 }
 
-// Tree
+// Props
 
 func (w *world) addTree(ss *protocol.ObjectSnapshot) common.Tree {
 	// logger.Debugf(nil, "add_tree:%s", ss.ID)
 	tree := entity.NewTree(w, ss.ID)
 	w.objectDB.Set(tree)
 	return tree
+}
+
+func (w *world) setupFields() {
+	fields := []common.Field{}
+	for i := 0; i < worldFieldHeight; i++ {
+		for j := 0; j < worldFieldWidth; j++ {
+			pos := pixel.V(
+				float64(j)*worldFieldSize.W(),
+				float64(i)*worldFieldSize.H(),
+			)
+			fields = append(fields, entity.NewField(pos))
+		}
+	}
+	w.fields = fields
+}
+
+func (w *world) renderFields() {
+	smooth := w.win.Smooth()
+	w.win.SetSmooth(false)
+	defer w.win.SetSmooth(smooth)
+	if animation.FieldSheet != nil {
+		batch := pixel.NewBatch(&pixel.TrianglesData{}, animation.FieldSheet)
+		batch.Clear()
+		for _, f := range w.fields {
+			if w.isInScreen(f.GetShape()) {
+				f.Render(batch, w.GetCameraViewPos())
+			}
+		}
+		batch.Draw(w.win)
+	}
 }

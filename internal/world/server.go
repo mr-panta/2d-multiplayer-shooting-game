@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	minNextItemPerd = 15
-	maxNextItemPerd = 30
+	minNextItemPerd = 10
+	maxNextItemPerd = 20
 )
 
 // Common
@@ -34,9 +34,12 @@ func (w *world) ServerUpdate(tick int64) {
 	}
 }
 
-func (w *world) GetSnapshot() (int64, *protocol.WorldSnapshot) {
+func (w *world) GetSnapshot(all bool) (int64, *protocol.WorldSnapshot) {
 	snapshot := &protocol.WorldSnapshot{}
 	for _, o := range w.objectDB.SelectAll() {
+		if (!all && o.GetType() == config.TreeObject) || o.GetType() == 0 {
+			continue
+		}
 		snapshot.ObjectSnapshots = append(
 			snapshot.ObjectSnapshots,
 			o.GetSnapshot(w.tick),
@@ -56,7 +59,7 @@ func (w *world) SpawnPlayer(playerID string) {
 		player = entity.NewPlayer(w, playerID)
 	}
 	// TODO: change random position
-	player.SetPos(util.RandomVec(w.field))
+	player.SetPos(util.RandomVec(w.getWorldSize()))
 	w.objectDB.Set(player)
 }
 
@@ -81,7 +84,7 @@ func (w *world) spawnItem() (nextItemTime time.Time) {
 	// i := int(rand.Uint32()) % len(spawnItemFnList)
 	for _, fn := range spawnItemFnList {
 		item := fn()
-		item.SetPos(util.RandomVec(w.field))
+		item.SetPos(util.RandomVec(w.getWorldSize()))
 		w.objectDB.Set(item)
 		logger.Debugf(nil, "spawn_item:%s", item.GetID())
 	}
@@ -117,7 +120,7 @@ func (w *world) createTrees() {
 		logger.Debugf(nil, "create_tree:%s", treeID)
 		tree := entity.NewTree(w, treeID)
 		w.objectDB.Set(tree)
-		pos := util.RandomVec(w.field)
+		pos := util.RandomVec(w.getWorldSize())
 		index := int(rand.Uint32()) % len(config.TreeTypes)
 		treeType := config.TreeTypes[index]
 		right := rand.Int()%2 != 0

@@ -5,9 +5,11 @@ package protocol
 type RegisterPlayerRequest struct{}
 
 type RegisterPlayerResponse struct {
-	PlayerID   string `json:"player_id,omitempty"`
-	ServerTime int64  `json:"server_time,omitempty"`
-	StartTime  int64  `json:"start_time,omitempty"`
+	PlayerID      string         `json:"player_id,omitempty"`
+	ServerTime    int64          `json:"server_time,omitempty"`
+	StartTime     int64          `json:"start_time,omitempty"`
+	Tick          int64          `json:"tick,omitempty"`
+	WorldSnapshot *WorldSnapshot `json:"world_snapshot,omitempty"`
 }
 
 // SetPlayerInput

@@ -21,5 +21,6 @@ func (c *clientProcessor) registerPlayer() error {
 	ticktime.SetServerStartTime(startTime)
 	// Set world
 	c.world.SetMainPlayerID(resp.PlayerID)
+	c.world.SetSnapshot(resp.Tick, resp.WorldSnapshot)
 	return nil
 }

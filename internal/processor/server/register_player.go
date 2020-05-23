@@ -15,9 +15,12 @@ func (p *serverProcessor) processRegisterPlayer(request interface{}) (resp *prot
 		playerID = util.GenerateID()
 	}
 	p.world.SpawnPlayer(playerID)
+	tick, worldSnapshot := p.world.GetSnapshot(true)
 	return &protocol.RegisterPlayerResponse{
-		PlayerID:   playerID,
-		ServerTime: ticktime.GetServerTime().UnixNano(),
-		StartTime:  ticktime.GetServerStartTime().UnixNano(),
+		PlayerID:      playerID,
+		ServerTime:    ticktime.GetServerTime().UnixNano(),
+		StartTime:     ticktime.GetServerStartTime().UnixNano(),
+		Tick:          tick,
+		WorldSnapshot: worldSnapshot,
 	}
 }

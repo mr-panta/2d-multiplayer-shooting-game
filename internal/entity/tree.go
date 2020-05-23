@@ -19,13 +19,13 @@ var (
 	// shape
 	treeAShape = pixel.R(0, 0, 100, 250)
 	treeBShape = pixel.R(0, 0, 183, 260)
-	treeCShape = pixel.R(0, 0, 300, 268)
-	treeDShape = pixel.R(0, 0, 130, 75)
-	treeEShape = pixel.R(0, 0, 130, 75)
+	treeCShape = pixel.R(0, 0, 240, 280)
+	treeDShape = pixel.R(0, 0, 132, 90)
+	treeEShape = pixel.R(0, 0, 138, 90)
 	// collider
 	treeACollider = pixel.R(0, 0, 40, 40)
 	treeBCollider = pixel.R(0, 0, 40, 40)
-	treeCCollider = pixel.R(0, 0, 60, 40)
+	treeCCollider = pixel.R(0, 12, 30, 52)
 )
 
 type Tree struct {

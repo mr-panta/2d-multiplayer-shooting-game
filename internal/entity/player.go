@@ -32,6 +32,8 @@ const (
 	playerMaxScopeRange      = 400
 	playerStartRegenTime     = 3 * time.Second
 	playerRegenRate          = 1
+	playerSpeedCooldown      = 300 * time.Millisecond
+	playerMaxPosError        = 100
 )
 
 type player struct {
@@ -180,9 +182,13 @@ func (p *player) ServerUpdate(tick int64) {
 		}
 	}
 	// Update position
+	moveSpeed := p.moveSpeed
+	if now.Sub(p.triggerTime) < playerSpeedCooldown {
+		moveSpeed /= 2
+	}
 	pos := p.pos
 	diff := now.Sub(p.updateTime).Seconds()
-	diffDist := p.moveDir.Unit().Scaled(p.moveSpeed * diff)
+	diffDist := p.moveDir.Unit().Scaled(moveSpeed * diff)
 	pos = pos.Add(diffDist)
 	// Check collision
 	_, _, dynamicAdjust := p.world.CheckCollision(p.id, p.getCollider(), p.getColliderByPos(pos))
@@ -211,16 +217,24 @@ func (p *player) ClientUpdate() {
 		p.hp = ss.HP
 		// Update position
 		now := ticktime.GetServerTime()
+		moveSpeed := p.moveSpeed
+		if now.Sub(p.triggerTime) < playerSpeedCooldown {
+			moveSpeed /= 2
+		}
 		pos := p.pos
 		diff := now.Sub(p.updateTime).Seconds()
-		diffDist := p.moveDir.Unit().Scaled(p.moveSpeed * diff)
+		diffDist := p.moveDir.Unit().Scaled(moveSpeed * diff)
 		pos = pos.Add(diffDist)
 		// Correct error
-		ms := 1000.0
-		d := time.Duration(ms/config.ServerSyncRate) * time.Millisecond
-		if now.Sub(p.errorTime) <= d {
-			errorCorrectionDist := p.posError.Scaled(diff / d.Seconds())
-			pos = pos.Sub(errorCorrectionDist)
+		if ss.Pos.Convert().Sub(pos).Len() >= playerMaxPosError {
+			pos = ss.Pos.Convert()
+		} else {
+			ms := 1000.0
+			d := time.Duration(ms/config.ServerSyncRate) * time.Millisecond
+			if now.Sub(p.errorTime) <= d {
+				errorCorrectionDist := p.posError.Scaled(diff / d.Seconds())
+				pos = pos.Sub(errorCorrectionDist)
+			}
 		}
 		// Check collision
 		_, _, dynamicAdjust := p.world.CheckCollision(p.id, p.getCollider(), p.getColliderByPos(pos))
@@ -388,8 +402,12 @@ func (p *player) render(win *pixelgl.Window, viewPos pixel.Vec) {
 	} else {
 		anim.State = animation.CharacterRunState
 	}
-	if p.moveSpeed > 0 {
-		anim.FrameTime = int(float64(playerFrameTime*playerBaseMoveSpeed) / p.moveSpeed)
+	moveSpeed := p.moveSpeed
+	if now.Sub(p.triggerTime) < playerSpeedCooldown {
+		moveSpeed /= 2
+	}
+	if moveSpeed > 0 {
+		anim.FrameTime = int(float64(playerFrameTime*playerBaseMoveSpeed) / moveSpeed)
 	}
 	anim.Draw(win)
 	if weapon := p.GetWeapon(); weapon != nil {

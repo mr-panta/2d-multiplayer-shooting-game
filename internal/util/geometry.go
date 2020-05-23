@@ -3,6 +3,8 @@ package util
 import (
 	"math/rand"
 
+	"github.com/mr-panta/go-logger"
+
 	"github.com/faiface/pixel"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
 )
@@ -59,8 +61,15 @@ func CheckCollision(fixedObject, prevCollider, nextCollider pixel.Rect) (staticA
 	}
 	dynamicAdjust = staticAdjust.Project(pixel.V(1, 0))
 	if r := nextCollider.Moved(pixel.ZV.Sub(dynamicAdjust)); fixedObject.Intersect(r).Area() == 0 {
+		logger.Debugf(nil, "X")
 		return staticAdjust, dynamicAdjust
 	}
 	dynamicAdjust = staticAdjust.Project(pixel.V(0, 1))
-	return staticAdjust, dynamicAdjust
+	if r := nextCollider.Moved(pixel.ZV.Sub(dynamicAdjust)); fixedObject.Intersect(r).Area() == 0 {
+		logger.Debugf(nil, "Y")
+		return staticAdjust, dynamicAdjust
+	}
+	logger.Debugf(nil, "Z")
+	staticAdjust = nextCollider.Center().Sub(prevCollider.Center())
+	return staticAdjust, staticAdjust
 }

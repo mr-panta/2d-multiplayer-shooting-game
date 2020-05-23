@@ -12,12 +12,15 @@ var (
 	// frame
 	treeAFrame = pixel.R(0, 0, 100, 250)
 	treeBFrame = pixel.R(100, 0, 300, 340)
-	treeCFrame = pixel.R(300, 0, 600, 268)
-	treeDFrame = pixel.R(600, 0, 730, 75)
-	treeEFrame = pixel.R(600, 100, 730, 175)
+	treeCFrame = pixel.R(300, 0, 600, 282)
+	treeDFrame = pixel.R(600, 0, 738, 90)
+	treeEFrame = pixel.R(600, 100, 738, 190)
 	// shadow
 	treeBShadow = pixel.V(80, 12)
 	treeCShadow = pixel.V(100, 16)
+	// shadow offset
+	treeBShadowOffset = pixel.V(0, 4)
+	treeCShadowOffset = pixel.V(0, 16)
 )
 
 func NewTreeA() *Tree {
@@ -28,17 +31,19 @@ func NewTreeA() *Tree {
 
 func NewTreeB() *Tree {
 	return &Tree{
-		frame:     treeBFrame,
-		shadow:    treeBShadow,
-		shadowImd: imdraw.New(nil),
+		frame:        treeBFrame,
+		shadow:       treeBShadow,
+		shadowOffset: treeBShadowOffset,
+		shadowImd:    imdraw.New(nil),
 	}
 }
 
 func NewTreeC() *Tree {
 	return &Tree{
-		frame:     treeCFrame,
-		shadow:    treeCShadow,
-		shadowImd: imdraw.New(nil),
+		frame:        treeCFrame,
+		shadow:       treeCShadow,
+		shadowOffset: treeCShadowOffset,
+		shadowImd:    imdraw.New(nil),
 	}
 }
 
@@ -55,12 +60,13 @@ func NewTreeE() *Tree {
 }
 
 type Tree struct {
-	frame     pixel.Rect
-	shadow    pixel.Vec
-	shadowImd *imdraw.IMDraw
-	Pos       pixel.Vec
-	Color     color.Color
-	Right     bool
+	frame        pixel.Rect
+	shadow       pixel.Vec
+	shadowOffset pixel.Vec
+	shadowImd    *imdraw.IMDraw
+	Pos          pixel.Vec
+	Color        color.Color
+	Right        bool
 }
 
 func (t *Tree) Draw(win *pixelgl.Window) {
@@ -85,7 +91,7 @@ func (t *Tree) drawShadow(win *pixelgl.Window) {
 		}
 		t.shadowImd.Clear()
 		t.shadowImd.Color = characterShadowColor
-		t.shadowImd.Push(pixel.V(0, 4))
+		t.shadowImd.Push(t.shadowOffset)
 		t.shadowImd.SetMatrix(matrix)
 		t.shadowImd.Ellipse(t.shadow, 0)
 		t.shadowImd.Draw(win)

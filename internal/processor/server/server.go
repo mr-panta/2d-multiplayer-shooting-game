@@ -5,12 +5,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mr-panta/go-logger"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/world"
+	"github.com/mr-panta/go-logger"
 	"golang.org/x/time/rate"
 )
 
@@ -52,7 +52,7 @@ func (p *serverProcessor) BroadcastSnapshot() {
 	ctx := context.Background()
 	for {
 		_ = limiter.Wait(ctx)
-		tick, snapshot := p.world.GetSnapshot()
+		tick, snapshot := p.world.GetSnapshot(false)
 		req := &protocol.AddWorldSnapshotRequest{
 			Tick:          tick,
 			WorldSnapshot: snapshot,

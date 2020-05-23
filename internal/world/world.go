@@ -12,13 +12,14 @@ import (
 )
 
 var (
-	worldField      = pixel.R(0, 0, 4000, 4000)
-	worldTreeAmount = 100
+	worldFieldWidth  = 10
+	worldFieldHeight = 10
+	worldFieldSize   = pixel.R(0, 0, 240, 240)
+	worldTreeAmount  = 40
 )
 
 type world struct {
 	// common
-	field      pixel.Rect
 	objectDB   common.ObjectDB
 	treeAmount int
 	// client
@@ -30,6 +31,7 @@ type world struct {
 	cameraPos    pixel.Vec
 	hud          common.Hud
 	scope        common.Scope
+	fields       []common.Field
 	// server
 	tick         int64
 	nextItemTime time.Time
@@ -38,7 +40,6 @@ type world struct {
 func New(core common.Core) common.World {
 	world := &world{
 		// common
-		field:      worldField,
 		objectDB:   common.NewObjectDB(),
 		treeAmount: worldTreeAmount,
 		// client
@@ -53,10 +54,12 @@ func New(core common.Core) common.World {
 		world.win = core.GetWindow()
 		world.hud = entity.NewHud(world)
 		world.scope = entity.NewScope(world)
+		world.setupFields()
 	} else {
 		// server
 		world.createTrees()
 	}
+	world.setupBoundaries()
 	return world
 }
 
@@ -66,20 +69,57 @@ func (w *world) GetObjectDB() common.ObjectDB {
 
 func (w *world) CheckCollision(id string, prevCollider, nextCollider pixel.Rect) (
 	obj common.Object, staticAdjust, dynamicAdjust pixel.Vec) {
+	count := 0
 	for _, o := range w.objectDB.SelectAll() {
 		if !o.Exists() || o.GetID() == id {
 			continue
 		}
 		if collider, exists := o.GetCollider(); exists {
-			staticAdjust, dynamicAdjust := util.CheckCollision(
+			static, dynamic := util.CheckCollision(
 				collider,
 				prevCollider,
 				nextCollider,
 			)
-			if staticAdjust.Len() > 0 {
-				return o, staticAdjust, dynamicAdjust
+			if static.Len() > 0 {
+				obj = o
+				staticAdjust = static
+				dynamicAdjust = dynamic
+				count++
+			}
+			if count > 1 {
+				staticAdjust = nextCollider.Center().Sub(prevCollider.Center())
+				dynamicAdjust = nextCollider.Center().Sub(prevCollider.Center())
+				break
 			}
 		}
 	}
-	return nil, pixel.ZV, pixel.ZV
+	return obj, staticAdjust, dynamicAdjust
+}
+
+func (w *world) getWorldSize() pixel.Rect {
+	return pixel.R(
+		0, 0,
+		float64(worldFieldWidth)*worldFieldSize.W(),
+		float64(worldFieldHeight)*worldFieldSize.H(),
+	)
+}
+
+func (w *world) setupBoundaries() {
+	size := w.getWorldSize()
+	w.objectDB.Set(entity.NewBoundary(w, util.GenerateID(), pixel.Rect{
+		Min: pixel.V(size.Min.X-200, size.Min.Y-200),
+		Max: pixel.V(size.Max.X+200, size.Min.Y),
+	}))
+	w.objectDB.Set(entity.NewBoundary(w, util.GenerateID(), pixel.Rect{
+		Min: pixel.V(size.Min.X-200, size.Max.Y),
+		Max: pixel.V(size.Max.X+200, size.Max.Y+200),
+	}))
+	w.objectDB.Set(entity.NewBoundary(w, util.GenerateID(), pixel.Rect{
+		Min: pixel.V(size.Min.X-200, size.Min.Y-200),
+		Max: pixel.V(size.Min.X, size.Max.Y+200),
+	}))
+	w.objectDB.Set(entity.NewBoundary(w, util.GenerateID(), pixel.Rect{
+		Min: pixel.V(size.Max.X, size.Min.Y-200),
+		Max: pixel.V(size.Max.X+200, size.Max.Y+200),
+	}))
 }

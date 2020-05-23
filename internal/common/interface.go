@@ -34,7 +34,7 @@ type World interface {
 	// Server
 	ServerUpdate(tick int64)
 	SpawnPlayer(playerID string)
-	GetSnapshot() (tick int64, snapshot *protocol.WorldSnapshot)
+	GetSnapshot(all bool) (tick int64, snapshot *protocol.WorldSnapshot)
 	SetInputSnapshot(playerID string, snapshot *protocol.InputSnapshot)
 }
 
@@ -116,7 +116,7 @@ type Tree interface {
 	SetState(pos pixel.Vec, treeType string, right bool)
 }
 
-// Game Interface
+// Etc
 
 type Hud interface {
 	Update()
@@ -127,4 +127,9 @@ type Scope interface {
 	Update(win *pixelgl.Window)
 	GetRenderObject() RenderObject
 	Intersects(shape pixel.Rect) bool
+}
+
+type Field interface {
+	GetShape() pixel.Rect
+	Render(t pixel.Target, viewPos pixel.Vec)
 }

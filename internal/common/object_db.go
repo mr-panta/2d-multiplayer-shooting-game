@@ -9,6 +9,7 @@ type ObjectDB interface {
 	SelectAll() []Object
 	Set(p Object)
 	Delete(id string)
+	GetAvailableID() string
 }
 
 type objectDB struct {
@@ -39,4 +40,13 @@ func (db *objectDB) Set(p Object) {
 
 func (db *objectDB) Delete(id string) {
 	db.inMemDB.Delete(id)
+}
+
+func (db *objectDB) GetAvailableID() string {
+	for {
+		id := util.GenerateID()
+		if _, exists := db.inMemDB.SelectOne(id); !exists {
+			return id
+		}
+	}
 }

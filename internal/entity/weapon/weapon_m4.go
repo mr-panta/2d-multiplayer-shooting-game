@@ -183,7 +183,7 @@ func (m *WeaponM4) SetSnapshot(tick int64, snapshot *protocol.ObjectSnapshot) {
 func (m *WeaponM4) Trigger() (ok bool) {
 	ok = false
 	if !m.isTriggering && m.mag > 0 && !m.isReloading {
-		bullet := NewBullet(m.world, util.GenerateID())
+		bullet := NewBullet(m.world, m.world.GetObjectDB().GetAvailableID())
 		bullet.Fire(
 			m.playerID,
 			m.pos.Add(m.dir.Unit().Scaled(m4Width/2)),

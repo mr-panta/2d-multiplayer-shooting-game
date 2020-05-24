@@ -116,21 +116,21 @@ func (w *world) spawnItem() (nextItemTime time.Time) {
 }
 
 func (w *world) spawnWeaponItem() common.Item {
-	itemID := util.GenerateID()
-	weaponID := util.GenerateID()
+	weaponID := w.objectDB.GetAvailableID()
 	weapon := weapon.NewWeaponM4(w, weaponID)
 	w.objectDB.Set(weapon)
 	logger.Debugf(nil, "spawn_weapon:%s", weaponID)
+	itemID := w.objectDB.GetAvailableID()
 	return item.NewItemWeapon(w, itemID, weaponID)
 }
 
 func (w *world) spawnAmmoItem() common.Item {
-	itemID := util.GenerateID()
+	itemID := w.objectDB.GetAvailableID()
 	return item.NewItemAmmo(w, itemID)
 }
 
 func (w *world) spawnAmmoSMItem() common.Item {
-	itemID := util.GenerateID()
+	itemID := w.objectDB.GetAvailableID()
 	return item.NewItemAmmoSM(w, itemID)
 }
 
@@ -138,7 +138,7 @@ func (w *world) spawnAmmoSMItem() common.Item {
 
 func (w *world) createTrees() {
 	for i := 0; i < worldTreeAmount; i++ {
-		treeID := util.GenerateID()
+		treeID := w.objectDB.GetAvailableID()
 		logger.Debugf(nil, "create_tree:%s", treeID)
 		tree := entity.NewTree(w, treeID)
 		w.objectDB.Set(tree)
@@ -152,7 +152,7 @@ func (w *world) createTrees() {
 
 func (w *world) createTerrains() {
 	for i := 0; i < worldTerrainAmount; i++ {
-		terrainID := util.GenerateID()
+		terrainID := w.objectDB.GetAvailableID()
 		logger.Debugf(nil, "create_terrain:%s", terrainID)
 		terrain := entity.NewTerrain(w, terrainID)
 		w.objectDB.Set(terrain)

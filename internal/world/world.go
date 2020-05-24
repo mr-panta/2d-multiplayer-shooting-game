@@ -17,12 +17,12 @@ var (
 )
 
 const (
-	minNextItemPerd    = 1000
-	maxNextItemPerd    = 2000
-	worldFieldWidth    = 4
-	worldFieldHeight   = 4
-	worldTreeAmount    = 1
-	worldTerrainAmount = 1
+	minNextItemPerd    = 10
+	maxNextItemPerd    = 20
+	worldFieldWidth    = 32
+	worldFieldHeight   = 16
+	worldTreeAmount    = 64
+	worldTerrainAmount = 16
 	worldMinSpawnDist  = 48
 )
 
@@ -30,16 +30,19 @@ type world struct {
 	// common
 	objectDB common.ObjectDB
 	// client
-	core         common.Core
-	win          *pixelgl.Window
-	batch        *pixel.Batch
-	currRawInput *common.RawInput
-	prevRawInput *common.RawInput
-	mainPlayerID string
-	cameraPos    pixel.Vec
-	hud          common.Hud
-	scope        common.Scope
-	water        common.Water
+	core          common.Core
+	win           *pixelgl.Window
+	batch         *pixel.Batch
+	currRawInput  *common.RawInput
+	prevRawInput  *common.RawInput
+	mainPlayerID  string
+	cameraPos     pixel.Vec
+	hud           common.Hud
+	scope         common.Scope
+	water         common.Water
+	fps           int
+	frameCount    int
+	fpsUpdateTime time.Time
 	// server
 	tick         int64
 	nextItemTime time.Time
@@ -65,6 +68,7 @@ func New(core common.Core) common.World {
 		world.hud = entity.NewHud(world)
 		world.scope = entity.NewScope(world)
 		world.water = entity.NewWater(world)
+		world.fpsUpdateTime = ticktime.GetServerTime()
 	} else {
 		// server
 		world.createTrees()
@@ -120,19 +124,19 @@ func (w *world) getSizeRect() pixel.Rect {
 
 func (w *world) setupBoundaries() {
 	size := w.getSizeRect()
-	w.objectDB.Set(entity.NewBoundary(w, util.GenerateID(), pixel.Rect{
+	w.objectDB.Set(entity.NewBoundary(w, w.objectDB.GetAvailableID(), pixel.Rect{
 		Min: pixel.V(size.Min.X-200, size.Min.Y-200),
 		Max: pixel.V(size.Max.X+200, size.Min.Y),
 	}))
-	w.objectDB.Set(entity.NewBoundary(w, util.GenerateID(), pixel.Rect{
+	w.objectDB.Set(entity.NewBoundary(w, w.objectDB.GetAvailableID(), pixel.Rect{
 		Min: pixel.V(size.Min.X-200, size.Max.Y),
 		Max: pixel.V(size.Max.X+200, size.Max.Y+200),
 	}))
-	w.objectDB.Set(entity.NewBoundary(w, util.GenerateID(), pixel.Rect{
+	w.objectDB.Set(entity.NewBoundary(w, w.objectDB.GetAvailableID(), pixel.Rect{
 		Min: pixel.V(size.Min.X-200, size.Min.Y-200),
 		Max: pixel.V(size.Min.X, size.Max.Y+200),
 	}))
-	w.objectDB.Set(entity.NewBoundary(w, util.GenerateID(), pixel.Rect{
+	w.objectDB.Set(entity.NewBoundary(w, w.objectDB.GetAvailableID(), pixel.Rect{
 		Min: pixel.V(size.Max.X, size.Min.Y-200),
 		Max: pixel.V(size.Max.X+200, size.Max.Y+200),
 	}))

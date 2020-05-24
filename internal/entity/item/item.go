@@ -1,12 +1,15 @@
 package item
 
 import (
+	"time"
+
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
 )
 
 const (
-	itemZ = 10
+	itemZ        = 10
+	itemLifeTime = 60 * time.Second
 )
 
 func New(world common.World, itemID string, snapshot *protocol.ObjectSnapshot) common.Item {

@@ -22,6 +22,7 @@ type ItemWeapon struct {
 	weaponID      string
 	world         common.World
 	pos           pixel.Vec
+	createTime    time.Time
 	isDestroyed   bool
 	tickSnapshots []*protocol.TickSnapshot
 	lock          sync.RWMutex
@@ -29,10 +30,11 @@ type ItemWeapon struct {
 
 func NewItemWeapon(world common.World, id string, weaponID string) *ItemWeapon {
 	return &ItemWeapon{
-		id:       id,
-		weaponID: weaponID,
-		world:    world,
-		pos:      util.GetHighVec(),
+		id:         id,
+		weaponID:   weaponID,
+		world:      world,
+		pos:        util.GetHighVec(),
+		createTime: ticktime.GetServerTime(),
 	}
 }
 
@@ -93,6 +95,12 @@ func (w *ItemWeapon) GetSnapshot(tick int64) (ss *protocol.ObjectSnapshot) {
 func (w *ItemWeapon) ServerUpdate(tick int64) {
 	w.SetSnapshot(tick, w.getCurrentSnapshot())
 	w.cleanTickSnapshots()
+	now := ticktime.GetServerTime()
+	if now.Sub(w.createTime) > itemLifeTime {
+		w.world.GetObjectDB().Delete(w.id)
+		w.world.GetObjectDB().Delete(w.weaponID)
+		w.isDestroyed = true
+	}
 }
 
 func (w *ItemWeapon) ClientUpdate() {

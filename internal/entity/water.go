@@ -84,12 +84,12 @@ func (w *Water) setupWest() {
 }
 
 func (w *Water) setupEast() {
-	_, height := w.world.GetSize()
+	width, height := w.world.GetSize()
 	for i := 0; i < height-1; i++ {
 		shape := pixel.R(
-			float64(height)*waterShape.W(),
+			float64(width)*waterShape.W(),
 			float64(i)*waterShape.H(),
-			float64(height+1)*waterShape.W(),
+			float64(width+1)*waterShape.W(),
 			float64(i+1)*waterShape.H(),
 		)
 		w.objects = append(

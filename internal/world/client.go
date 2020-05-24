@@ -3,6 +3,7 @@ package world
 import (
 	"image/color"
 	"sort"
+	"time"
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
@@ -12,6 +13,7 @@ import (
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/entity/item"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/entity/weapon"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
+	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/util"
 )
 
@@ -86,6 +88,8 @@ func (w *world) Render() {
 	w.batch.Draw(w.win)
 	// Render hud
 	w.hud.Render(w.win)
+	// Update FPS
+	w.updateFPS()
 }
 
 func (w *world) SetSnapshot(tick int64, snapshot *protocol.WorldSnapshot) {
@@ -110,6 +114,14 @@ func (w *world) SetSnapshot(tick int64, snapshot *protocol.WorldSnapshot) {
 
 func (w *world) GetScope() common.Scope {
 	return w.scope
+}
+
+func (w *world) GetCameraViewPos() pixel.Vec {
+	if w.getMainPlayer() != nil {
+		w.cameraPos = w.getMainPlayer().GetPivot()
+	}
+	r := w.win.Bounds()
+	return w.cameraPos.Sub(r.Center())
 }
 
 func (w *world) addObject(ss *protocol.ObjectSnapshot) (o common.Object) {
@@ -140,12 +152,14 @@ func (w *world) isInScreen(r pixel.Rect) bool {
 	return r.Intersects(w.win.Bounds())
 }
 
-func (w *world) GetCameraViewPos() pixel.Vec {
-	if w.getMainPlayer() != nil {
-		w.cameraPos = w.getMainPlayer().GetPivot()
+func (w *world) updateFPS() {
+	w.frameCount++
+	now := ticktime.GetServerTime()
+	if now.Sub(w.fpsUpdateTime) >= time.Second {
+		w.fps = w.frameCount
+		w.frameCount = 0
+		w.fpsUpdateTime = now
 	}
-	r := w.win.Bounds()
-	return w.cameraPos.Sub(r.Center())
 }
 
 // Input

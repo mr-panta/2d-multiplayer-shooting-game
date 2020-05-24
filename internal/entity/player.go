@@ -356,7 +356,7 @@ func (p *player) DropWeapon() {
 	if weapon := p.GetWeapon(); weapon != nil {
 		p.SetWeapon(nil)
 		weapon.SetPlayerID("")
-		itemID := util.GenerateID()
+		itemID := p.world.GetObjectDB().GetAvailableID()
 		item := item.NewItemWeapon(p.world, itemID, weapon.GetID())
 		item.SetPos(p.GetShape().Min.Sub(pixel.V(playerDropDiff, 0)))
 		p.world.GetObjectDB().Set(item)

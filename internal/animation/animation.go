@@ -12,13 +12,8 @@ import (
 )
 
 var (
-	weaponSheet    *pixel.PictureData
-	characterSheet *pixel.PictureData
-	itemSheet      *pixel.PictureData
-	treeSheet      *pixel.PictureData
+	objectSheet *pixel.PictureData
 )
-
-var FieldSheet *pixel.PictureData
 
 func LoadAllSprite() (err error) {
 	path := "./"
@@ -28,19 +23,7 @@ func LoadAllSprite() (err error) {
 		}
 	}
 	assetPath := fmt.Sprintf("%s/asset/sprite", path)
-	if err := loadCharacterSprite(assetPath); err != nil {
-		return err
-	}
-	if err := loadWeaponSprite(assetPath); err != nil {
-		return err
-	}
-	if err := loadItemSprite(assetPath); err != nil {
-		return err
-	}
-	if err := loadTreeSprite(assetPath); err != nil {
-		return err
-	}
-	if err := loadFieldSprite(assetPath); err != nil {
+	if err := loadObjectSprite(assetPath); err != nil {
 		return err
 	}
 	return nil
@@ -50,8 +33,8 @@ func timeMS() int64 {
 	return time.Now().UnixNano() / 1000000
 }
 
-func loadWeaponSprite(assetPath string) error {
-	file, err := os.Open(fmt.Sprintf("%s/weapon.png", assetPath))
+func loadObjectSprite(assetPath string) error {
+	file, err := os.Open(fmt.Sprintf("%s/object.png", assetPath))
 	if err != nil {
 		return err
 	}
@@ -60,62 +43,10 @@ func loadWeaponSprite(assetPath string) error {
 	if err != nil {
 		return err
 	}
-	weaponSheet = pixel.PictureDataFromImage(img)
+	objectSheet = pixel.PictureDataFromImage(img)
 	return nil
 }
 
-func loadCharacterSprite(assetPath string) error {
-	file, err := os.Open(fmt.Sprintf("%s/character.png", assetPath))
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	img, _, err := image.Decode(file)
-	if err != nil {
-		return err
-	}
-	characterSheet = pixel.PictureDataFromImage(img)
-	return nil
-}
-
-func loadItemSprite(assetPath string) error {
-	file, err := os.Open(fmt.Sprintf("%s/item.png", assetPath))
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	img, _, err := image.Decode(file)
-	if err != nil {
-		return err
-	}
-	itemSheet = pixel.PictureDataFromImage(img)
-	return nil
-}
-
-func loadTreeSprite(assetPath string) error {
-	file, err := os.Open(fmt.Sprintf("%s/tree.png", assetPath))
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	img, _, err := image.Decode(file)
-	if err != nil {
-		return err
-	}
-	treeSheet = pixel.PictureDataFromImage(img)
-	return nil
-}
-
-func loadFieldSprite(assetPath string) error {
-	file, err := os.Open(fmt.Sprintf("%s/field.png", assetPath))
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	img, _, err := image.Decode(file)
-	if err != nil {
-		return err
-	}
-	FieldSheet = pixel.PictureDataFromImage(img)
-	return nil
+func GetObjectSheet() *pixel.PictureData {
+	return objectSheet
 }

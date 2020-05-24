@@ -2,15 +2,14 @@ package common
 
 import (
 	"github.com/faiface/pixel"
-	"github.com/faiface/pixel/pixelgl"
 )
 
-type Render func(win *pixelgl.Window, pos pixel.Vec)
+type Render func(target pixel.Target, pos pixel.Vec)
 
 type RenderObject interface {
 	GetZ() int
 	GetShape() pixel.Rect
-	Render(win *pixelgl.Window, pos pixel.Vec)
+	Render(target pixel.Target, pos pixel.Vec)
 }
 
 type renderObject struct {
@@ -35,8 +34,8 @@ func (obj *renderObject) GetShape() pixel.Rect {
 	return obj.shape
 }
 
-func (obj *renderObject) Render(win *pixelgl.Window, pos pixel.Vec) {
+func (obj *renderObject) Render(target pixel.Target, pos pixel.Vec) {
 	if obj.render != nil {
-		obj.render(win, pos)
+		obj.render(target, pos)
 	}
 }

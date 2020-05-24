@@ -57,11 +57,12 @@ var (
 
 // object type
 const (
-	PlayerObject = 1
-	ItemObject   = 2
-	WeaponObject = 3
-	BulletObject = 4
-	TreeObject   = 5
+	PlayerObject  = 1
+	ItemObject    = 2
+	WeaponObject  = 3
+	BulletObject  = 4
+	TreeObject    = 5
+	TerrainObject = 6
 )
 
 // tree type
@@ -80,3 +81,6 @@ var TreeTypes = []string{
 	TreeTypeD,
 	TreeTypeE,
 }
+
+// terrain
+const TerrainTypeAmount = 4

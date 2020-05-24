@@ -6,7 +6,6 @@ import (
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/imdraw"
-	"github.com/faiface/pixel/pixelgl"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/animation"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
@@ -28,6 +27,7 @@ const (
 	playerInitHP             = 100
 	playerRespawnTime        = 3 * time.Second
 	playerHitHeightlightTime = 100 * time.Millisecond
+	playerVisibleTime        = 1000 * time.Millisecond
 	playerMaxScopeRadius     = 240
 	playerMaxScopeRange      = 400
 	playerStartRegenTime     = 3 * time.Second
@@ -371,6 +371,11 @@ func (p *player) GetTriggerTime() time.Time {
 	return p.triggerTime
 }
 
+func (p *player) IsVisible() bool {
+	now := ticktime.GetServerTime()
+	return now.Sub(p.hitTime) <= playerVisibleTime || now.Sub(p.triggerTime) <= playerVisibleTime
+}
+
 func (p *player) getShapeByPos(pos pixel.Vec) pixel.Rect {
 	min := pos.Sub(pixel.V(playerShapeWidth, playerShapeHeigth).Scaled(0.5))
 	max := pos.Add(pixel.V(playerShapeWidth, playerShapeHeigth).Scaled(0.5))
@@ -387,7 +392,7 @@ func (p *player) getColliderByPos(pos pixel.Vec) pixel.Rect {
 	return pixel.Rect{Min: min, Max: max}
 }
 
-func (p *player) render(win *pixelgl.Window, viewPos pixel.Vec) {
+func (p *player) render(target pixel.Target, viewPos pixel.Vec) {
 	now := ticktime.GetServerTime()
 	pos := p.GetShape().Center()
 	base := pos.Sub(viewPos)
@@ -399,6 +404,7 @@ func (p *player) render(win *pixelgl.Window, viewPos pixel.Vec) {
 	anim.Shadow = true
 	if p.moveSpeed == 0 {
 		anim.State = animation.CharacterIdleState
+		anim.FrameTime *= 2
 	} else {
 		anim.State = animation.CharacterRunState
 	}
@@ -409,13 +415,13 @@ func (p *player) render(win *pixelgl.Window, viewPos pixel.Vec) {
 	if moveSpeed > 0 {
 		anim.FrameTime = int(float64(playerFrameTime*playerBaseMoveSpeed) / moveSpeed)
 	}
-	anim.Draw(win)
+	anim.Draw(target)
 	if weapon := p.GetWeapon(); weapon != nil {
-		weapon.Render(win, viewPos)
+		weapon.Render(target, viewPos)
 	}
 }
 
-func (p *player) renderLerp(win *pixelgl.Window, viewPos pixel.Vec) { // For debugging
+func (p *player) renderLerp(target pixel.Target, viewPos pixel.Vec) { // For debugging
 	objectSS := p.getLerpSnapshot()
 	ss := objectSS.Player
 	pos := p.getShapeByPos(ss.Pos.Convert()).Center()
@@ -427,16 +433,17 @@ func (p *player) renderLerp(win *pixelgl.Window, viewPos pixel.Vec) { // For deb
 	sprite.FrameTime = playerFrameTime
 	if ss.MoveSpeed == 0 {
 		sprite.State = animation.CharacterIdleState
+		ss.MoveSpeed *= 2
 	} else {
 		sprite.State = animation.CharacterRunState
 	}
 	if ss.MoveSpeed > 0 {
 		sprite.FrameTime = int(float64(playerFrameTime*playerBaseMoveSpeed) / ss.MoveSpeed)
 	}
-	sprite.Draw(win)
+	sprite.Draw(target)
 }
 
-func (p *player) renderLastSnapshot(win *pixelgl.Window, viewPos pixel.Vec) { // For debugging
+func (p *player) renderLastSnapshot(target pixel.Target, viewPos pixel.Vec) { // For debugging
 	objectSS := p.getLastSnapshot()
 	ss := objectSS.Player
 	pos := p.getShapeByPos(ss.Pos.Convert()).Center()
@@ -448,31 +455,32 @@ func (p *player) renderLastSnapshot(win *pixelgl.Window, viewPos pixel.Vec) { //
 	sprite.FrameTime = playerFrameTime
 	if ss.MoveSpeed == 0 {
 		sprite.State = animation.CharacterIdleState
+		ss.MoveSpeed *= 2
 	} else {
 		sprite.State = animation.CharacterRunState
 	}
 	if ss.MoveSpeed > 0 {
 		sprite.FrameTime = int(float64(playerFrameTime*playerBaseMoveSpeed) / ss.MoveSpeed)
 	}
-	sprite.Draw(win)
+	sprite.Draw(target)
 }
 
-func (p *player) renderCollider(win *pixelgl.Window, viewPos pixel.Vec) { // For debugging
+func (p *player) renderCollider(target pixel.Target, viewPos pixel.Vec) { // For debugging
 	p.colliderImd.Clear()
 	p.colliderImd.Color = config.ColliderColor
 	p.colliderImd.Push(p.getCollider().Min, p.getCollider().Max)
 	p.colliderImd.Rectangle(1)
 	p.colliderImd.SetMatrix(pixel.IM.Moved(pixel.ZV.Sub(viewPos)))
-	p.colliderImd.Draw(win)
+	p.colliderImd.Draw(target)
 }
 
-func (p *player) renderShape(win *pixelgl.Window, viewPos pixel.Vec) { // For debugging
+func (p *player) renderShape(target pixel.Target, viewPos pixel.Vec) { // For debugging
 	p.shapeImd.Clear()
 	p.shapeImd.Color = config.ShapeColor
 	p.shapeImd.Push(p.GetShape().Min, p.GetShape().Max)
 	p.shapeImd.Rectangle(1)
 	p.shapeImd.SetMatrix(pixel.IM.Moved(pixel.ZV.Sub(viewPos)))
-	p.shapeImd.Draw(win)
+	p.shapeImd.Draw(target)
 }
 
 func (p *player) getLastSnapshot() *protocol.ObjectSnapshot {

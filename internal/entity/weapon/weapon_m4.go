@@ -5,7 +5,6 @@ import (
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/imdraw"
-	"github.com/faiface/pixel/pixelgl"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/animation"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
@@ -91,7 +90,7 @@ func (m *WeaponM4) GetRenderObjects() []common.RenderObject {
 	return nil
 }
 
-func (m *WeaponM4) Render(win *pixelgl.Window, viewPos pixel.Vec) {
+func (m *WeaponM4) Render(target pixel.Target, viewPos pixel.Vec) {
 	anim := animation.NewWeaponM4()
 	anim.Pos = m.pos.Sub(viewPos)
 	anim.Dir = m.dir
@@ -100,11 +99,11 @@ func (m *WeaponM4) Render(win *pixelgl.Window, viewPos pixel.Vec) {
 	} else {
 		anim.State = animation.WeaponM4IdleState
 	}
-	anim.Draw(win)
+	anim.Draw(target)
 	// debug
 	if config.EnvDebug() {
-		m.renderDir(win, viewPos)
-		m.renderPos(win, viewPos)
+		m.renderDir(target, viewPos)
+		m.renderPos(target, viewPos)
 	}
 }
 
@@ -112,22 +111,22 @@ func (m *WeaponM4) GetType() int {
 	return config.WeaponObject
 }
 
-func (m *WeaponM4) renderPos(win *pixelgl.Window, viewPos pixel.Vec) { // For debugging
+func (m *WeaponM4) renderPos(target pixel.Target, viewPos pixel.Vec) { // For debugging
 	m.posImd.Clear()
 	m.posImd.Color = colornames.Red
 	m.posImd.Push(m.pos)
 	m.posImd.Circle(2, 1)
 	m.posImd.SetMatrix(pixel.IM.Moved(pixel.ZV.Sub(viewPos)))
-	m.posImd.Draw(win)
+	m.posImd.Draw(target)
 }
 
-func (m *WeaponM4) renderDir(win *pixelgl.Window, viewPos pixel.Vec) { // For debugging
+func (m *WeaponM4) renderDir(target pixel.Target, viewPos pixel.Vec) { // For debugging
 	m.dirImd.Clear()
 	m.dirImd.Color = colornames.Blue
 	m.dirImd.Push(m.pos, m.pos.Add(m.dir.Unit().Scaled(80)))
 	m.dirImd.Line(1)
 	m.dirImd.SetMatrix(pixel.IM.Moved(pixel.ZV.Sub(viewPos)))
-	m.dirImd.Draw(win)
+	m.dirImd.Draw(target)
 }
 
 func (m *WeaponM4) ServerUpdate(tick int64) {

@@ -7,13 +7,13 @@ import (
 	_ "image/png"
 
 	"github.com/faiface/pixel"
-	"github.com/faiface/pixel/pixelgl"
+)
+
+var (
+	weaponM4Frame = pixel.R(0, 2*64+1, 128, 3*64-1)
 )
 
 const (
-	// info
-	weaponM4Width  = 114
-	weaponM4Height = 32
 	// state
 	WeaponM4IdleState   = 0
 	WeaponM4ReloadState = 1
@@ -30,11 +30,8 @@ func NewWeaponM4() *WeaponM4 {
 	return &WeaponM4{}
 }
 
-func (m *WeaponM4) Draw(win *pixelgl.Window) {
-	sprite := pixel.NewSprite(
-		weaponSheet,
-		pixel.R(0, 0, float64(weaponM4Width), float64(weaponM4Height)),
-	)
+func (m *WeaponM4) Draw(target pixel.Target) {
+	sprite := pixel.NewSprite(objectSheet, weaponM4Frame)
 	var dir pixel.Vec
 	switch m.State {
 	case WeaponM4IdleState:
@@ -50,5 +47,5 @@ func (m *WeaponM4) Draw(win *pixelgl.Window) {
 		matrix = matrix.Rotated(pixel.ZV, pixel.ZV.Sub(dir).Angle())
 	}
 	matrix = matrix.Moved(m.Pos)
-	sprite.DrawColorMask(win, matrix, m.Color)
+	sprite.DrawColorMask(target, matrix, m.Color)
 }

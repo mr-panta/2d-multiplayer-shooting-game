@@ -5,22 +5,24 @@ import (
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/imdraw"
-	"github.com/faiface/pixel/pixelgl"
 )
 
 var (
 	// frame
-	treeAFrame = pixel.R(0, 0, 100, 250)
-	treeBFrame = pixel.R(100, 0, 300, 340)
-	treeCFrame = pixel.R(300, 0, 600, 282)
-	treeDFrame = pixel.R(600, 0, 738, 90)
-	treeEFrame = pixel.R(600, 100, 738, 190)
+	treeFrameOffset = pixel.V(0, 4*64)
+	treeAFrame      = pixel.R(0, 0, 2*64, 4*64).Moved(treeFrameOffset)
+	treeBFrame      = pixel.R(2*64, 0, 5*64, 4*64+32).Moved(treeFrameOffset)
+	treeCFrame      = pixel.R(5*64+1, 0, 9*64-1, 4*64+32-1).Moved(treeFrameOffset)
+	treeDFrame      = pixel.R(9*64, 0, 12*64, 2*64).Moved(treeFrameOffset)
+	treeEFrame      = pixel.R(9*64, 2*64, 12*64, 4*64).Moved(treeFrameOffset)
 	// shadow
 	treeBShadow = pixel.V(80, 12)
 	treeCShadow = pixel.V(100, 16)
 	// shadow offset
 	treeBShadowOffset = pixel.V(0, 4)
 	treeCShadowOffset = pixel.V(0, 16)
+	// transparent
+	treeTransparentColor = color.RGBA{127, 127, 127, 127}
 )
 
 func NewTreeA() *Tree {
@@ -67,23 +69,28 @@ type Tree struct {
 	Pos          pixel.Vec
 	Color        color.Color
 	Right        bool
+	Transparent  bool
 }
 
-func (t *Tree) Draw(win *pixelgl.Window) {
-	t.drawShadow(win)
-	t.draw(win)
+func (t *Tree) Draw(target pixel.Target) {
+	t.drawShadow(target)
+	t.draw(target)
 }
 
-func (t *Tree) draw(win *pixelgl.Window) {
-	sprite := pixel.NewSprite(treeSheet, t.frame)
+func (t *Tree) draw(target pixel.Target) {
+	sprite := pixel.NewSprite(objectSheet, t.frame)
 	matrix := pixel.IM.Moved(t.Pos.Add(pixel.V(0, t.frame.H()/2)))
 	if t.Right {
 		matrix = matrix.ScaledXY(t.Pos, pixel.V(-1, 1))
 	}
-	sprite.DrawColorMask(win, matrix, t.Color)
+	color := t.Color
+	if t.Transparent {
+		color = treeTransparentColor
+	}
+	sprite.DrawColorMask(target, matrix, color)
 }
 
-func (t *Tree) drawShadow(win *pixelgl.Window) {
+func (t *Tree) drawShadow(target pixel.Target) {
 	if t.shadowImd != nil {
 		matrix := pixel.IM.Moved(t.Pos)
 		if t.Right {
@@ -94,6 +101,6 @@ func (t *Tree) drawShadow(win *pixelgl.Window) {
 		t.shadowImd.Push(t.shadowOffset)
 		t.shadowImd.SetMatrix(matrix)
 		t.shadowImd.Ellipse(t.shadow, 0)
-		t.shadowImd.Draw(win)
+		t.shadowImd.Draw(target)
 	}
 }

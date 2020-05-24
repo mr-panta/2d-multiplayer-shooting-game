@@ -56,11 +56,12 @@ type InputSnapshot struct {
 }
 
 type ObjectSnapshot struct {
-	ID     string          `json:"id,omitempty"`
-	Type   int             `json:"type,omitempty"`
-	Player *PlayerSnapshot `json:"player,omitempty"`
-	Item   *ItemSnapshot   `json:"item,omitempty"`
-	Weapon *WeaponSnapshot `json:"weapon,omitempty"`
-	Bullet *BulletSnapshot `json:"bullet,omitempty"`
-	Tree   *TreeSnapshot   `json:"tree,omitempty"`
+	ID      string           `json:"id,omitempty"`
+	Type    int              `json:"type,omitempty"`
+	Player  *PlayerSnapshot  `json:"player,omitempty"`
+	Item    *ItemSnapshot    `json:"item,omitempty"`
+	Weapon  *WeaponSnapshot  `json:"weapon,omitempty"`
+	Bullet  *BulletSnapshot  `json:"bullet,omitempty"`
+	Tree    *TreeSnapshot    `json:"tree,omitempty"`
+	Terrain *TerrainSnapshot `json:"terrain,omitempty"`
 }

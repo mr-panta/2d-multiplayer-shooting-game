@@ -3,7 +3,6 @@ package entity
 import (
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/imdraw"
-	"github.com/faiface/pixel/pixelgl"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
@@ -13,6 +12,7 @@ type Boundary struct {
 	world    common.World
 	id       string
 	collider pixel.Rect
+	imd      *imdraw.IMDraw
 }
 
 func NewBoundary(world common.World, id string, collider pixel.Rect) *Boundary {
@@ -20,6 +20,7 @@ func NewBoundary(world common.World, id string, collider pixel.Rect) *Boundary {
 		world:    world,
 		id:       id,
 		collider: collider,
+		imd:      imdraw.New(nil),
 	}
 }
 
@@ -43,9 +44,12 @@ func (o *Boundary) GetCollider() (pixel.Rect, bool) {
 
 }
 func (o *Boundary) GetRenderObjects() []common.RenderObject {
-	return []common.RenderObject{
-		common.NewRenderObject(1, o.GetShape(), o.render),
+	if config.EnvDebug() {
+		return []common.RenderObject{
+			common.NewRenderObject(1, o.GetShape(), o.renderCollider),
+		}
 	}
+	return nil
 }
 func (o *Boundary) GetSnapshot(tick int64) *protocol.ObjectSnapshot {
 	return &protocol.ObjectSnapshot{
@@ -65,11 +69,11 @@ func (o *Boundary) ClientUpdate() {
 	// NOOP
 }
 
-func (o *Boundary) render(win *pixelgl.Window, viewPos pixel.Vec) {
+func (o *Boundary) renderCollider(target pixel.Target, viewPos pixel.Vec) {
 	imd := imdraw.New(nil)
 	imd.Color = config.ColliderColor
 	imd.Push(o.GetShape().Min, o.GetShape().Max)
 	imd.SetMatrix(pixel.IM.Moved(pixel.ZV.Sub(viewPos)))
 	imd.Rectangle(1)
-	imd.Draw(win)
+	imd.Draw(target)
 }

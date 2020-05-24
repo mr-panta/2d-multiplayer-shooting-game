@@ -3,25 +3,23 @@ package world
 import (
 	"image/color"
 	"sort"
-	"time"
 
 	"github.com/faiface/pixel"
-	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/animation"
+	"github.com/faiface/pixel/pixelgl"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/entity"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/entity/item"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/entity/weapon"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
-	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/util"
 )
 
-const (
-	playerVisibleTime = 1000 * time.Millisecond
-)
-
 // Common
+
+func (w *world) GetWindow() *pixelgl.Window {
+	return w.win
+}
 
 func (w *world) ClientUpdate() {
 	w.updateRawInput()
@@ -29,7 +27,7 @@ func (w *world) ClientUpdate() {
 		o.ClientUpdate()
 	}
 	w.hud.Update()
-	w.scope.Update(w.win)
+	w.scope.Update()
 }
 
 func (w *world) Render() {
@@ -40,8 +38,7 @@ func (w *world) Render() {
 		playerVisible := true
 		if o.GetType() == config.PlayerObject && w.mainPlayerID != o.GetID() {
 			player := o.(common.Player)
-			visible := ticktime.GetServerTime().Sub(player.GetHitTime()) < playerVisibleTime
-			visible = visible || ticktime.GetServerTime().Sub(player.GetTriggerTime()) < playerVisibleTime
+			visible := player.IsVisible()
 			visible = visible || w.scope.Intersects(o.GetShape())
 			playerVisible = visible
 		}
@@ -49,6 +46,7 @@ func (w *world) Render() {
 			objects = append(objects, o.GetRenderObjects()...)
 		}
 	}
+	objects = append(objects, w.water.GetRenderObjects()...)
 	// Filter
 	for _, obj := range objects {
 		if w.isInScreen(obj.GetShape()) {
@@ -66,13 +64,26 @@ func (w *world) Render() {
 		}
 		return renderObjects[i].GetZ() < renderObjects[j].GetZ()
 	})
-	w.win.Clear(color.RGBA{0xb0, 0xbb, 0x8d, 0xff})
-	// Render fields
-	w.renderFields()
-	// Render objects
+	w.win.Clear(color.RGBA{8, 168, 255, 255})
+	// Render smooth false
+	smooth := w.win.Smooth()
+	w.win.SetSmooth(false)
+	w.batch.Clear()
 	for _, obj := range renderObjects {
-		obj.Render(w.win, w.GetCameraViewPos())
+		if obj.GetZ() < 0 {
+			obj.Render(w.batch, w.GetCameraViewPos())
+		}
 	}
+	w.batch.Draw(w.win)
+	w.win.SetSmooth(smooth)
+	// Render smooth default
+	w.batch.Clear()
+	for _, obj := range renderObjects {
+		if obj.GetZ() >= 0 {
+			obj.Render(w.batch, w.GetCameraViewPos())
+		}
+	}
+	w.batch.Draw(w.win)
 	// Render hud
 	w.hud.Render(w.win)
 }
@@ -88,10 +99,17 @@ func (w *world) SetSnapshot(tick int64, snapshot *protocol.WorldSnapshot) {
 		o.SetSnapshot(tick, ss)
 	}
 	for _, o := range w.objectDB.SelectAll() {
-		if o.GetType() != 0 && o.GetType() != config.TreeObject && !existsMap[o.GetID()] {
+		if o.GetType() != 0 &&
+			o.GetType() != config.TreeObject &&
+			o.GetType() != config.TerrainObject &&
+			!existsMap[o.GetID()] {
 			w.removeObject(o.GetID())
 		}
 	}
+}
+
+func (w *world) GetScope() common.Scope {
+	return w.scope
 }
 
 func (w *world) addObject(ss *protocol.ObjectSnapshot) (o common.Object) {
@@ -106,6 +124,8 @@ func (w *world) addObject(ss *protocol.ObjectSnapshot) (o common.Object) {
 		return w.addBullet(ss)
 	case config.TreeObject:
 		return w.addTree(ss)
+	case config.TerrainObject:
+		return w.addTerrain(ss)
 	}
 	return nil
 }
@@ -249,32 +269,9 @@ func (w *world) addTree(ss *protocol.ObjectSnapshot) common.Tree {
 	return tree
 }
 
-func (w *world) setupFields() {
-	fields := []common.Field{}
-	for i := 0; i < worldFieldHeight; i++ {
-		for j := 0; j < worldFieldWidth; j++ {
-			pos := pixel.V(
-				float64(j)*worldFieldSize.W(),
-				float64(i)*worldFieldSize.H(),
-			)
-			fields = append(fields, entity.NewField(pos))
-		}
-	}
-	w.fields = fields
-}
-
-func (w *world) renderFields() {
-	smooth := w.win.Smooth()
-	w.win.SetSmooth(false)
-	defer w.win.SetSmooth(smooth)
-	if animation.FieldSheet != nil {
-		batch := pixel.NewBatch(&pixel.TrianglesData{}, animation.FieldSheet)
-		batch.Clear()
-		for _, f := range w.fields {
-			if w.isInScreen(f.GetShape()) {
-				f.Render(batch, w.GetCameraViewPos())
-			}
-		}
-		batch.Draw(w.win)
-	}
+func (w *world) addTerrain(ss *protocol.ObjectSnapshot) common.Terrain {
+	// logger.Debugf(nil, "add_tree:%s", ss.ID)
+	terrain := entity.NewTerrain(w, ss.ID)
+	w.objectDB.Set(terrain)
+	return terrain
 }

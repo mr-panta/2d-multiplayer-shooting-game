@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/faiface/pixel"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/entity"
@@ -13,11 +14,6 @@ import (
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/util"
 	"github.com/mr-panta/go-logger"
-)
-
-const (
-	minNextItemPerd = 10
-	maxNextItemPerd = 20
 )
 
 // Common
@@ -37,7 +33,10 @@ func (w *world) ServerUpdate(tick int64) {
 func (w *world) GetSnapshot(all bool) (int64, *protocol.WorldSnapshot) {
 	snapshot := &protocol.WorldSnapshot{}
 	for _, o := range w.objectDB.SelectAll() {
-		if (!all && o.GetType() == config.TreeObject) || o.GetType() == 0 {
+		skip := o.GetType() == 0
+		skip = skip || (!all && o.GetType() == config.TreeObject)
+		skip = skip || (!all && o.GetType() == config.TerrainObject)
+		if skip {
 			continue
 		}
 		snapshot.ObjectSnapshots = append(
@@ -46,6 +45,29 @@ func (w *world) GetSnapshot(all bool) (int64, *protocol.WorldSnapshot) {
 		)
 	}
 	return w.tick, snapshot
+}
+
+func (w *world) getFreePos() pixel.Vec {
+	for i := 0; i < 10; i++ {
+		pos := util.RandomVec(w.getSizeRect())
+		rect := pixel.R(
+			-worldMinSpawnDist,
+			-worldMinSpawnDist,
+			worldMinSpawnDist,
+			worldMinSpawnDist,
+		).Moved(pos)
+		ok := true
+		for _, obj := range w.objectDB.SelectAll() {
+			if collider, exists := obj.GetCollider(); exists && collider.Intersects(rect) {
+				ok = false
+				break
+			}
+		}
+		if ok {
+			return pos
+		}
+	}
+	return pixel.ZV
 }
 
 // Player
@@ -59,7 +81,7 @@ func (w *world) SpawnPlayer(playerID string) {
 		player = entity.NewPlayer(w, playerID)
 	}
 	// TODO: change random position
-	player.SetPos(util.RandomVec(w.getWorldSize()))
+	player.SetPos(w.getFreePos())
 	w.objectDB.Set(player)
 }
 
@@ -84,7 +106,7 @@ func (w *world) spawnItem() (nextItemTime time.Time) {
 	// i := int(rand.Uint32()) % len(spawnItemFnList)
 	for _, fn := range spawnItemFnList {
 		item := fn()
-		item.SetPos(util.RandomVec(w.getWorldSize()))
+		item.SetPos(w.getFreePos())
 		w.objectDB.Set(item)
 		logger.Debugf(nil, "spawn_item:%s", item.GetID())
 	}
@@ -112,18 +134,30 @@ func (w *world) spawnAmmoSMItem() common.Item {
 	return item.NewItemAmmoSM(w, itemID)
 }
 
-// Tree
+// Props
 
 func (w *world) createTrees() {
-	for i := 0; i < w.treeAmount; i++ {
+	for i := 0; i < worldTreeAmount; i++ {
 		treeID := util.GenerateID()
 		logger.Debugf(nil, "create_tree:%s", treeID)
 		tree := entity.NewTree(w, treeID)
 		w.objectDB.Set(tree)
-		pos := util.RandomVec(w.getWorldSize())
+		pos := w.getFreePos()
 		index := int(rand.Uint32()) % len(config.TreeTypes)
 		treeType := config.TreeTypes[index]
 		right := rand.Int()%2 != 0
 		tree.SetState(pos, treeType, right)
+	}
+}
+
+func (w *world) createTerrains() {
+	for i := 0; i < worldTerrainAmount; i++ {
+		terrainID := util.GenerateID()
+		logger.Debugf(nil, "create_terrain:%s", terrainID)
+		terrain := entity.NewTerrain(w, terrainID)
+		w.objectDB.Set(terrain)
+		pos := w.getFreePos()
+		terrainType := int(rand.Uint32()) % config.TerrainTypeAmount
+		terrain.SetState(pos, terrainType)
 	}
 }

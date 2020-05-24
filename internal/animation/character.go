@@ -5,8 +5,24 @@ import (
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/imdraw"
-	"github.com/faiface/pixel/pixelgl"
 	"golang.org/x/image/colornames"
+)
+
+var (
+	characterIdleFrames = []pixel.Rect{
+		pixel.R(0*128, 0, 1*128, 128),
+		pixel.R(1*128, 0, 2*128, 128),
+		pixel.R(2*128, 0, 3*128, 128),
+		pixel.R(3*128, 0, 4*128, 128),
+	}
+	characterMoveFrames = []pixel.Rect{
+		pixel.R(4*128, 0, 5*128, 128),
+		pixel.R(5*128, 0, 6*128, 128),
+		pixel.R(6*128, 0, 7*128, 128),
+		pixel.R(7*128, 0, 8*128, 128),
+	}
+	characterHitColor    = colornames.Red
+	characterShadowColor = color.RGBA{0, 0, 0, 88}
 )
 
 const (
@@ -16,12 +32,6 @@ const (
 	// States
 	CharacterIdleState = 0
 	CharacterRunState  = 1
-)
-
-var (
-	characterSetFrames   = []int{4, 4}
-	characterHitColor    = colornames.Red
-	characterShadowColor = color.RGBA{0, 0, 0, 88}
 )
 
 type Character struct {
@@ -42,25 +52,25 @@ func NewCharacter() *Character {
 	}
 }
 
-func (c *Character) Draw(win *pixelgl.Window) {
+func (c *Character) Draw(target pixel.Target) {
 	if c.Shadow {
-		c.drawShadow(win)
+		c.drawShadow(target)
 	}
-	c.draw(win)
+	c.draw(target)
 }
 
-func (c *Character) draw(win *pixelgl.Window) {
-	spriteSet := len(characterSetFrames) - c.State - 1
-	spriteFrame := int((timeMS() / int64(c.FrameTime)) % int64(characterSetFrames[spriteSet]))
-	sprite := pixel.NewSprite(
-		characterSheet,
-		pixel.R(
-			float64(characterWidth*spriteFrame),
-			float64(characterHeight*spriteSet),
-			float64(characterWidth*(spriteFrame+1)),
-			float64(characterHeight*(spriteSet+1)),
-		),
-	)
+func (c *Character) draw(target pixel.Target) {
+	var frames []pixel.Rect
+	switch c.State {
+	case CharacterIdleState:
+		frames = characterIdleFrames
+	case CharacterRunState:
+		frames = characterMoveFrames
+	default:
+		return
+	}
+	frame := frames[int((timeMS()/int64(c.FrameTime))%int64(len(frames)))]
+	sprite := pixel.NewSprite(objectSheet, frame)
 	matrix := pixel.IM.Moved(c.Pos)
 	if c.Right {
 		matrix = matrix.ScaledXY(c.Pos, pixel.V(-1, 1))
@@ -69,15 +79,15 @@ func (c *Character) draw(win *pixelgl.Window) {
 	if c.Hit {
 		color = characterHitColor
 	}
-	sprite.DrawColorMask(win, matrix, color)
+	sprite.DrawColorMask(target, matrix, color)
 }
 
-func (c *Character) drawShadow(win *pixelgl.Window) {
+func (c *Character) drawShadow(target pixel.Target) {
 	matrix := pixel.IM.Moved(c.Pos)
 	c.shadowImd.Clear()
 	c.shadowImd.Color = characterShadowColor
 	c.shadowImd.Push(pixel.V(0, -characterHeight/2))
 	c.shadowImd.SetMatrix(matrix)
 	c.shadowImd.Ellipse(pixel.V(characterWidth/5, characterHeight/12), 0)
-	c.shadowImd.Draw(win)
+	c.shadowImd.Draw(target)
 }

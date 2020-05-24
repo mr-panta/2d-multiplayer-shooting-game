@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/faiface/pixel"
-	"github.com/faiface/pixel/pixelgl"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/animation"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
@@ -54,7 +53,7 @@ func (w *ItemWeapon) SetPos(pos pixel.Vec) {
 }
 
 func (w *ItemWeapon) GetShape() pixel.Rect {
-	return itemWeaponShape.Moved(w.pos.Sub(itemWeaponShape.Center()))
+	return itemWeaponShape.Moved(w.pos.Sub(pixel.V(itemWeaponShape.W()/2, 0)))
 }
 
 func (w *ItemWeapon) GetCollider() (pixel.Rect, bool) {
@@ -149,10 +148,10 @@ func (w *ItemWeapon) getCurrentSnapshot() *protocol.ObjectSnapshot {
 	}
 }
 
-func (w *ItemWeapon) render(win *pixelgl.Window, viewPos pixel.Vec) {
+func (w *ItemWeapon) render(target pixel.Target, viewPos pixel.Vec) {
 	anim := animation.NewItemWeapon()
 	anim.Pos = w.pos.Sub(viewPos)
-	anim.Draw(win)
+	anim.Draw(target)
 }
 
 func (w *ItemWeapon) getLerpSnapshot() *protocol.ObjectSnapshot {

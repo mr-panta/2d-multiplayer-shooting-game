@@ -5,6 +5,7 @@ import (
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
+	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/animation"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/entity"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
@@ -12,26 +13,33 @@ import (
 )
 
 var (
-	worldFieldWidth  = 10
-	worldFieldHeight = 10
-	worldFieldSize   = pixel.R(0, 0, 240, 240)
-	worldTreeAmount  = 40
+	worldFieldSize = pixel.R(0, 0, 64, 64)
+)
+
+const (
+	minNextItemPerd    = 1000
+	maxNextItemPerd    = 2000
+	worldFieldWidth    = 4
+	worldFieldHeight   = 4
+	worldTreeAmount    = 1
+	worldTerrainAmount = 1
+	worldMinSpawnDist  = 48
 )
 
 type world struct {
 	// common
-	objectDB   common.ObjectDB
-	treeAmount int
+	objectDB common.ObjectDB
 	// client
 	core         common.Core
 	win          *pixelgl.Window
+	batch        *pixel.Batch
 	currRawInput *common.RawInput
 	prevRawInput *common.RawInput
 	mainPlayerID string
 	cameraPos    pixel.Vec
 	hud          common.Hud
 	scope        common.Scope
-	fields       []common.Field
+	water        common.Water
 	// server
 	tick         int64
 	nextItemTime time.Time
@@ -40,26 +48,28 @@ type world struct {
 func New(core common.Core) common.World {
 	world := &world{
 		// common
-		objectDB:   common.NewObjectDB(),
-		treeAmount: worldTreeAmount,
+		objectDB: common.NewObjectDB(),
 		// client
 		currRawInput: &common.RawInput{},
 		prevRawInput: &common.RawInput{},
 		// server
 		nextItemTime: ticktime.GetServerTime(),
 	}
+	// common
+	world.setupBoundaries()
 	if core != nil {
 		// client
 		world.core = core
 		world.win = core.GetWindow()
+		world.batch = pixel.NewBatch(&pixel.TrianglesData{}, animation.GetObjectSheet())
 		world.hud = entity.NewHud(world)
 		world.scope = entity.NewScope(world)
-		world.setupFields()
+		world.water = entity.NewWater(world)
 	} else {
 		// server
 		world.createTrees()
+		world.createTerrains()
 	}
-	world.setupBoundaries()
 	return world
 }
 
@@ -96,7 +106,11 @@ func (w *world) CheckCollision(id string, prevCollider, nextCollider pixel.Rect)
 	return obj, staticAdjust, dynamicAdjust
 }
 
-func (w *world) getWorldSize() pixel.Rect {
+func (w *world) GetSize() (width, height int) {
+	return worldFieldWidth, worldFieldHeight
+}
+
+func (w *world) getSizeRect() pixel.Rect {
 	return pixel.R(
 		0, 0,
 		float64(worldFieldWidth)*worldFieldSize.W(),
@@ -105,7 +119,7 @@ func (w *world) getWorldSize() pixel.Rect {
 }
 
 func (w *world) setupBoundaries() {
-	size := w.getWorldSize()
+	size := w.getSizeRect()
 	w.objectDB.Set(entity.NewBoundary(w, util.GenerateID(), pixel.Rect{
 		Min: pixel.V(size.Min.X-200, size.Min.Y-200),
 		Max: pixel.V(size.Max.X+200, size.Min.Y),

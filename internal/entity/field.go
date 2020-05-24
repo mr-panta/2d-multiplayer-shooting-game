@@ -5,15 +5,17 @@ import (
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/animation"
 )
 
-var fieldShape = pixel.R(0, 0, 240, 240)
+var fieldShape = pixel.R(0, 0, 64, 64)
 
 type Field struct {
-	pos pixel.Vec
+	pos         pixel.Vec
+	terrainType int
 }
 
-func NewField(pos pixel.Vec) *Field {
+func NewField(pos pixel.Vec, terrainType int) *Field {
 	return &Field{
-		pos: pos,
+		pos:         pos,
+		terrainType: terrainType,
 	}
 }
 
@@ -23,6 +25,7 @@ func (o *Field) GetShape() pixel.Rect {
 
 func (o *Field) Render(t pixel.Target, viewPos pixel.Vec) {
 	anim := animation.NewField()
-	anim.Pos = o.pos.Add(fieldShape.Center()).Sub(viewPos)
+	anim.Pos = o.pos.Sub(viewPos)
+	anim.TerrainType = o.terrainType
 	anim.Draw(t)
 }

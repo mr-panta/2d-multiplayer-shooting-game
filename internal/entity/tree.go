@@ -3,7 +3,6 @@ package entity
 import (
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/imdraw"
-	"github.com/faiface/pixel/pixelgl"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/animation"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
@@ -36,6 +35,7 @@ type Tree struct {
 	pos         pixel.Vec
 	treeType    string
 	right       bool
+	transparent bool
 }
 
 func NewTree(world common.World, id string) *Tree {
@@ -126,7 +126,23 @@ func (o *Tree) ServerUpdate(tick int64) {
 }
 
 func (o *Tree) ClientUpdate() {
-	// NOOP
+	// transparent := o.world.GetScope().Intersects(o.GetShape()) // Show when on scope
+	transparent := false
+	if !transparent {
+		for _, obj := range o.world.GetObjectDB().SelectAll() {
+			if obj.Exists() &&
+				obj.GetType() == config.PlayerObject &&
+				obj.GetShape().Min.Y > o.GetShape().Min.Y &&
+				obj.GetShape().Intersects(o.GetShape()) {
+				player := obj.(common.Player)
+				if player.IsVisible() || player.GetID() == o.world.GetMainPlayerID() {
+					transparent = true
+					break
+				}
+			}
+		}
+	}
+	o.transparent = transparent
 }
 
 func (o *Tree) SetState(pos pixel.Vec, treeType string, right bool) {
@@ -135,7 +151,7 @@ func (o *Tree) SetState(pos pixel.Vec, treeType string, right bool) {
 	o.right = right
 }
 
-func (o *Tree) render(win *pixelgl.Window, viewPos pixel.Vec) {
+func (o *Tree) render(target pixel.Target, viewPos pixel.Vec) {
 	var anim *animation.Tree
 	switch o.treeType {
 	case config.TreeTypeA:
@@ -153,30 +169,31 @@ func (o *Tree) render(win *pixelgl.Window, viewPos pixel.Vec) {
 	}
 	anim.Pos = o.pos.Sub(viewPos)
 	anim.Right = o.right
-	anim.Draw(win)
+	anim.Transparent = o.transparent
+	anim.Draw(target)
 	// debug
 	if config.EnvDebug() {
-		o.renderShape(win, viewPos)
-		o.renderCollider(win, viewPos)
+		o.renderShape(target, viewPos)
+		o.renderCollider(target, viewPos)
 	}
 }
 
-func (o *Tree) renderCollider(win *pixelgl.Window, viewPos pixel.Vec) {
+func (o *Tree) renderCollider(target pixel.Target, viewPos pixel.Vec) {
 	if collider, exists := o.GetCollider(); exists {
 		o.colliderImd.Clear()
 		o.colliderImd.Color = config.ColliderColor
 		o.colliderImd.Push(collider.Min, collider.Max)
 		o.colliderImd.Rectangle(1)
 		o.colliderImd.SetMatrix(pixel.IM.Moved(pixel.ZV.Sub(viewPos)))
-		o.colliderImd.Draw(win)
+		o.colliderImd.Draw(target)
 	}
 }
 
-func (o *Tree) renderShape(win *pixelgl.Window, viewPos pixel.Vec) {
+func (o *Tree) renderShape(target pixel.Target, viewPos pixel.Vec) {
 	o.shapeImd.Clear()
 	o.shapeImd.Color = config.ShapeColor
 	o.shapeImd.Push(o.GetShape().Min, o.GetShape().Max)
 	o.shapeImd.Rectangle(1)
 	o.shapeImd.SetMatrix(pixel.IM.Moved(pixel.ZV.Sub(viewPos)))
-	o.shapeImd.Draw(win)
+	o.shapeImd.Draw(target)
 }

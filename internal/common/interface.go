@@ -23,14 +23,17 @@ type World interface {
 	GetObjectDB() ObjectDB
 	CheckCollision(id string, prevCollider, nextCollider pixel.Rect) (
 		obj Object, staticAdjust, dynamicAdjust pixel.Vec)
+	GetSize() (width, height int)
 	// Client
 	Render()
+	GetWindow() *pixelgl.Window
 	ClientUpdate()
 	SetMainPlayerID(playerID string)
 	GetMainPlayerID() string
 	SetSnapshot(tick int64, snapshot *protocol.WorldSnapshot)
 	GetInputSnapshot() *protocol.InputSnapshot
 	GetCameraViewPos() pixel.Vec
+	GetScope() Scope
 	// Server
 	ServerUpdate(tick int64)
 	SpawnPlayer(playerID string)
@@ -85,6 +88,7 @@ type Player interface {
 	GetHitTime() time.Time
 	GetTriggerTime() time.Time
 	GetScopeRadius(dist float64) float64
+	IsVisible() bool
 }
 
 type Item interface {
@@ -98,7 +102,7 @@ type Weapon interface {
 	SetPos(pos pixel.Vec)
 	SetDir(dir pixel.Vec)
 	SetPlayerID(playerID string)
-	Render(win *pixelgl.Window, viewPos pixel.Vec)
+	Render(target pixel.Target, viewPos pixel.Vec)
 	AddAmmo(ammo int) (canAdd bool)
 	GetAmmo() (mag, ammo int)
 	Trigger() bool
@@ -116,20 +120,30 @@ type Tree interface {
 	SetState(pos pixel.Vec, treeType string, right bool)
 }
 
+type Terrain interface {
+	Object
+	GetTerrainType() int
+	SetState(pos pixel.Vec, terrainType int)
+}
+
 // Etc
 
 type Hud interface {
 	Update()
-	Render(win *pixelgl.Window)
+	Render(target pixel.Target)
 }
 
 type Scope interface {
-	Update(win *pixelgl.Window)
+	Update()
 	GetRenderObject() RenderObject
 	Intersects(shape pixel.Rect) bool
 }
 
 type Field interface {
 	GetShape() pixel.Rect
-	Render(t pixel.Target, viewPos pixel.Vec)
+	Render(target pixel.Target, viewPos pixel.Vec)
+}
+
+type Water interface {
+	GetRenderObjects() []RenderObject
 }

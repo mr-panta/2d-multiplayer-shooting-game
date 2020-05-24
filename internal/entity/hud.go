@@ -6,7 +6,6 @@ import (
 	"math"
 
 	"github.com/faiface/pixel"
-	"github.com/faiface/pixel/pixelgl"
 	"github.com/faiface/pixel/text"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/animation"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
@@ -91,17 +90,19 @@ func (h *Hud) updateRespawnCountdown() {
 	h.respawnCountdown = countdown
 }
 
-func (h *Hud) Render(win *pixelgl.Window) {
-	h.renderAmmo(win)
-	h.renderHP(win)
-	h.renderRespawnCountdown(win)
-	h.renderCursor(win)
-}
-
-func (h *Hud) renderHP(win *pixelgl.Window) {
+func (h *Hud) Render(target pixel.Target) {
+	win := h.world.GetWindow()
 	smooth := win.Smooth()
 	win.SetSmooth(false)
 	defer win.SetSmooth(smooth)
+	// render
+	h.renderAmmo(target)
+	h.renderHP(target)
+	h.renderRespawnCountdown(target)
+	h.renderCursor(target)
+}
+
+func (h *Hud) renderHP(target pixel.Target) {
 	pos := hudHPMarginBottomLeft
 	atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
 	txt := text.New(pos, atlas)
@@ -110,16 +111,14 @@ func (h *Hud) renderHP(win *pixelgl.Window) {
 	txt.Color = color.Black
 	fmt.Fprintf(txt, "HP: %d", int(math.Ceil(h.hp)))
 	m := pixel.IM.Scaled(txt.Orig, 4)
-	txt.Draw(win, m.Moved(shadowOffset.Scaled(4)))
+	txt.Draw(target, m.Moved(shadowOffset.Scaled(4)))
 	txt.Color = hudHPColor
 	fmt.Fprintf(txt, "\rHP: %d", int(math.Ceil(h.hp)))
-	txt.Draw(win, m)
+	txt.Draw(target, m)
 }
 
-func (h *Hud) renderAmmo(win *pixelgl.Window) {
-	smooth := win.Smooth()
-	win.SetSmooth(false)
-	defer win.SetSmooth(smooth)
+func (h *Hud) renderAmmo(target pixel.Target) {
+	win := h.world.GetWindow()
 	pos := pixel.V(win.Bounds().W(), 0).Add(hudAmmoMarginBottomRight)
 	atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
 	txt := text.New(pos, atlas)
@@ -128,18 +127,15 @@ func (h *Hud) renderAmmo(win *pixelgl.Window) {
 	txt.Color = color.Black
 	fmt.Fprintf(txt, "%d / %d", h.mag, h.ammo)
 	m := pixel.IM.Moved(pixel.V(-txt.Bounds().W(), 0)).Scaled(txt.Orig, 4)
-	txt.Draw(win, m.Moved(shadowOffset.Scaled(4)))
+	txt.Draw(target, m.Moved(shadowOffset.Scaled(4)))
 	txt.Color = hudAmmoColor
 	fmt.Fprintf(txt, "\r%d / %d", h.mag, h.ammo)
-	txt.Draw(win, m)
+	txt.Draw(target, m)
 }
 
-func (h *Hud) renderRespawnCountdown(win *pixelgl.Window) {
-	smooth := win.Smooth()
-	win.SetSmooth(false)
-	defer win.SetSmooth(smooth)
+func (h *Hud) renderRespawnCountdown(target pixel.Target) {
 	if h.respawnCountdown > 0 {
-		pos := win.Bounds().Center()
+		pos := h.world.GetWindow().Bounds().Center()
 		atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
 		txt := text.New(pos, atlas)
 		txt.Clear()
@@ -147,15 +143,15 @@ func (h *Hud) renderRespawnCountdown(win *pixelgl.Window) {
 		txt.Color = color.Black
 		fmt.Fprintf(txt, "%d", h.respawnCountdown)
 		m := pixel.IM.Moved(pixel.V(-txt.Bounds().W()/2, 0)).Scaled(txt.Bounds().Center(), 8)
-		txt.Draw(win, m.Moved(shadowOffset.Scaled(8)))
+		txt.Draw(target, m.Moved(shadowOffset.Scaled(8)))
 		txt.Color = hudAmmoColor
 		fmt.Fprintf(txt, "\r%d", h.respawnCountdown)
-		txt.Draw(win, m)
+		txt.Draw(target, m)
 	}
 }
 
-func (h *Hud) renderCursor(win *pixelgl.Window) {
-	h.crosshair.Pos = win.MousePosition()
+func (h *Hud) renderCursor(target pixel.Target) {
+	h.crosshair.Pos = h.world.GetWindow().MousePosition()
 	h.crosshair.Color = crosshairColor
-	h.crosshair.Draw(win)
+	h.crosshair.Draw(target)
 }

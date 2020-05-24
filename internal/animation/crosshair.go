@@ -6,7 +6,6 @@ import (
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/imdraw"
-	"github.com/faiface/pixel/pixelgl"
 	"golang.org/x/image/colornames"
 )
 
@@ -41,26 +40,26 @@ func NewCrosshair() *Crosshair {
 	}
 }
 
-func (c *Crosshair) Draw(win *pixelgl.Window) {
+func (c *Crosshair) Draw(target pixel.Target) {
 	for i := range c.lines {
-		c.drawLineShadow(win, i)
+		c.drawLineShadow(target, i)
 	}
 	for i := range c.lines {
-		c.drawLine(win, i)
+		c.drawLine(target, i)
 	}
 }
 
-func (c *Crosshair) drawLineShadow(win *pixelgl.Window, i int) {
+func (c *Crosshair) drawLineShadow(target pixel.Target, i int) {
 	m := pixel.IM.Rotated(pixel.ZV, float64(i)*math.Pi/2.0).Moved(c.Pos)
 	c.shadowList[i].Clear()
 	c.shadowList[i].Color = colornames.Black
 	c.shadowList[i].Push(crosshairLine.A, crosshairLine.B)
 	c.shadowList[i].Line(crosshairThickness)
 	c.shadowList[i].SetMatrix(m.Moved(pixel.V(1, -1)))
-	c.shadowList[i].Draw(win)
+	c.shadowList[i].Draw(target)
 }
 
-func (c *Crosshair) drawLine(win *pixelgl.Window, i int) {
+func (c *Crosshair) drawLine(target pixel.Target, i int) {
 	m := pixel.IM.Rotated(pixel.ZV, float64(i)*math.Pi/2.0).Moved(c.Pos)
 	c.lines[i].Clear()
 	if c.Color == nil {
@@ -71,5 +70,5 @@ func (c *Crosshair) drawLine(win *pixelgl.Window, i int) {
 	c.lines[i].Push(crosshairLine.A, crosshairLine.B)
 	c.lines[i].Line(crosshairThickness)
 	c.lines[i].SetMatrix(m)
-	c.lines[i].Draw(win)
+	c.lines[i].Draw(target)
 }

@@ -4,15 +4,15 @@ import (
 	"image/color"
 
 	"github.com/faiface/pixel"
-	"github.com/faiface/pixel/pixelgl"
 )
 
 var (
-	itemAmmoFrame       = pixel.R(0, 0, 45, 47)
-	itemWeaponFrame     = pixel.R(50, 0, 50+45, 47)
-	itemMedicKitFrame   = pixel.R(100, 0, 100+49, 35)
-	itemAmmoSMFrame     = pixel.R(150, 0, 150+20, 26)
-	itemMedicKitSMFrame = pixel.R(175, 0, 175+20, 26)
+	itemFrameOffset     = pixel.V(0, 3*64)
+	itemAmmoFrame       = pixel.R(0*64, 0, 1*64, 64).Moved(itemFrameOffset)
+	itemWeaponFrame     = pixel.R(1*64, 0, 2*64, 64).Moved(itemFrameOffset)
+	itemMedicKitFrame   = pixel.R(2*64, 0, 3*64, 64).Moved(itemFrameOffset)
+	itemAmmoSMFrame     = pixel.R(3*64, 0, 3*64+32, 32).Moved(itemFrameOffset)
+	itemMedicKitSMFrame = pixel.R(3*64, 32, 3*64+32, 64).Moved(itemFrameOffset)
 )
 
 func NewItemAmmo() *Item {
@@ -41,8 +41,8 @@ type Item struct {
 	Color color.Color
 }
 
-func (i *Item) Draw(win *pixelgl.Window) {
-	sprite := pixel.NewSprite(itemSheet, i.frame)
-	matrix := pixel.IM.Moved(i.Pos)
-	sprite.DrawColorMask(win, matrix, i.Color)
+func (i *Item) Draw(target pixel.Target) {
+	sprite := pixel.NewSprite(objectSheet, i.frame)
+	matrix := pixel.IM.Moved(i.Pos.Add(pixel.V(0, i.frame.H()/2)))
+	sprite.DrawColorMask(target, matrix, i.Color)
 }

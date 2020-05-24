@@ -5,7 +5,6 @@ import (
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/imdraw"
-	"github.com/faiface/pixel/pixelgl"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
 )
@@ -32,9 +31,9 @@ func NewScope(world common.World) common.Scope {
 	}
 }
 
-func (s *Scope) Update(win *pixelgl.Window) {
+func (s *Scope) Update() {
 	if p := s.getPlayer(); p != nil && p.Exists() {
-		pos := win.MousePosition()
+		pos := s.world.GetWindow().MousePosition()
 		dist := p.GetPivot().Sub(s.world.GetCameraViewPos()).Sub(pos).Len()
 		s.radius = p.GetScopeRadius(dist)
 		s.pos = pos
@@ -51,7 +50,8 @@ func (s *Scope) GetRenderObject() common.RenderObject {
 	return nil
 }
 
-func (s *Scope) render(win *pixelgl.Window, viewPos pixel.Vec) {
+func (s *Scope) render(target pixel.Target, viewPos pixel.Vec) {
+	win := s.world.GetWindow()
 	s.imd.Clear()
 	s.imd.Color = scopeColor
 	if win.MouseInsideWindow() {
@@ -61,7 +61,7 @@ func (s *Scope) render(win *pixelgl.Window, viewPos pixel.Vec) {
 		s.imd.Push(win.Bounds().Min, win.Bounds().Max)
 		s.imd.Rectangle(0)
 	}
-	s.imd.Draw(win)
+	s.imd.Draw(target)
 }
 
 func (s *Scope) Intersects(shape pixel.Rect) bool {

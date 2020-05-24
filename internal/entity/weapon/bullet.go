@@ -6,7 +6,6 @@ import (
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/imdraw"
-	"github.com/faiface/pixel/pixelgl"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
@@ -179,7 +178,7 @@ func (o *Bullet) Fire(playerID string, initPos, dir pixel.Vec, speed, maxRange, 
 	o.isDestroyed = false
 }
 
-func (o *Bullet) render(win *pixelgl.Window, viewPos pixel.Vec) {
+func (o *Bullet) render(target pixel.Target, viewPos pixel.Vec) {
 	a := pixel.ZV.Add(pixel.V(o.length/2, 0))
 	b := pixel.ZV.Sub(pixel.V(o.length/2, 0))
 	matrix := pixel.IM.Rotated(pixel.ZV, o.dir.Angle())
@@ -192,20 +191,20 @@ func (o *Bullet) render(win *pixelgl.Window, viewPos pixel.Vec) {
 	o.imd.Push(b)
 	o.imd.Line(bulletThickness)
 	o.imd.SetMatrix(matrix)
-	o.imd.Draw(win)
+	o.imd.Draw(target)
 	// debug
 	if config.EnvDebug() {
-		o.renderInitPos(win, viewPos)
+		o.renderInitPos(target, viewPos)
 	}
 }
 
-func (o *Bullet) renderInitPos(win *pixelgl.Window, viewPos pixel.Vec) { // For debugging
+func (o *Bullet) renderInitPos(target pixel.Target, viewPos pixel.Vec) { // For debugging
 	o.initPosImd.Clear()
 	o.initPosImd.Color = colornames.Red
 	o.initPosImd.Push(o.initPos)
 	o.initPosImd.Circle(2, 1)
 	o.initPosImd.SetMatrix(pixel.IM.Moved(pixel.ZV.Sub(viewPos)))
-	o.initPosImd.Draw(win)
+	o.initPosImd.Draw(target)
 }
 
 func (o *Bullet) getColliderByPos(pos pixel.Vec) pixel.Rect {

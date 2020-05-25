@@ -81,7 +81,9 @@ type Player interface {
 	GetWeapon() Weapon
 	SetWeapon(w Weapon)
 	DropWeapon()
-	AddDamage(damage float64)
+	IncreaseKill()
+	GetStats() (kill, death, streak, maxStreak int)
+	AddDamage(firingPlayerID string, damage float64)
 	GetHP() float64
 	GetRespawnTime() time.Time
 	GetHitTime() time.Time
@@ -89,6 +91,7 @@ type Player interface {
 	GetScopeRadius(dist float64) float64
 	IsVisible() bool
 	SetPlayerName(name string)
+	GetPlayerName() string
 }
 
 type Item interface {
@@ -112,7 +115,8 @@ type Weapon interface {
 
 type Bullet interface {
 	Object
-	Fire(playerID string, initPos, dir pixel.Vec, speed, maxRange, damage, length float64)
+	Fire(playerID, weaponID string, initPos, dir pixel.Vec,
+		speed, maxRange, damage, length float64)
 }
 
 type Tree interface {

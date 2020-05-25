@@ -31,6 +31,7 @@ type Bullet struct {
 	// state fields
 	id         string
 	playerID   string
+	weaponID   string
 	initPos    pixel.Vec
 	dir        pixel.Vec
 	speed      float64
@@ -98,6 +99,7 @@ func (o *Bullet) GetSnapshot(tick int64) *protocol.ObjectSnapshot {
 		Type: o.GetType(),
 		Bullet: &protocol.BulletSnapshot{
 			PlayerID:   o.playerID,
+			WeaponID:   o.weaponID,
 			InitPos:    util.ConvertVec(o.initPos),
 			Dir:        util.ConvertVec(o.dir),
 			Speed:      o.speed,
@@ -114,6 +116,7 @@ func (o *Bullet) SetSnapshot(tick int64, snapshot *protocol.ObjectSnapshot) {
 	if snapshot != nil && snapshot.Bullet != nil {
 		ss := snapshot.Bullet
 		o.playerID = ss.PlayerID
+		o.weaponID = ss.WeaponID
 		o.initPos = ss.InitPos.Convert()
 		o.dir = ss.Dir.Convert()
 		o.speed = ss.Speed
@@ -138,7 +141,7 @@ func (o *Bullet) ServerUpdate(tick int64) {
 			o.deleteTime = now
 			if obj.GetType() == config.PlayerObject {
 				player := obj.(common.Player)
-				player.AddDamage(o.damage)
+				player.AddDamage(o.playerID, o.damage)
 			}
 		}
 	}
@@ -166,8 +169,9 @@ func (o *Bullet) ClientUpdate() {
 	o.isDestroyed = isDestroyed
 }
 
-func (o *Bullet) Fire(playerID string, initPos, dir pixel.Vec, speed, maxRange, damage, length float64) {
+func (o *Bullet) Fire(playerID, weaponID string, initPos, dir pixel.Vec, speed, maxRange, damage, length float64) {
 	o.playerID = playerID
+	o.weaponID = weaponID
 	o.initPos = initPos
 	o.dir = dir
 	o.speed = speed

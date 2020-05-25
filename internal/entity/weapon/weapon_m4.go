@@ -186,6 +186,7 @@ func (m *WeaponM4) Trigger() (ok bool) {
 		bullet := NewBullet(m.world, m.world.GetObjectDB().GetAvailableID())
 		bullet.Fire(
 			m.playerID,
+			m.id,
 			m.pos.Add(m.dir.Unit().Scaled(m4Width/2)),
 			m.dir,
 			m4BulletSpeed,

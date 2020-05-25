@@ -3,6 +3,10 @@ package protocol
 type PlayerSnapshot struct {
 	PlayerName   string  `json:"player_name,omitempty"`
 	WeaponID     string  `json:"weapon_id,omitempty"`
+	Kill         int     `json:"kill,omitempty"`
+	Death        int     `json:"death,omitempty"`
+	Streak       int     `json:"streak,omitempty"`
+	MaxStreak    int     `json:"max_streak,omitempty"`
 	CursorDir    *Vec    `json:"cursor_dir,omitempty"`
 	Pos          *Vec    `json:"pos,omitempty"`
 	MoveDir      *Vec    `json:"move_dir,omitempty"`

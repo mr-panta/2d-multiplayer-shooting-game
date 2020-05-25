@@ -4,6 +4,7 @@ package protocol
 
 type BulletSnapshot struct {
 	PlayerID   string  `json:"player_id,omitempty"`
+	WeaponID   string  `json:"weapon_id,omitempty"`
 	InitPos    *Vec    `json:"init_pos,omitempty"`
 	Dir        *Vec    `json:"dir,omitempty"`
 	Speed      float64 `json:"speed,omitempty"`

@@ -19,10 +19,10 @@ var (
 const (
 	minNextItemPerd       = 10
 	maxNextItemPerd       = 20
-	worldFieldWidth       = 32
-	worldFieldHeight      = 16
-	worldTreeAmount       = 64
-	worldTerrainAmount    = 16
+	worldFieldWidth       = 8
+	worldFieldHeight      = 8
+	worldTreeAmount       = 0
+	worldTerrainAmount    = 1
 	worldMinSpawnDist     = 48
 	worldMinWindowRenderZ = 1000
 )

@@ -1,15 +1,12 @@
 package entity
 
 import (
-	"fmt"
 	"image/color"
-	"math"
 	"sync"
 	"time"
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/imdraw"
-	"github.com/faiface/pixel/text"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/animation"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
@@ -17,8 +14,6 @@ import (
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/util"
-	"golang.org/x/image/colornames"
-	"golang.org/x/image/font/basicfont"
 )
 
 const (
@@ -51,6 +46,10 @@ type player struct {
 	weaponID      string
 	world         common.World
 	tickSnapshots []*protocol.TickSnapshot
+	kill          int
+	death         int
+	streak        int
+	maxStreak     int
 	pos           pixel.Vec
 	posError      pixel.Vec
 	errorTime     time.Time
@@ -97,6 +96,14 @@ func (p *player) Destroy() {
 func (p *player) Exists() bool {
 	now := ticktime.GetServerTime()
 	return now.After(p.respawnTime) && !p.isDestroyed
+}
+
+func (p *player) IncreaseKill() {
+	p.kill++
+	p.streak++
+	if p.maxStreak < p.streak {
+		p.maxStreak = p.streak
+	}
 }
 
 func (p *player) GetShape() pixel.Rect {
@@ -255,11 +262,15 @@ func (p *player) ClientUpdate() {
 	}
 	// Set status
 	lastSS := p.getLastSnapshot().Player
+	p.kill = lastSS.Kill
+	p.death = lastSS.Death
+	p.streak = lastSS.Streak
+	p.maxStreak = lastSS.MaxStreak
+	p.hp = lastSS.HP
 	p.respawnTime = time.Unix(0, lastSS.RespawnTime)
 	p.hitTime = time.Unix(0, lastSS.HitTime)
 	p.triggerTime = time.Unix(0, lastSS.TriggerTime)
 	p.playerName = lastSS.PlayerName
-	p.hp = lastSS.HP
 	// Update weapon
 	if weapon := p.GetWeapon(); weapon != nil {
 		weapon.SetPos(p.GetPivot())
@@ -325,14 +336,20 @@ func (p *player) GetType() int {
 	return config.PlayerObject
 }
 
-func (p *player) AddDamage(damage float64) {
+func (p *player) AddDamage(firingPlayerID string, damage float64) {
 	p.hp -= damage
 	p.hitTime = ticktime.GetServerTime()
 	if p.hp <= 0 {
+		p.death++
+		p.streak = 0
 		p.hp = playerInitHP
 		p.respawnTime = ticktime.GetServerTime().Add(playerRespawnTime)
 		p.DropWeapon()
 		p.world.SpawnPlayer(p.id, "")
+		if obj, exists := p.world.GetObjectDB().SelectOne(firingPlayerID); exists {
+			firingPlayer := obj.(common.Player)
+			firingPlayer.IncreaseKill()
+		}
 	}
 }
 
@@ -382,6 +399,14 @@ func (p *player) SetPlayerName(name string) {
 	p.playerName = name
 }
 
+func (p *player) GetPlayerName() string {
+	return p.playerName
+}
+
+func (p *player) GetStats() (kill, death, streak, maxStreak int) {
+	return p.kill, p.death, p.streak, p.maxStreak
+}
+
 func (p *player) getShapeByPos(pos pixel.Vec) pixel.Rect {
 	min := pos.Sub(pixel.V(playerShapeWidth, 0).Scaled(0.5))
 	max := pos.Add(pixel.V(playerShapeWidth/2, playerShapeHeigth))
@@ -404,25 +429,10 @@ func (p *player) renderPlayerName(target pixel.Target, viewPos pixel.Vec) {
 	defer func() {
 		p.world.GetWindow().SetSmooth(smooth)
 	}()
+
 	shape := p.GetShape()
 	pos := pixel.V(shape.Min.X+shape.W()/2, shape.Max.Y+playerNameOffset).Sub(viewPos)
-	atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
-	txt := text.New(pixel.ZV, atlas)
-	txt.Clear()
-	txt.LineHeight = atlas.LineHeight()
-	txt.Color = colornames.Black
-	fmt.Fprintf(txt, p.playerName)
-	m := pixel.IM.
-		Moved(pixel.ZV.Sub(pixel.V(txt.Bounds().W()/2, 0))).
-		Scaled(pixel.ZV, 2).
-		Moved(pos)
-	txt.Draw(target, m.Moved(shadowOffset.Rotated(math.Pi/4+0*math.Pi/2).Scaled(2)))
-	txt.Draw(target, m.Moved(shadowOffset.Rotated(math.Pi/4+1*math.Pi/2).Scaled(2)))
-	txt.Draw(target, m.Moved(shadowOffset.Rotated(math.Pi/4+2*math.Pi/2).Scaled(2)))
-	txt.Draw(target, m.Moved(shadowOffset.Rotated(math.Pi/4+3*math.Pi/2).Scaled(2)))
-	txt.Color = playerNameColor
-	fmt.Fprintf(txt, "\r%s", p.playerName)
-	txt.Draw(target, m)
+	animation.DrawStrokeTextCenter(target, pos, p.playerName, 2)
 }
 
 func (p *player) render(target pixel.Target, viewPos pixel.Vec) {
@@ -545,6 +555,10 @@ func (p *player) getSnapshotsByTime(t time.Time) *protocol.ObjectSnapshot {
 		Player: &protocol.PlayerSnapshot{
 			PlayerName:   ssB.PlayerName,
 			WeaponID:     ssB.WeaponID,
+			Kill:         ssB.Kill,
+			Death:        ssB.Death,
+			Streak:       ssB.Streak,
+			MaxStreak:    ssB.MaxStreak,
 			CursorDir:    util.ConvertVec(pixel.Lerp(ssA.CursorDir.Convert(), ssA.CursorDir.Convert(), d)),
 			Pos:          util.ConvertVec(pixel.Lerp(ssA.Pos.Convert(), ssB.Pos.Convert(), d)),
 			MoveDir:      util.ConvertVec(pixel.Lerp(ssA.MoveDir.Convert(), ssB.MoveDir.Convert(), d)),
@@ -585,6 +599,10 @@ func (p *player) getCurrentSnapshot() *protocol.ObjectSnapshot {
 		Player: &protocol.PlayerSnapshot{
 			PlayerName:   p.playerName,
 			WeaponID:     p.weaponID,
+			Kill:         p.kill,
+			Death:        p.death,
+			Streak:       p.streak,
+			MaxStreak:    p.maxStreak,
 			CursorDir:    util.ConvertVec(p.cursorDir),
 			Pos:          util.ConvertVec(p.pos),
 			MoveDir:      util.ConvertVec(p.moveDir),

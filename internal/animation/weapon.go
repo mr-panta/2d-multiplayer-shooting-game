@@ -10,7 +10,8 @@ import (
 )
 
 var (
-	weaponM4Frame = pixel.R(0, 2*64+1, 128, 3*64-1)
+	weaponM4Frame  = pixel.R(0, 2*64+1, 3*32, 3*64-1)
+	weaponM4Offset = pixel.V(-16, 0)
 )
 
 const (
@@ -39,7 +40,7 @@ func (m *WeaponM4) Draw(target pixel.Target) {
 	case WeaponM4ReloadState:
 		dir = pixel.V(m.Dir.X, -math.Abs(m.Dir.X))
 	}
-	matrix := pixel.IM
+	matrix := pixel.IM.Moved(weaponM4Offset)
 	if m.Dir.X > 0 {
 		matrix = matrix.ScaledXY(pixel.ZV, pixel.V(-1, 1))
 		matrix = matrix.Rotated(pixel.ZV, dir.Angle())

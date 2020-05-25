@@ -40,7 +40,8 @@ func (v *Vec) Convert() pixel.Vec {
 }
 
 type WorldSnapshot struct {
-	ObjectSnapshots []*ObjectSnapshot `json:"object_snapshots,omitempty"`
+	KillFeedSnapshot *KillFeedSnapshot `json:"kill_feed_snapshot,omitempty"`
+	ObjectSnapshots  []*ObjectSnapshot `json:"object_snapshots,omitempty"`
 }
 
 type InputSnapshot struct {
@@ -53,6 +54,17 @@ type InputSnapshot struct {
 	Right     bool `json:"right,omitempty"`
 	Reload    bool `json:"reload,omitempty"`
 	Drop      bool `json:"drop,omitempty"`
+}
+
+type KillFeedSnapshot struct {
+	Rows []*KillFeedRow `json:"rows,omitempty"`
+}
+
+type KillFeedRow struct {
+	CreateTime     int64  `json:"create_time,omitempty"`
+	KillerPlayerID string `json:"killer_player_id,omitempty"`
+	VictimPlayerID string `json:"victim_player_id,omitempty"`
+	WeaponID       string `json:"weapon_id,omitempty"`
 }
 
 type ObjectSnapshot struct {

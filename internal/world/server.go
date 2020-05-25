@@ -28,10 +28,14 @@ func (w *world) ServerUpdate(tick int64) {
 	for _, o := range w.objectDB.SelectAll() {
 		o.ServerUpdate(tick)
 	}
+	// Kill feed
+	w.hud.ServerUpdate()
 }
 
 func (w *world) GetSnapshot(all bool) (int64, *protocol.WorldSnapshot) {
-	snapshot := &protocol.WorldSnapshot{}
+	snapshot := &protocol.WorldSnapshot{
+		KillFeedSnapshot: w.hud.GetKillFeedSnapshot(),
+	}
 	for _, o := range w.objectDB.SelectAll() {
 		skip := o.GetType() == 0
 		skip = skip || (!all && o.GetType() == config.TreeObject)

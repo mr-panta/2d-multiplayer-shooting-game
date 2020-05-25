@@ -22,6 +22,7 @@ type World interface {
 	GetSize() (width, height int)
 	CheckCollision(id string, prevCollider, nextCollider pixel.Rect) (
 		obj Object, staticAdjust, dynamicAdjust pixel.Vec)
+	GetHud() Hud
 	// Client
 	Render()
 	GetWindow() *pixelgl.Window
@@ -83,7 +84,7 @@ type Player interface {
 	DropWeapon()
 	IncreaseKill()
 	GetStats() (kill, death, streak, maxStreak int)
-	AddDamage(firingPlayerID string, damage float64)
+	AddDamage(firingPlayerID, weaponID string, damage float64)
 	GetHP() float64
 	GetRespawnTime() time.Time
 	GetHitTime() time.Time
@@ -102,6 +103,7 @@ type Item interface {
 
 type Weapon interface {
 	Object
+	GetWeaponType() int
 	SetPos(pos pixel.Vec)
 	SetDir(dir pixel.Vec)
 	SetPlayerID(playerID string)
@@ -133,8 +135,12 @@ type Terrain interface {
 // Etc
 
 type Hud interface {
-	Update()
 	Render(target pixel.Target)
+	ClientUpdate()
+	ServerUpdate()
+	GetKillFeedSnapshot() *protocol.KillFeedSnapshot
+	SetKillFeedSnapshot(snapshot *protocol.KillFeedSnapshot)
+	AddKillFeedRow(killerPlayerID, victimPlayerID, weaponID string)
 }
 
 type Scope interface {

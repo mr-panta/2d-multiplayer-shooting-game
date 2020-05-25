@@ -28,7 +28,7 @@ func (w *world) ClientUpdate() {
 	for _, o := range w.objectDB.SelectAll() {
 		o.ClientUpdate()
 	}
-	w.hud.Update()
+	w.hud.ClientUpdate()
 	w.scope.Update()
 }
 
@@ -123,6 +123,7 @@ func (w *world) SetSnapshot(tick int64, snapshot *protocol.WorldSnapshot) {
 			w.removeObject(o.GetID())
 		}
 	}
+	w.hud.SetKillFeedSnapshot(snapshot.KillFeedSnapshot)
 }
 
 func (w *world) GetScope() common.Scope {

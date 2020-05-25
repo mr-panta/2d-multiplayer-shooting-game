@@ -5,6 +5,7 @@ import (
 	"image/color"
 	"math"
 	"sort"
+	"time"
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/imdraw"
@@ -12,6 +13,7 @@ import (
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/animation"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
+	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
 	"golang.org/x/image/colornames"
 	"golang.org/x/image/font/basicfont"
@@ -35,10 +37,26 @@ var (
 	scoreboardMarginTop        = 8.
 	scoreboardMarginBottom     = 8.
 	scoreboardLineHeight       = 16.
-	scoreboardSize             = 10
+	scoreboardLimit            = 10
 	scoreboardPlayerNameLength = 10
-	scoreboardColor            = color.RGBA{0, 0, 0, 127}
+	scoreboardBGColor          = color.RGBA{0, 0, 0, 127}
+	// kill feed
+	killFeedLimit           = 32
+	killFeedLifeTime        = 10 * time.Second
+	killFeedPadding         = 12.
+	killFeedRowHeight       = 20.
+	killFeedRowMargin       = 8.
+	killFeedRowMarginTop    = 4.
+	killFeedRowMarginBottom = 6.
+	killFeedBGColor         = color.RGBA{0, 0, 0, 127}
 )
+
+type killFeedRow struct {
+	createTime     time.Time
+	killerPlayerID string
+	victimPlayerID string
+	weaponID       string
+}
 
 type Hud struct {
 	world             common.World
@@ -47,23 +65,69 @@ type Hud struct {
 	hp                float64
 	respawnCountdown  int
 	crosshair         *animation.Crosshair
-	scoreboardPlayers []common.Player
 	scoreboardImd     *imdraw.IMDraw
+	killFeedRowImds   []*imdraw.IMDraw
+	killFeedRows      []*killFeedRow
+	scoreboardPlayers []common.Player
 }
 
 func NewHud(world common.World) common.Hud {
+	killFeedRowImds := []*imdraw.IMDraw{}
+	for i := 0; i < killFeedLimit; i++ {
+		killFeedRowImds = append(killFeedRowImds, imdraw.New(nil))
+	}
 	return &Hud{
-		world:         world,
-		crosshair:     animation.NewCrosshair(),
-		scoreboardImd: imdraw.New(nil),
+		world:           world,
+		crosshair:       animation.NewCrosshair(),
+		scoreboardImd:   imdraw.New(nil),
+		killFeedRowImds: killFeedRowImds,
 	}
 }
 
-func (h *Hud) Update() {
+func (h *Hud) AddKillFeedRow(killerPlayerID, victimPlayerID, weaponID string) {
+	h.killFeedRows = append(h.killFeedRows, &killFeedRow{
+		createTime:     ticktime.GetServerTime(),
+		killerPlayerID: killerPlayerID,
+		victimPlayerID: victimPlayerID,
+		weaponID:       weaponID,
+	})
+}
+
+func (h *Hud) ClientUpdate() {
 	h.updateAmmo()
 	h.updateHP()
 	h.updateRespawnCountdown()
 	h.updateScoreboard()
+}
+
+func (h *Hud) ServerUpdate() {
+	h.updateKillFeed()
+}
+
+func (h *Hud) GetKillFeedSnapshot() *protocol.KillFeedSnapshot {
+	ss := &protocol.KillFeedSnapshot{}
+	for _, r := range h.killFeedRows {
+		ss.Rows = append(ss.Rows, &protocol.KillFeedRow{
+			CreateTime:     r.createTime.UnixNano(),
+			KillerPlayerID: r.killerPlayerID,
+			VictimPlayerID: r.victimPlayerID,
+			WeaponID:       r.weaponID,
+		})
+	}
+	return ss
+}
+
+func (h *Hud) SetKillFeedSnapshot(snapshot *protocol.KillFeedSnapshot) {
+	rows := []*killFeedRow{}
+	for _, r := range snapshot.Rows {
+		rows = append(rows, &killFeedRow{
+			createTime:     time.Unix(0, r.CreateTime),
+			killerPlayerID: r.KillerPlayerID,
+			victimPlayerID: r.VictimPlayerID,
+			weaponID:       r.WeaponID,
+		})
+	}
+	h.killFeedRows = rows
 }
 
 func (h *Hud) getPlayer() common.Player {
@@ -139,6 +203,21 @@ func (h *Hud) updateScoreboard() {
 	h.scoreboardPlayers = players
 }
 
+func (h *Hud) updateKillFeed() {
+	rows := []*killFeedRow{}
+	now := ticktime.GetServerTime()
+	for _, r := range h.killFeedRows {
+		if now.Sub(r.createTime) <= killFeedLifeTime {
+			rows = append(rows, r)
+		}
+	}
+	offset := killFeedLimit
+	if len(rows) < offset {
+		offset = len(rows)
+	}
+	h.killFeedRows = rows[len(rows)-offset:]
+}
+
 func (h *Hud) Render(target pixel.Target) {
 	win := h.world.GetWindow()
 	smooth := win.Smooth()
@@ -150,6 +229,7 @@ func (h *Hud) Render(target pixel.Target) {
 	h.renderRespawnCountdown(target)
 	h.renderCursor(target)
 	h.renderScoreboard(target)
+	h.renderKillFeed(target)
 }
 
 func (h *Hud) renderHP(target pixel.Target) {
@@ -208,7 +288,7 @@ func (h *Hud) renderCursor(target pixel.Target) {
 
 func (h *Hud) getScoreboard() (players []common.Player, mainPlayer common.Player, mainPlayerPlace int) {
 	for i, player := range h.scoreboardPlayers {
-		if i < scoreboardSize {
+		if i < scoreboardLimit {
 			players = append(players, player)
 		} else if player.GetID() == h.world.GetMainPlayerID() {
 			mainPlayer = player
@@ -232,7 +312,7 @@ func (h *Hud) renderScoreboard(target pixel.Target) {
 			height += scoreboardLineHeight
 		}
 		h.scoreboardImd.Clear()
-		h.scoreboardImd.Color = scoreboardColor
+		h.scoreboardImd.Color = scoreboardBGColor
 		h.scoreboardImd.EndShape = imdraw.RoundEndShape
 		h.scoreboardImd.Push(pos, pos.Add(pixel.V(scoreboardWidth+scoreboardMarginLeft*2, -height)))
 		h.scoreboardImd.Rectangle(0)
@@ -275,12 +355,59 @@ func (h *Hud) renderScoreboard(target pixel.Target) {
 		))
 		pos = pos.Add(pixel.V(0, -float64(playerLen+2)*scoreboardLineHeight))
 		playerName := mainPlayer.GetPlayerName()
-		if len(playerName) > 10 {
-			playerName = playerName[:10] + "..."
+		if len(playerName) > scoreboardPlayerNameLength {
+			playerName = playerName[:scoreboardPlayerNameLength] + "..."
 		}
 		animation.DrawShadowTextLeft(target, pos, fmt.Sprintf("%d. %s", mainPlayerPlace, playerName), 1)
 		kill, death, _, streak := mainPlayer.GetStats()
 		pos = pos.Add(pixel.V(scoreboardWidth, 0))
 		animation.DrawShadowTextRight(target, pos, fmt.Sprintf("%d/%d/%d", kill, death, streak), 1)
 	}
+}
+
+func (h *Hud) renderKillFeed(target pixel.Target) {
+	index := 0
+	for _, row := range h.killFeedRows {
+		if h.renderKillFeedRow(target, index, row) {
+			index++
+		}
+	}
+}
+
+func (h *Hud) renderKillFeedRow(target pixel.Target, i int, row *killFeedRow) bool {
+	// Prepare
+	win := h.world.GetWindow()
+	db := h.world.GetObjectDB()
+	killerObj, exists := db.SelectOne(row.killerPlayerID)
+	if !exists {
+		return false
+	}
+	killer := killerObj.(common.Player)
+	victimObj, exists := db.SelectOne(row.victimPlayerID)
+	if !exists {
+		return false
+	}
+	victim := victimObj.(common.Player)
+	// weaponObj, exists := db.SelectOne(row.weaponID)
+	// if !exists {
+	// 	return
+	// }
+	// weapon := weaponObj.(common.Weapon)
+	// Setup position
+	message := fmt.Sprintf("%s > %s", killer.GetPlayerName(), victim.GetPlayerName())
+	topRight := win.Bounds().Vertices()[2]
+	pos := topRight.Sub(pixel.V(killFeedPadding, killFeedPadding))
+	pos = pos.Sub(pixel.V(killFeedRowMargin, float64(i+1)*(killFeedRowHeight+killFeedRowMargin)))
+	bounds := animation.GetTextRightBounds(pos, message, 1)
+	bounds.Min = bounds.Min.Sub(pixel.V(killFeedRowMargin, killFeedRowMarginBottom))
+	bounds.Max = bounds.Max.Add(pixel.V(killFeedRowMargin, killFeedRowMarginTop))
+	// Render
+	imd := h.killFeedRowImds[i]
+	imd.Clear()
+	imd.Color = killFeedBGColor
+	imd.Push(bounds.Min, bounds.Max)
+	imd.Rectangle(0)
+	imd.Draw(target)
+	animation.DrawShadowTextRight(target, pos, message, 1)
+	return true
 }

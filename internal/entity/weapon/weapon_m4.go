@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	m4Width           = 114
+	m4Width           = 124
 	m4BulletSpeed     = 750
 	m4MaxRange        = 20000
 	m4BulletLength    = 12
@@ -252,4 +252,8 @@ func (m *WeaponM4) GetScopeRadius(dist float64) float64 {
 		return 0
 	}
 	return m4MaxScopeRadius * (1.0 - (dist / m4MaxScopeRange))
+}
+
+func (m *WeaponM4) GetWeaponType() int {
+	return config.M4Weapon
 }

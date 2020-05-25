@@ -30,6 +30,7 @@ const (
 type world struct {
 	// common
 	objectDB common.ObjectDB
+	hud      common.Hud
 	// client
 	win           *pixelgl.Window
 	batch         *pixel.Batch
@@ -37,7 +38,6 @@ type world struct {
 	prevRawInput  *common.RawInput
 	mainPlayerID  string
 	cameraPos     pixel.Vec
-	hud           common.Hud
 	scope         common.Scope
 	water         common.Water
 	fps           int
@@ -60,11 +60,11 @@ func New(clientProcessor common.ClientProcessor) common.World {
 	}
 	// common
 	world.setupBoundaries()
+	world.hud = entity.NewHud(world)
 	if clientProcessor != nil {
 		// client
 		world.win = clientProcessor.GetWindow()
 		world.batch = pixel.NewBatch(&pixel.TrianglesData{}, animation.GetObjectSheet())
-		world.hud = entity.NewHud(world)
 		world.scope = entity.NewScope(world)
 		world.water = entity.NewWater(world)
 		world.fpsUpdateTime = ticktime.GetServerTime()
@@ -107,6 +107,10 @@ func (w *world) CheckCollision(id string, prevCollider, nextCollider pixel.Rect)
 		}
 	}
 	return obj, staticAdjust, dynamicAdjust
+}
+
+func (w *world) GetHud() common.Hud {
+	return w.hud
 }
 
 func (w *world) GetSize() (width, height int) {

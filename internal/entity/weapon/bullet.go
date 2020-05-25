@@ -141,7 +141,7 @@ func (o *Bullet) ServerUpdate(tick int64) {
 			o.deleteTime = now
 			if obj.GetType() == config.PlayerObject {
 				player := obj.(common.Player)
-				player.AddDamage(o.playerID, o.damage)
+				player.AddDamage(o.playerID, o.weaponID, o.damage)
 			}
 		}
 	}

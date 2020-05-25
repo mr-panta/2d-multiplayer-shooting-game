@@ -19,6 +19,8 @@ const (
 	inputCursorBlinkTimeMS  = 300
 )
 
+var inputLabelColor = color.RGBA{63, 63, 63, 255}
+
 type Input struct {
 	win        *pixelgl.Window
 	lineImd    *imdraw.IMDraw
@@ -73,12 +75,13 @@ func (i *Input) Update() {
 }
 
 func (i *Input) Render() {
+	if len(i.value) == 0 {
+		i.renderLabel()
+	}
 	i.renderLine()
 	i.renderValue()
 	if i.focused {
 		i.renderCursor()
-	} else if len(i.value) == 0 {
-		i.renderLabel()
 	}
 }
 
@@ -113,7 +116,7 @@ func (i *Input) renderLabel() {
 	txt := text.New(pixel.ZV, atlas)
 	txt.Clear()
 	txt.LineHeight = atlas.LineHeight()
-	txt.Color = colornames.Darkgray
+	txt.Color = inputLabelColor
 	fmt.Fprintf(txt, i.Label)
 	txt.Draw(i.win, i.getCenterMatrix(txt))
 }

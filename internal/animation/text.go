@@ -9,6 +9,21 @@ import (
 	"golang.org/x/image/font/basicfont"
 )
 
+func GetTextCenterBounds(pos pixel.Vec, value string, size float64) pixel.Rect {
+	atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
+	txt := text.New(pixel.ZV, atlas)
+	txt.Clear()
+	txt.LineHeight = atlas.LineHeight()
+	fmt.Fprintf(txt, value)
+	rect := txt.Bounds().
+		Moved(pixel.ZV.Sub(pixel.V(txt.Bounds().W()/2, 0))).
+		Moved(pos)
+	return pixel.Rect{
+		Min: rect.Min,
+		Max: rect.Min.Add(pixel.V(rect.W()*size, rect.H()*size)),
+	}
+}
+
 func DrawStrokeTextCenter(target pixel.Target, pos pixel.Vec, value string, size float64) {
 	atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
 	txt := text.New(pixel.ZV, atlas)
@@ -27,6 +42,20 @@ func DrawStrokeTextCenter(target pixel.Target, pos pixel.Vec, value string, size
 	txt.Color = colornames.White
 	fmt.Fprintf(txt, "\r%s", value)
 	txt.Draw(target, m)
+
+}
+
+func GetTextLeftBounds(pos pixel.Vec, value string, size float64) pixel.Rect {
+	atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
+	txt := text.New(pixel.ZV, atlas)
+	txt.Clear()
+	txt.LineHeight = atlas.LineHeight()
+	fmt.Fprintf(txt, value)
+	rect := txt.Bounds().Moved(pos)
+	return pixel.Rect{
+		Min: rect.Min,
+		Max: rect.Min.Add(pixel.V(rect.W()*size, rect.H()*size)),
+	}
 }
 
 func DrawShadowTextLeft(target pixel.Target, pos pixel.Vec, value string, size float64) {
@@ -41,6 +70,21 @@ func DrawShadowTextLeft(target pixel.Target, pos pixel.Vec, value string, size f
 	txt.Color = colornames.White
 	fmt.Fprintf(txt, "\r%s", value)
 	txt.Draw(target, m)
+}
+
+func GetTextRightBounds(pos pixel.Vec, value string, size float64) pixel.Rect {
+	atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
+	txt := text.New(pixel.ZV, atlas)
+	txt.Clear()
+	txt.LineHeight = atlas.LineHeight()
+	fmt.Fprintf(txt, value)
+	rect := txt.Bounds().
+		Moved(pixel.ZV.Sub(pixel.V(txt.Bounds().W(), 0))).
+		Moved(pos)
+	return pixel.Rect{
+		Min: rect.Min,
+		Max: rect.Min.Add(pixel.V(rect.W()*size, rect.H()*size)),
+	}
 }
 
 func DrawShadowTextRight(target pixel.Target, pos pixel.Vec, value string, size float64) {

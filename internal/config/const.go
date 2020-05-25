@@ -8,7 +8,7 @@ import (
 	"golang.org/x/image/colornames"
 )
 
-const Version = "1.0.0"
+const Version = "0.0.0"
 
 // default
 const (
@@ -67,6 +67,11 @@ const (
 	BulletObject  = 4
 	TreeObject    = 5
 	TerrainObject = 6
+)
+
+// weapon type
+const (
+	M4Weapon = 1
 )
 
 // tree type

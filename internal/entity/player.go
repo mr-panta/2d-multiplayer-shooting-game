@@ -336,7 +336,7 @@ func (p *player) GetType() int {
 	return config.PlayerObject
 }
 
-func (p *player) AddDamage(firingPlayerID string, damage float64) {
+func (p *player) AddDamage(firingPlayerID string, weaponID string, damage float64) {
 	p.hp -= damage
 	p.hitTime = ticktime.GetServerTime()
 	if p.hp <= 0 {
@@ -350,6 +350,7 @@ func (p *player) AddDamage(firingPlayerID string, damage float64) {
 			firingPlayer := obj.(common.Player)
 			firingPlayer.IncreaseKill()
 		}
+		p.world.GetHud().AddKillFeedRow(firingPlayerID, p.id, weaponID)
 	}
 }
 

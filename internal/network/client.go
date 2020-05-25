@@ -99,7 +99,7 @@ func (c *client) listenConnB(i int) {
 		data, err = uncompressData(data)
 		if err != nil {
 			logger.Errorf(ctx, err.Error())
-			continue
+			break
 		}
 		c.listenBuffer <- data
 	}

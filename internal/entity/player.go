@@ -1,11 +1,15 @@
 package entity
 
 import (
+	"fmt"
+	"image/color"
+	"math"
 	"sync"
 	"time"
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/imdraw"
+	"github.com/faiface/pixel/text"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/animation"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
@@ -13,16 +17,18 @@ import (
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/util"
+	"golang.org/x/image/colornames"
+	"golang.org/x/image/font/basicfont"
 )
 
 const (
 	playerShapeHeigth        = 128
 	playerShapeWidth         = 48
 	playerColliderSize       = 40
-	playerWeaponMarginTop    = 24
 	playerBaseMoveSpeed      = 300
 	playerFrameTime          = 150
 	playerZ                  = 10
+	playerNameZ              = 1000
 	playerDropDiff           = 32
 	playerInitHP             = 100
 	playerRespawnTime        = 3 * time.Second
@@ -34,7 +40,10 @@ const (
 	playerRegenRate          = 1
 	playerSpeedCooldown      = 300 * time.Millisecond
 	playerMaxPosError        = 100
+	playerNameOffset         = 8
 )
+
+var playerNameColor = color.White
 
 type player struct {
 	id            string
@@ -100,6 +109,7 @@ func (p *player) GetCollider() (pixel.Rect, bool) {
 
 func (p *player) GetRenderObjects() (objs []common.RenderObject) {
 	objs = append(objs, common.NewRenderObject(playerZ, p.GetShape(), p.render))
+	objs = append(objs, common.NewRenderObject(playerNameZ, p.GetShape(), p.renderPlayerName))
 	// debug
 	if config.EnvDebug() {
 		if p.isMainPlayer {
@@ -113,12 +123,7 @@ func (p *player) GetRenderObjects() (objs []common.RenderObject) {
 }
 
 func (p *player) GetPivot() pixel.Vec {
-	ss := p.getLerpSnapshot().Player
-	pos := ss.Pos.Convert()
-	if p.isMainPlayer {
-		pos = p.pos
-	}
-	return pos.Sub(pixel.V(0, playerWeaponMarginTop))
+	return p.pos.Add(pixel.V(0, playerColliderSize))
 }
 
 func (p *player) GetSnapshot(tick int64) (snapshot *protocol.ObjectSnapshot) {
@@ -242,7 +247,6 @@ func (p *player) ClientUpdate() {
 		// Set weapon
 		p.weaponID = ss.WeaponID
 		// Update position
-		p.hp = ss.HP
 		p.pos = ss.Pos.Convert()
 		p.moveDir = ss.MoveDir.Convert()
 		p.cursorDir = ss.CursorDir.Convert()
@@ -255,6 +259,7 @@ func (p *player) ClientUpdate() {
 	p.hitTime = time.Unix(0, lastSS.HitTime)
 	p.triggerTime = time.Unix(0, lastSS.TriggerTime)
 	p.playerName = lastSS.PlayerName
+	p.hp = lastSS.HP
 	// Update weapon
 	if weapon := p.GetWeapon(); weapon != nil {
 		weapon.SetPos(p.GetPivot())
@@ -378,8 +383,8 @@ func (p *player) SetPlayerName(name string) {
 }
 
 func (p *player) getShapeByPos(pos pixel.Vec) pixel.Rect {
-	min := pos.Sub(pixel.V(playerShapeWidth, playerShapeHeigth).Scaled(0.5))
-	max := pos.Add(pixel.V(playerShapeWidth, playerShapeHeigth).Scaled(0.5))
+	min := pos.Sub(pixel.V(playerShapeWidth, 0).Scaled(0.5))
+	max := pos.Add(pixel.V(playerShapeWidth/2, playerShapeHeigth))
 	return pixel.Rect{Min: min, Max: max}
 }
 
@@ -388,9 +393,36 @@ func (p *player) getCollider() pixel.Rect {
 }
 
 func (p *player) getColliderByPos(pos pixel.Vec) pixel.Rect {
-	min := pos.Sub(pixel.V(playerColliderSize/2, playerShapeHeigth/2))
-	max := pos.Add(pixel.V(playerColliderSize/2, playerColliderSize-playerShapeHeigth/2))
+	min := pos.Sub(pixel.V(playerColliderSize, 0).Scaled(0.5))
+	max := pos.Add(pixel.V(playerColliderSize/2, playerColliderSize))
 	return pixel.Rect{Min: min, Max: max}
+}
+
+func (p *player) renderPlayerName(target pixel.Target, viewPos pixel.Vec) {
+	smooth := p.world.GetWindow().Smooth()
+	p.world.GetWindow().SetSmooth(false)
+	defer func() {
+		p.world.GetWindow().SetSmooth(smooth)
+	}()
+	shape := p.GetShape()
+	pos := pixel.V(shape.Min.X+shape.W()/2, shape.Max.Y+playerNameOffset).Sub(viewPos)
+	atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
+	txt := text.New(pixel.ZV, atlas)
+	txt.Clear()
+	txt.LineHeight = atlas.LineHeight()
+	txt.Color = colornames.Black
+	fmt.Fprintf(txt, p.playerName)
+	m := pixel.IM.
+		Moved(pixel.ZV.Sub(pixel.V(txt.Bounds().W()/2, 0))).
+		Scaled(pixel.ZV, 2).
+		Moved(pos)
+	txt.Draw(target, m.Moved(shadowOffset.Rotated(math.Pi/4+0*math.Pi/2).Scaled(2)))
+	txt.Draw(target, m.Moved(shadowOffset.Rotated(math.Pi/4+1*math.Pi/2).Scaled(2)))
+	txt.Draw(target, m.Moved(shadowOffset.Rotated(math.Pi/4+2*math.Pi/2).Scaled(2)))
+	txt.Draw(target, m.Moved(shadowOffset.Rotated(math.Pi/4+3*math.Pi/2).Scaled(2)))
+	txt.Color = playerNameColor
+	fmt.Fprintf(txt, "\r%s", p.playerName)
+	txt.Draw(target, m)
 }
 
 func (p *player) render(target pixel.Target, viewPos pixel.Vec) {

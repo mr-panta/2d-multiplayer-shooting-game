@@ -17,13 +17,14 @@ var (
 )
 
 const (
-	minNextItemPerd    = 10
-	maxNextItemPerd    = 20
-	worldFieldWidth    = 32
-	worldFieldHeight   = 16
-	worldTreeAmount    = 64
-	worldTerrainAmount = 16
-	worldMinSpawnDist  = 48
+	minNextItemPerd       = 10
+	maxNextItemPerd       = 20
+	worldFieldWidth       = 32
+	worldFieldHeight      = 16
+	worldTreeAmount       = 64
+	worldTerrainAmount    = 16
+	worldMinSpawnDist     = 48
+	worldMinWindowRenderZ = 1000
 )
 
 type world struct {

@@ -66,26 +66,39 @@ func (w *world) Render() {
 		}
 		return renderObjects[i].GetZ() < renderObjects[j].GetZ()
 	})
+	// Render
 	w.win.Clear(color.RGBA{8, 168, 255, 255})
-	// Render smooth false
+	windownRenderObjects := []common.RenderObject{}
+	defaultSmoothObjects := []common.RenderObject{}
+	nonSmoothObjects := []common.RenderObject{}
+	for _, obj := range renderObjects {
+		if obj.GetZ() >= worldMinWindowRenderZ {
+			windownRenderObjects = append(windownRenderObjects, obj)
+		} else if obj.GetZ() >= 0 {
+			defaultSmoothObjects = append(defaultSmoothObjects, obj)
+		} else {
+			nonSmoothObjects = append(nonSmoothObjects, obj)
+		}
+	}
+	// Render non smooth objects
 	smooth := w.win.Smooth()
 	w.win.SetSmooth(false)
 	w.batch.Clear()
-	for _, obj := range renderObjects {
-		if obj.GetZ() < 0 {
-			obj.Render(w.batch, w.GetCameraViewPos())
-		}
+	for _, obj := range nonSmoothObjects {
+		obj.Render(w.batch, w.GetCameraViewPos())
 	}
 	w.batch.Draw(w.win)
 	w.win.SetSmooth(smooth)
-	// Render smooth default
+	// Render default smooth objects
 	w.batch.Clear()
-	for _, obj := range renderObjects {
-		if obj.GetZ() >= 0 {
-			obj.Render(w.batch, w.GetCameraViewPos())
-		}
+	for _, obj := range defaultSmoothObjects {
+		obj.Render(w.batch, w.GetCameraViewPos())
 	}
 	w.batch.Draw(w.win)
+	// Render window render objects
+	for _, obj := range windownRenderObjects {
+		obj.Render(w.win, w.GetCameraViewPos())
+	}
 	// Render hud
 	w.hud.Render(w.win)
 	// Update FPS

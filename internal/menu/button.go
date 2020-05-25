@@ -44,10 +44,8 @@ func NewButton(win *pixelgl.Window) *Button {
 func (b *Button) Update() {
 	r := pixel.R(0, 0, b.Width, b.Height).Moved(b.Pos)
 	b.hovered = r.Contains(b.win.MousePosition())
-	if b.hovered {
-		b.actived = b.win.JustReleased(pixelgl.MouseButton1)
-		b.focused = b.win.Pressed(pixelgl.MouseButton1)
-	}
+	b.actived = b.hovered && b.win.JustReleased(pixelgl.MouseButton1)
+	b.focused = b.hovered && b.win.Pressed(pixelgl.MouseButton1)
 }
 
 func (b *Button) Render() {

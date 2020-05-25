@@ -87,6 +87,7 @@ func (p *clientProcessor) StartWorld(hostIP, playerName string) (err error) {
 	if err := p.registerPlayer(playerName); err != nil {
 		return err
 	}
+	p.started = true
 	p.win.SetSmooth(true)
 	p.win.SetCursorVisible(false)
 	go p.consumeWorldSnapshot()

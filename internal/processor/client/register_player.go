@@ -1,10 +1,13 @@
 package client
 
 import (
+	"errors"
 	"time"
 
+	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
+	"github.com/mr-panta/go-logger"
 )
 
 func (c *clientProcessor) registerPlayer(playerName string) error {
@@ -13,13 +16,18 @@ func (c *clientProcessor) registerPlayer(playerName string) error {
 		protocol.CmdRegisterPlayer,
 		&protocol.RegisterPlayerRequest{
 			PlayerName: playerName,
+			Version:    config.Version,
 		},
 	)
 	ping := time.Since(now)
 	if err != nil {
-		return err
+		logger.Debugf(nil, err.Error())
+		return errors.New("CAN'T REGISTER PLAYER")
 	}
 	resp := r.(*protocol.RegisterPlayerResponse)
+	if !resp.OK {
+		return errors.New(resp.DebugMessage)
+	}
 	serverTime := time.Unix(0, resp.ServerTime)
 	startTime := time.Unix(0, resp.StartTime)
 	ticktime.SetServerTime(serverTime, ping)

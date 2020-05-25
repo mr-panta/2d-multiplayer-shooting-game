@@ -8,12 +8,16 @@ import (
 	"golang.org/x/image/colornames"
 )
 
+const Version = "1.0.1"
+
+// default
 const (
 	DefaultRefreshRate  = 60
 	DefaultWindowWidth  = float64(768)
 	DefaultWindowHeight = float64(512)
 )
 
+// settings
 const (
 	Timestep        = 15 * time.Millisecond
 	LerpPeriod      = 67 * time.Millisecond

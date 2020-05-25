@@ -7,7 +7,6 @@ import (
 	"github.com/faiface/pixel/pixelgl"
 	"github.com/faiface/pixel/text"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
-	"github.com/mr-panta/go-logger"
 	"golang.org/x/image/colornames"
 	"golang.org/x/image/font/basicfont"
 )
@@ -93,8 +92,7 @@ func (m *Menu) updatePlayerButton() {
 			m.playerNameInput.GetValue(),
 		)
 		if err != nil {
-			logger.Debugf(nil, err.Error())
-			m.message = "CAN'T CONNECT TO HOST"
+			m.message = err.Error()
 		}
 	}
 }

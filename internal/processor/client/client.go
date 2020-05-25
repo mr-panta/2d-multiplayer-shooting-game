@@ -1,20 +1,20 @@
 package client
 
 import (
+	"errors"
 	"fmt"
 	"time"
-
-	"golang.org/x/image/colornames"
-
-	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/menu"
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/animation"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
+	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/menu"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/world"
+	"github.com/mr-panta/go-logger"
+	"golang.org/x/image/colornames"
 )
 
 type clientProcessor struct {
@@ -24,6 +24,7 @@ type clientProcessor struct {
 	menu         common.Menu
 	world        common.World
 	client       ClientNetwork
+	started      bool
 }
 
 func NewClientProcessor() (processor common.ClientProcessor, err error) {
@@ -77,7 +78,8 @@ func (p *clientProcessor) StartWorld(hostIP, playerName string) (err error) {
 	// Create network
 	p.client = NewClientNetwork(hostIP)
 	if err = p.client.Start(); err != nil {
-		return err
+		logger.Debugf(nil, err.Error())
+		return errors.New("CAN'T CONNECT TO HOST")
 	}
 	// Create world
 	p.world = world.New(p)
@@ -98,7 +100,7 @@ func (p *clientProcessor) startUpdateLoop(restartCount int) {
 		if restartCount != p.restartCount {
 			return
 		}
-		if p.world != nil {
+		if p.started && p.world != nil {
 			p.world.ClientUpdate()
 			p.win.UpdateInput()
 		}
@@ -116,7 +118,7 @@ func (p *clientProcessor) startRenderLoop(restartCount int) {
 		if p.menu != nil {
 			p.menu.UpdateAndRender()
 		}
-		if p.world != nil {
+		if p.started && p.world != nil {
 			p.world.Render()
 		}
 		p.win.Update()

@@ -38,6 +38,7 @@ const (
 
 type player struct {
 	id            string
+	playerName    string
 	weaponID      string
 	world         common.World
 	tickSnapshots []*protocol.TickSnapshot
@@ -210,11 +211,6 @@ func (p *player) ClientUpdate() {
 		// Set weapon
 		ss := p.getLastSnapshot().Player
 		p.weaponID = ss.WeaponID
-		// Set status
-		p.respawnTime = time.Unix(0, ss.RespawnTime)
-		p.hitTime = time.Unix(0, ss.HitTime)
-		p.triggerTime = time.Unix(0, ss.TriggerTime)
-		p.hp = ss.HP
 		// Update position
 		now := ticktime.GetServerTime()
 		moveSpeed := p.moveSpeed
@@ -245,11 +241,6 @@ func (p *player) ClientUpdate() {
 		ss := p.getLerpSnapshot().Player
 		// Set weapon
 		p.weaponID = ss.WeaponID
-		// Set status
-		lastSS := p.getLastSnapshot().Player
-		p.respawnTime = time.Unix(0, lastSS.RespawnTime)
-		p.hitTime = time.Unix(0, lastSS.HitTime)
-		p.triggerTime = time.Unix(0, lastSS.TriggerTime)
 		// Update position
 		p.hp = ss.HP
 		p.pos = ss.Pos.Convert()
@@ -258,6 +249,12 @@ func (p *player) ClientUpdate() {
 		p.moveSpeed = ss.MoveSpeed
 		p.maxMoveSpeed = ss.MaxMoveSpeed
 	}
+	// Set status
+	lastSS := p.getLastSnapshot().Player
+	p.respawnTime = time.Unix(0, lastSS.RespawnTime)
+	p.hitTime = time.Unix(0, lastSS.HitTime)
+	p.triggerTime = time.Unix(0, lastSS.TriggerTime)
+	p.playerName = lastSS.PlayerName
 	// Update weapon
 	if weapon := p.GetWeapon(); weapon != nil {
 		weapon.SetPos(p.GetPivot())
@@ -330,7 +327,7 @@ func (p *player) AddDamage(damage float64) {
 		p.hp = playerInitHP
 		p.respawnTime = ticktime.GetServerTime().Add(playerRespawnTime)
 		p.DropWeapon()
-		p.world.SpawnPlayer(p.id)
+		p.world.SpawnPlayer(p.id, "")
 	}
 }
 
@@ -374,6 +371,10 @@ func (p *player) GetTriggerTime() time.Time {
 func (p *player) IsVisible() bool {
 	now := ticktime.GetServerTime()
 	return now.Sub(p.hitTime) <= playerVisibleTime || now.Sub(p.triggerTime) <= playerVisibleTime
+}
+
+func (p *player) SetPlayerName(name string) {
+	p.playerName = name
 }
 
 func (p *player) getShapeByPos(pos pixel.Vec) pixel.Rect {
@@ -510,6 +511,7 @@ func (p *player) getSnapshotsByTime(t time.Time) *protocol.ObjectSnapshot {
 		ID:   p.id,
 		Type: config.PlayerObject,
 		Player: &protocol.PlayerSnapshot{
+			PlayerName:   ssB.PlayerName,
 			WeaponID:     ssB.WeaponID,
 			CursorDir:    util.ConvertVec(pixel.Lerp(ssA.CursorDir.Convert(), ssA.CursorDir.Convert(), d)),
 			Pos:          util.ConvertVec(pixel.Lerp(ssA.Pos.Convert(), ssB.Pos.Convert(), d)),
@@ -549,6 +551,7 @@ func (p *player) getCurrentSnapshot() *protocol.ObjectSnapshot {
 		ID:   p.id,
 		Type: config.PlayerObject,
 		Player: &protocol.PlayerSnapshot{
+			PlayerName:   p.playerName,
 			WeaponID:     p.weaponID,
 			CursorDir:    util.ConvertVec(p.cursorDir),
 			Pos:          util.ConvertVec(p.pos),

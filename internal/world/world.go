@@ -30,7 +30,6 @@ type world struct {
 	// common
 	objectDB common.ObjectDB
 	// client
-	core          common.Core
 	win           *pixelgl.Window
 	batch         *pixel.Batch
 	currRawInput  *common.RawInput
@@ -48,7 +47,7 @@ type world struct {
 	nextItemTime time.Time
 }
 
-func New(core common.Core) common.World {
+func New(clientProcessor common.ClientProcessor) common.World {
 	world := &world{
 		// common
 		objectDB: common.NewObjectDB(),
@@ -60,10 +59,9 @@ func New(core common.Core) common.World {
 	}
 	// common
 	world.setupBoundaries()
-	if core != nil {
+	if clientProcessor != nil {
 		// client
-		world.core = core
-		world.win = core.GetWindow()
+		world.win = clientProcessor.GetWindow()
 		world.batch = pixel.NewBatch(&pixel.TrianglesData{}, animation.GetObjectSheet())
 		world.hud = entity.NewHud(world)
 		world.scope = entity.NewScope(world)

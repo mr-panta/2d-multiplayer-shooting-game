@@ -8,12 +8,10 @@ import (
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
 )
 
-// Core
+// Menu
 
-type Core interface {
-	Restart()
-	Close()
-	GetWindow() *pixelgl.Window
+type Menu interface {
+	UpdateAndRender()
 }
 
 // World
@@ -21,9 +19,9 @@ type Core interface {
 type World interface {
 	// Common
 	GetObjectDB() ObjectDB
+	GetSize() (width, height int)
 	CheckCollision(id string, prevCollider, nextCollider pixel.Rect) (
 		obj Object, staticAdjust, dynamicAdjust pixel.Vec)
-	GetSize() (width, height int)
 	// Client
 	Render()
 	GetWindow() *pixelgl.Window
@@ -36,7 +34,7 @@ type World interface {
 	GetScope() Scope
 	// Server
 	ServerUpdate(tick int64)
-	SpawnPlayer(playerID string)
+	SpawnPlayer(playerID string, playerName string)
 	GetSnapshot(all bool) (tick int64, snapshot *protocol.WorldSnapshot)
 	SetInputSnapshot(playerID string, snapshot *protocol.InputSnapshot)
 }
@@ -48,6 +46,7 @@ type ClientProcessor interface {
 	Close()
 	GetWindow() *pixelgl.Window
 	Run()
+	StartWorld(hostIP, playerName string) (err error)
 }
 
 type ServerProcessor interface {
@@ -89,6 +88,7 @@ type Player interface {
 	GetTriggerTime() time.Time
 	GetScopeRadius(dist float64) float64
 	IsVisible() bool
+	SetPlayerName(name string)
 }
 
 type Item interface {

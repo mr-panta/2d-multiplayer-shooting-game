@@ -6,8 +6,9 @@ import (
 )
 
 func (p *serverProcessor) processRegisterPlayer(request interface{}) (resp *protocol.RegisterPlayerResponse) {
+	req := request.(*protocol.RegisterPlayerRequest)
 	playerID := p.world.GetObjectDB().GetAvailableID()
-	p.world.SpawnPlayer(playerID)
+	p.world.SpawnPlayer(playerID, req.PlayerName)
 	tick, worldSnapshot := p.world.GetSnapshot(true)
 	return &protocol.RegisterPlayerResponse{
 		PlayerID:      playerID,

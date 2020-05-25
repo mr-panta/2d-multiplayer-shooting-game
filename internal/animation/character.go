@@ -5,6 +5,7 @@ import (
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/imdraw"
+	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
 	"golang.org/x/image/colornames"
 )
 
@@ -69,7 +70,7 @@ func (c *Character) draw(target pixel.Target) {
 	default:
 		return
 	}
-	frame := frames[int((timeMS()/int64(c.FrameTime))%int64(len(frames)))]
+	frame := frames[int((ticktime.GetServerTimeMS()/int64(c.FrameTime))%int64(len(frames)))]
 	sprite := pixel.NewSprite(objectSheet, frame)
 	matrix := pixel.IM.Moved(c.Pos)
 	if c.Right {

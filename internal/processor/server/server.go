@@ -11,7 +11,6 @@ import (
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/world"
 	"github.com/mr-panta/go-logger"
-	"golang.org/x/time/rate"
 )
 
 type serverProcessor struct {
@@ -48,10 +47,9 @@ func (p *serverProcessor) UpdateWorld() {
 }
 
 func (p *serverProcessor) BroadcastSnapshot() {
-	limiter := rate.NewLimiter(rate.Limit(config.ServerSyncRate), 1)
+	ticker := time.NewTicker(time.Second / config.ServerSyncRate)
 	ctx := context.Background()
-	for {
-		_ = limiter.Wait(ctx)
+	for range ticker.C {
 		tick, snapshot := p.world.GetSnapshot(false)
 		req := &protocol.AddWorldSnapshotRequest{
 			Tick:          tick,
@@ -64,10 +62,8 @@ func (p *serverProcessor) BroadcastSnapshot() {
 }
 
 func (p *serverProcessor) CleanWorld() {
-	limiter := rate.NewLimiter(rate.Limit(config.ServerSyncRate), 1)
-	ctx := context.Background()
-	for {
-		_ = limiter.Wait(ctx)
+	ticker := time.NewTicker(time.Second / config.ServerSyncRate)
+	for range ticker.C {
 		p.lastActiveTimeLock.RLock()
 		now := ticktime.GetServerTime()
 		for playerID, lastActiveTime := range p.lastActiveTimeMap {

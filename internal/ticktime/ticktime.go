@@ -53,3 +53,7 @@ func GetPing() time.Duration {
 func IsZeroTime(t time.Time) bool {
 	return t.Before(startTime)
 }
+
+func GetServerTimeMS() int64 {
+	return GetServerTime().UnixNano() / 1000000
+}

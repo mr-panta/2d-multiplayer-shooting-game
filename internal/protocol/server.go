@@ -2,7 +2,9 @@ package protocol
 
 // RegisterPlayer
 
-type RegisterPlayerRequest struct{}
+type RegisterPlayerRequest struct {
+	PlayerName string `json:"player_name,omitempty"`
+}
 
 type RegisterPlayerResponse struct {
 	PlayerID      string         `json:"player_id,omitempty"`

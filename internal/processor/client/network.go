@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/mr-panta/go-logger"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/network"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
+	"github.com/mr-panta/go-logger"
 )
 
 type ClientNetwork interface {
@@ -23,8 +23,8 @@ type clientNetwork struct {
 	client network.Client
 }
 
-func NewClientNetwork() ClientNetwork {
-	client := network.NewClient(config.TCPIP+config.TCPPortA, config.TCPIP+config.TCPPortB)
+func NewClientNetwork(hostIP string) ClientNetwork {
+	client := network.NewClient(hostIP+config.TCPPortA, hostIP+config.TCPPortB)
 	return &clientNetwork{
 		buffer: make(chan *protocol.CmdData),
 		client: client,

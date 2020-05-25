@@ -7,9 +7,14 @@ import (
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
 )
 
-func (c *clientProcessor) registerPlayer() error {
+func (c *clientProcessor) registerPlayer(playerName string) error {
 	now := time.Now()
-	r, err := c.client.Send(protocol.CmdRegisterPlayer, &protocol.RegisterPlayerRequest{})
+	r, err := c.client.Send(
+		protocol.CmdRegisterPlayer,
+		&protocol.RegisterPlayerRequest{
+			PlayerName: playerName,
+		},
+	)
 	ping := time.Since(now)
 	if err != nil {
 		return err

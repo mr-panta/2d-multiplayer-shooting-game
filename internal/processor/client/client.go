@@ -1,9 +1,12 @@
 package client
 
 import (
-	"context"
 	"fmt"
 	"time"
+
+	"golang.org/x/image/colornames"
+
+	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/menu"
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
@@ -12,13 +15,13 @@ import (
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/world"
-	"golang.org/x/time/rate"
 )
 
 type clientProcessor struct {
 	win          *pixelgl.Window
 	restartSig   chan bool
 	restartCount int
+	menu         common.Menu
 	world        common.World
 	client       ClientNetwork
 }
@@ -37,23 +40,12 @@ func NewClientProcessor() (processor common.ClientProcessor, err error) {
 	if p.win, err = pixelgl.NewWindow(winCfg); err != nil {
 		return nil, err
 	}
-	p.win.SetSmooth(true)
-	p.win.SetCursorVisible(false)
 	// Load sprite
 	if err := animation.LoadAllSprite(); err != nil {
 		return nil, err
 	}
-	// Create network
-	p.client = NewClientNetwork()
-	if err = p.client.Start(); err != nil {
-		return nil, err
-	}
-	// Create world
-	p.world = world.New(p)
-	// Register player
-	if err := p.registerPlayer(); err != nil {
-		return nil, err
-	}
+	// Create menu
+	p.menu = menu.New(p)
 	return p, nil
 }
 
@@ -75,40 +67,58 @@ func (p *clientProcessor) Run() {
 		time.Sleep(time.Millisecond * 10)
 		go p.startUpdateLoop(p.restartCount)
 		go p.startRenderLoop(p.restartCount)
-		go p.consumeWorldSnapshot()
-		go p.produceInputSnapshot()
 		if <-p.restartSig {
 			return
 		}
 	}
 }
 
+func (p *clientProcessor) StartWorld(hostIP, playerName string) (err error) {
+	// Create network
+	p.client = NewClientNetwork(hostIP)
+	if err = p.client.Start(); err != nil {
+		return err
+	}
+	// Create world
+	p.world = world.New(p)
+	// Register player
+	if err := p.registerPlayer(playerName); err != nil {
+		return err
+	}
+	p.win.SetSmooth(true)
+	p.win.SetCursorVisible(false)
+	go p.consumeWorldSnapshot()
+	go p.produceInputSnapshot()
+	return nil
+}
+
 func (p *clientProcessor) startUpdateLoop(restartCount int) {
-	ctx := context.Background()
-	limiter := rate.NewLimiter(rate.Limit(config.ClientInputRate), 1)
-	for {
-		_ = limiter.Wait(ctx)
-		if p.win.Closed() {
-			p.Close()
-		}
+	ticker := time.NewTicker(time.Second / config.ClientInputRate)
+	for range ticker.C {
 		if restartCount != p.restartCount {
 			return
 		}
-		p.world.ClientUpdate()
-		p.win.UpdateInput()
+		if p.world != nil {
+			p.world.ClientUpdate()
+			p.win.UpdateInput()
+		}
 	}
 }
 
 func (p *clientProcessor) startRenderLoop(restartCount int) {
 	cfg := config.GetConfig()
-	ctx := context.Background()
-	limiter := rate.NewLimiter(rate.Limit(cfg.RefreshRate), 1)
-	for {
-		_ = limiter.Wait(ctx)
+	ticker := time.NewTicker(time.Second / time.Duration(cfg.RefreshRate))
+	for range ticker.C {
 		if restartCount != p.restartCount {
 			return
 		}
-		p.world.Render()
+		p.win.Clear(colornames.Black)
+		if p.menu != nil {
+			p.menu.UpdateAndRender()
+		}
+		if p.world != nil {
+			p.world.Render()
+		}
 		p.win.Update()
 	}
 }

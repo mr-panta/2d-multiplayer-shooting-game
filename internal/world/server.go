@@ -72,15 +72,15 @@ func (w *world) getFreePos() pixel.Vec {
 
 // Player
 
-func (w *world) SpawnPlayer(playerID string) {
+func (w *world) SpawnPlayer(playerID string, playerName string) {
 	var player common.Player
 	o, exists := w.objectDB.SelectOne(playerID)
 	if exists {
 		player = o.(common.Player)
 	} else {
 		player = entity.NewPlayer(w, playerID)
+		player.SetPlayerName(playerName)
 	}
-	// TODO: change random position
 	player.SetPos(w.getFreePos())
 	w.objectDB.Set(player)
 }

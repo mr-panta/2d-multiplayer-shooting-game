@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	DefaultRefreshRate  = float64(60)
+	DefaultRefreshRate  = 60
 	DefaultWindowWidth  = float64(768)
 	DefaultWindowHeight = float64(512)
 )

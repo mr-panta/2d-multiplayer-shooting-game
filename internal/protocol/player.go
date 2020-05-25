@@ -1,6 +1,7 @@
 package protocol
 
 type PlayerSnapshot struct {
+	PlayerName   string  `json:"player_name,omitempty"`
 	WeaponID     string  `json:"weapon_id,omitempty"`
 	CursorDir    *Vec    `json:"cursor_dir,omitempty"`
 	Pos          *Vec    `json:"pos,omitempty"`

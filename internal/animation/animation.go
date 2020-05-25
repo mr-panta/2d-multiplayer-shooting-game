@@ -5,7 +5,6 @@ import (
 	"image"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/faiface/pixel"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
@@ -27,10 +26,6 @@ func LoadAllSprite() (err error) {
 		return err
 	}
 	return nil
-}
-
-func timeMS() int64 {
-	return time.Now().UnixNano() / 1000000
 }
 
 func loadObjectSprite(assetPath string) error {

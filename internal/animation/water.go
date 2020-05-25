@@ -2,6 +2,7 @@ package animation
 
 import (
 	"github.com/faiface/pixel"
+	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
 )
 
 const (
@@ -55,7 +56,7 @@ func NewWaterSouth() *WaterSouth {
 
 func (w *WaterSouth) Draw(target pixel.Target) {
 	frames := waterSouthSet[w.WaterSouthType%len(waterSouthSet)]
-	index := int(timeMS()/waterFrameMS) % len(frames)
+	index := int(ticktime.GetServerTimeMS()/waterFrameMS) % len(frames)
 	frame := frames[index]
 	x := frame.W() / 2
 	y := frame.H() / 2
@@ -76,7 +77,7 @@ func NewWaterSide() *WaterSide {
 
 func (w *WaterSide) Draw(target pixel.Target) {
 	index := w.WaterSideType
-	index += int(timeMS() / waterFrameMS)
+	index += int(ticktime.GetServerTimeMS() / waterFrameMS)
 	index %= len(waterSideFrames)
 	matrix := pixel.IM
 	if w.Right {
@@ -106,7 +107,7 @@ func (w *WaterCorner) Draw(target pixel.Target) {
 	if w.North {
 		frames = waterNorthCornerFrames
 	}
-	index := int(timeMS()/waterFrameMS) % len(frames)
+	index := int(ticktime.GetServerTimeMS()/waterFrameMS) % len(frames)
 	matrix := pixel.IM
 	if w.Right {
 		matrix = matrix.ScaledXY(pixel.ZV, pixel.V(-1, 1))

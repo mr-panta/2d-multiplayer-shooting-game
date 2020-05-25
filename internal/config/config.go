@@ -5,7 +5,7 @@ import "os"
 type Config struct {
 	WindowWidth  float64
 	WindowHeight float64
-	RefreshRate  float64
+	RefreshRate  int64
 }
 
 var config *Config

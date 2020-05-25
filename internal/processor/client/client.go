@@ -98,7 +98,7 @@ func (p *clientProcessor) StartWorld(hostIP, playerName string) (err error) {
 func (p *clientProcessor) startUpdateLoop(restartCount int) {
 	ticker := time.NewTicker(time.Second / config.ClientInputRate)
 	for range ticker.C {
-		if restartCount != p.restartCount {
+		if p.win.Closed() || restartCount != p.restartCount {
 			return
 		}
 		if p.started && p.world != nil {
@@ -112,7 +112,8 @@ func (p *clientProcessor) startRenderLoop(restartCount int) {
 	cfg := config.GetConfig()
 	ticker := time.NewTicker(time.Second / time.Duration(cfg.RefreshRate))
 	for range ticker.C {
-		if restartCount != p.restartCount {
+		if p.win.Closed() || restartCount != p.restartCount {
+			p.Close()
 			return
 		}
 		p.win.Clear(colornames.Black)

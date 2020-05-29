@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	inputCursorPaddingLeft  = 8
+	inputCursorPaddingLeft  = 4
 	inputValuePaddingBottom = 12
 	inputCursorBlinkTimeMS  = 300
 )

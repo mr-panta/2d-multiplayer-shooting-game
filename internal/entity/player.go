@@ -1,7 +1,6 @@
 package entity
 
 import (
-	"image/color"
 	"sync"
 	"time"
 
@@ -24,7 +23,8 @@ const (
 	playerFrameTime          = 150
 	playerZ                  = 10
 	playerNameZ              = 1000
-	playerDropDiff           = 32
+	playerDropRange          = 64
+	playerDropDiff           = 40
 	playerInitHP             = 100
 	playerRespawnTime        = 3 * time.Second
 	playerHitHeightlightTime = 100 * time.Millisecond
@@ -37,8 +37,6 @@ const (
 	playerMaxPosError        = 100
 	playerNameOffset         = 8
 )
-
-var playerNameColor = color.White
 
 type player struct {
 	id            string
@@ -165,8 +163,13 @@ func (p *player) SetSnapshot(tick int64, snapshot *protocol.ObjectSnapshot) {
 
 func (p *player) ServerUpdate(tick int64) {
 	now := ticktime.GetServerTime()
-	// Check item
+	// Check respawn
+	preRespawnTime := p.respawnTime.Add(-config.LerpPeriod)
+	if now.After(preRespawnTime) && !p.updateTime.After(preRespawnTime) {
+		p.world.SpawnPlayer(p.id, p.playerName)
+	}
 	if p.Exists() {
+		// Check item
 		for _, o := range p.world.GetObjectDB().SelectAll() {
 			if o.GetType() != config.ItemObject || !o.GetShape().Intersects(p.getCollider()) {
 				continue
@@ -176,40 +179,40 @@ func (p *player) ServerUpdate(tick int64) {
 				p.world.GetObjectDB().Delete(item.GetID())
 			}
 		}
-	}
-	// Update weapon
-	if weapon := p.GetWeapon(); weapon != nil {
-		weapon.SetPos(p.GetPivot())
-		weapon.SetDir(p.cursorDir)
-		// Interact weapon
-		if p.isDropping {
-			p.DropWeapon()
-			p.isDropping = false
-		} else if p.isReloading {
-			weapon.Reload()
-			p.isReloading = false
-		} else if p.isTriggering {
-			if weapon.Trigger() {
-				p.triggerTime = now
+		// Update weapon
+		if weapon := p.GetWeapon(); weapon != nil {
+			weapon.SetPos(p.GetPivot())
+			weapon.SetDir(p.cursorDir)
+			// Interact weapon
+			if p.isDropping {
+				p.DropWeapon()
+				p.isDropping = false
+			} else if p.isReloading {
+				weapon.Reload()
+				p.isReloading = false
+			} else if p.isTriggering {
+				if weapon.Trigger() {
+					p.triggerTime = now
+				}
 			}
 		}
-	}
-	// Update position
-	moveSpeed := p.moveSpeed
-	if now.Sub(p.triggerTime) < playerSpeedCooldown {
-		moveSpeed /= 2
-	}
-	pos := p.pos
-	diff := now.Sub(p.updateTime).Seconds()
-	diffDist := p.moveDir.Unit().Scaled(moveSpeed * diff)
-	pos = pos.Add(diffDist)
-	// Check collision
-	_, _, dynamicAdjust := p.world.CheckCollision(p.id, p.getCollider(), p.getColliderByPos(pos))
-	p.pos = pos.Sub(dynamicAdjust)
-	// Update HP
-	if now.Sub(p.hitTime) > playerStartRegenTime {
-		if p.hp += diff * playerRegenRate; p.hp > playerInitHP {
-			p.hp = playerInitHP
+		// Update position
+		moveSpeed := p.moveSpeed
+		if now.Sub(p.triggerTime) < playerSpeedCooldown {
+			moveSpeed /= 2
+		}
+		pos := p.pos
+		diff := now.Sub(p.updateTime).Seconds()
+		diffDist := p.moveDir.Unit().Scaled(moveSpeed * diff)
+		pos = pos.Add(diffDist)
+		// Check collision
+		_, _, dynamicAdjust := p.world.CheckCollision(p.id, p.getCollider(), p.getColliderByPos(pos))
+		p.pos = pos.Sub(dynamicAdjust)
+		// Update HP
+		if now.Sub(p.hitTime) > playerStartRegenTime {
+			if p.hp += diff * playerRegenRate; p.hp > playerInitHP {
+				p.hp = playerInitHP
+			}
 		}
 	}
 	p.updateTime = now
@@ -284,7 +287,7 @@ func (p *player) SetPos(pos pixel.Vec) {
 }
 
 func (p *player) SetInput(input *protocol.InputSnapshot) {
-	if input == nil {
+	if input == nil || !p.Exists() {
 		return
 	}
 	var moveSpeed float64
@@ -345,7 +348,6 @@ func (p *player) AddDamage(firingPlayerID string, weaponID string, damage float6
 		p.hp = playerInitHP
 		p.respawnTime = ticktime.GetServerTime().Add(playerRespawnTime)
 		p.DropWeapon()
-		p.world.SpawnPlayer(p.id, "")
 		if obj, exists := p.world.GetObjectDB().SelectOne(firingPlayerID); exists {
 			firingPlayer := obj.(common.Player)
 			firingPlayer.IncreaseKill()
@@ -378,7 +380,11 @@ func (p *player) DropWeapon() {
 		weapon.SetPlayerID("")
 		itemID := p.world.GetObjectDB().GetAvailableID()
 		item := item.NewItemWeapon(p.world, itemID, weapon.GetID())
-		item.SetPos(p.GetShape().Min.Sub(pixel.V(playerDropDiff, 0)))
+		pos := pixel.V(playerDropRange, 0)
+		pos = pos.Rotated(p.cursorDir.Angle())
+		pos = pos.Add(p.GetPivot())
+		pos = pos.Sub(pixel.V(0, playerDropDiff))
+		item.SetPos(pos)
 		p.world.GetObjectDB().Set(item)
 	}
 }

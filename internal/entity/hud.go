@@ -186,6 +186,9 @@ func (h *Hud) updateScoreboard() {
 		jName := players[j].GetPlayerName()
 		jKill, jDeath, jStreak, jMaxStreak := players[j].GetStats()
 		// compare
+		if iStreak != jStreak {
+			return iStreak > jStreak
+		}
 		if iMaxStreak != jMaxStreak {
 			return iMaxStreak > jMaxStreak
 		}
@@ -194,9 +197,6 @@ func (h *Hud) updateScoreboard() {
 		}
 		if iDeath != jDeath {
 			return iDeath < jDeath
-		}
-		if iStreak != jStreak {
-			return iStreak > jStreak
 		}
 		return iName < jName
 	})
@@ -326,9 +326,9 @@ func (h *Hud) renderScoreboard(target pixel.Target) {
 			-scoreboardPadding-scoreboardMarginTop,
 		))
 		pos = pos.Add(pixel.V(0, -scoreboardLineHeight))
-		animation.DrawShadowTextLeft(target, pos, "#", 1)
+		animation.DrawShadowTextLeft(target, pos, "PLAYER", 1)
 		pos = pos.Add(pixel.V(scoreboardWidth, 0))
-		animation.DrawShadowTextRight(target, pos, "K/D/S", 1)
+		animation.DrawShadowTextRight(target, pos, "STREAK", 1)
 	}
 	for i, player := range players {
 		pos := win.Bounds().Vertices()[1]
@@ -342,9 +342,9 @@ func (h *Hud) renderScoreboard(target pixel.Target) {
 			playerName = playerName[:scoreboardPlayerNameLength] + "..."
 		}
 		animation.DrawShadowTextLeft(target, pos, fmt.Sprintf("%d. %s", i+1, playerName), 1)
-		kill, death, _, streak := player.GetStats()
+		_, _, streak, _ := player.GetStats()
 		pos = pos.Add(pixel.V(scoreboardWidth, 0))
-		animation.DrawShadowTextRight(target, pos, fmt.Sprintf("%d/%d/%d", kill, death, streak), 1)
+		animation.DrawShadowTextRight(target, pos, fmt.Sprint(streak), 1)
 	}
 	if mainPlayerPlace > 0 && mainPlayer != nil {
 		playerLen := len(players)
@@ -359,9 +359,9 @@ func (h *Hud) renderScoreboard(target pixel.Target) {
 			playerName = playerName[:scoreboardPlayerNameLength] + "..."
 		}
 		animation.DrawShadowTextLeft(target, pos, fmt.Sprintf("%d. %s", mainPlayerPlace, playerName), 1)
-		kill, death, _, streak := mainPlayer.GetStats()
+		_, _, streak, _ := mainPlayer.GetStats()
 		pos = pos.Add(pixel.V(scoreboardWidth, 0))
-		animation.DrawShadowTextRight(target, pos, fmt.Sprintf("%d/%d/%d", kill, death, streak), 1)
+		animation.DrawShadowTextRight(target, pos, fmt.Sprint(streak), 1)
 	}
 }
 

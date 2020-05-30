@@ -18,11 +18,11 @@ import (
 
 const (
 	m4Width           = 124
-	m4BulletSpeed     = 750
-	m4MaxRange        = 20000
+	m4BulletSpeed     = 1000
+	m4MaxRange        = 1500
 	m4BulletLength    = 12
-	m4Damage          = 10
-	m4TriggerCooldown = 100 * time.Millisecond
+	m4Damage          = 20
+	m4TriggerCooldown = 200 * time.Millisecond
 	m4ReloadCooldown  = 2 * time.Second
 	m4Ammo            = 60
 	m4Mag             = 30
@@ -245,18 +245,6 @@ func (m *WeaponM4) Reload() bool {
 	return false
 }
 
-func (m *WeaponM4) finishReloading() {
-	if m.mag < m4Mag && m.ammo > 0 {
-		totalAmmo := m.ammo + m.mag
-		if totalAmmo > m4Mag {
-			m.mag = m4Mag
-		} else {
-			m.mag = totalAmmo
-		}
-		m.ammo = totalAmmo - m.mag
-	}
-}
-
 func (m *WeaponM4) SetPlayerID(playerID string) {
 	m.playerID = playerID
 }
@@ -288,6 +276,18 @@ func (m *WeaponM4) GetScopeRadius(dist float64) float64 {
 
 func (m *WeaponM4) GetWeaponType() int {
 	return config.M4Weapon
+}
+
+func (m *WeaponM4) finishReloading() {
+	if m.mag < m4Mag && m.ammo > 0 {
+		totalAmmo := m.ammo + m.mag
+		if totalAmmo > m4Mag {
+			m.mag = m4Mag
+		} else {
+			m.mag = totalAmmo
+		}
+		m.ammo = totalAmmo - m.mag
+	}
 }
 
 func (m *WeaponM4) getLastSnapshot() *protocol.ObjectSnapshot {

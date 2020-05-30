@@ -1,6 +1,8 @@
 package weapon
 
 import (
+	"math"
+	"math/rand"
 	"sync"
 	"time"
 
@@ -19,7 +21,7 @@ import (
 const (
 	m4Width           = 124
 	m4BulletSpeed     = 1000
-	m4MaxRange        = 1500
+	m4MaxRange        = 1000
 	m4BulletLength    = 12
 	m4Damage          = 20
 	m4TriggerCooldown = 200 * time.Millisecond
@@ -28,6 +30,7 @@ const (
 	m4Mag             = 30
 	m4MaxScopeRadius  = 160
 	m4MaxScopeRange   = 600
+	m4RecoilAngle     = math.Pi / 180 * 6
 )
 
 type WeaponM4 struct {
@@ -216,11 +219,13 @@ func (m *WeaponM4) Trigger() (ok bool) {
 	ok = false
 	if !m.isTriggering && m.mag > 0 && !m.isReloading {
 		bullet := NewBullet(m.world, m.world.GetObjectDB().GetAvailableID())
+		recoilAngle := rand.Float64()*m4RecoilAngle - m4RecoilAngle/2
+		dir := m.dir.Rotated(recoilAngle)
 		bullet.Fire(
 			m.playerID,
 			m.id,
 			m.pos.Add(m.dir.Unit().Scaled(m4Width/2)),
-			m.dir,
+			dir,
 			m4BulletSpeed,
 			m4MaxRange,
 			m4Damage,

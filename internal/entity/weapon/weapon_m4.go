@@ -1,6 +1,7 @@
 package weapon
 
 import (
+	"sync"
 	"time"
 
 	"github.com/faiface/pixel"
@@ -9,6 +10,7 @@ import (
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
+	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/sound"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/util"
 	"golang.org/x/image/colornames"
@@ -29,20 +31,22 @@ const (
 )
 
 type WeaponM4 struct {
-	id           string
-	playerID     string
-	world        common.World
-	pos          pixel.Vec
-	dir          pixel.Vec
-	posImd       *imdraw.IMDraw
-	dirImd       *imdraw.IMDraw
-	isDestroyed  bool
-	isTriggering bool
-	isReloading  bool
-	triggerTime  time.Time
-	reloadTime   time.Time
-	mag          int
-	ammo         int
+	id            string
+	playerID      string
+	world         common.World
+	pos           pixel.Vec
+	dir           pixel.Vec
+	posImd        *imdraw.IMDraw
+	dirImd        *imdraw.IMDraw
+	isDestroyed   bool
+	isTriggering  bool
+	isReloading   bool
+	triggerTime   time.Time
+	reloadTime    time.Time
+	mag           int
+	ammo          int
+	tickSnapshots []*protocol.TickSnapshot
+	lock          sync.RWMutex
 }
 
 func NewWeaponM4(world common.World, id string) *WeaponM4 {
@@ -130,9 +134,15 @@ func (m *WeaponM4) renderDir(target pixel.Target, viewPos pixel.Vec) { // For de
 }
 
 func (m *WeaponM4) ServerUpdate(tick int64) {
+	if ticktime.IsZeroTime(m.triggerTime) {
+		m.triggerTime = ticktime.GetServerTime()
+	}
+	if ticktime.IsZeroTime(m.reloadTime) {
+		m.reloadTime = ticktime.GetServerTime()
+	}
 	if m.playerID == "" {
 		m.isReloading = false
-		m.reloadTime = time.Time{}
+		m.reloadTime = ticktime.GetServerStartTime()
 	} else {
 		now := ticktime.GetServerTime()
 		m.isTriggering = now.Sub(m.triggerTime) < m4TriggerCooldown
@@ -145,39 +155,61 @@ func (m *WeaponM4) ServerUpdate(tick int64) {
 }
 
 func (m *WeaponM4) ClientUpdate() {
-	now := ticktime.GetServerTime()
+	var now time.Time
+	var ss *protocol.WeaponM4Snapshot
 	if m.playerID != m.world.GetMainPlayerID() {
+		now = ticktime.GetServerTime()
+		snapshot := m.getLastSnapshot()
+		ss = snapshot.Weapon.M4
+	} else {
 		now = ticktime.GetLerpTime()
+		snapshot := m.getLerpSnapshot()
+		ss = snapshot.Weapon.M4
 	}
+	prevTriggerTime := m.triggerTime
+	prevReloadTime := m.reloadTime
+	m.playerID = ss.PlayerID
+	m.mag = ss.Mag
+	m.ammo = ss.Ammo
+	m.triggerTime = time.Unix(0, ss.TriggerTime)
+	m.reloadTime = time.Unix(0, ss.ReloadTime)
 	m.isTriggering = now.Sub(m.triggerTime) < m4TriggerCooldown
 	m.isReloading = now.Sub(m.reloadTime) < m4ReloadCooldown
+	if mainPlayer := m.world.GetMainPlayer(); mainPlayer != nil {
+		dist := m.world.GetMainPlayer().GetPivot().Sub(m.pos).Len()
+		if !ticktime.IsZeroTime(prevTriggerTime) && prevTriggerTime.Before(m.triggerTime) {
+			sound.PlayWeaponM4Fire(dist)
+		}
+		if !ticktime.IsZeroTime(prevReloadTime) && prevReloadTime.Before(m.reloadTime) {
+			sound.PlayWeaponM4Reload(dist)
+		}
+	}
 }
 
-func (m *WeaponM4) GetSnapshot(tick int64) *protocol.ObjectSnapshot {
-	return &protocol.ObjectSnapshot{
-		ID:   m.GetID(),
-		Type: m.GetType(),
-		Weapon: &protocol.WeaponSnapshot{
-			M4: &protocol.WeaponM4Snapshot{
-				PlayerID:    m.playerID,
-				Mag:         m.mag,
-				Ammo:        m.ammo,
-				TriggerTime: m.triggerTime.UnixNano(),
-				ReloadTime:  m.reloadTime.UnixNano(),
-			},
-		},
+func (m *WeaponM4) GetSnapshot(tick int64) (snapshot *protocol.ObjectSnapshot) {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+	for i := len(m.tickSnapshots) - 1; i >= 0; i-- {
+		ts := m.tickSnapshots[i]
+		if ts.Tick == tick {
+			snapshot = ts.Snapshot
+		} else if ts.Tick < tick {
+			break
+		}
 	}
+	if snapshot == nil {
+		snapshot = m.getCurrentSnapshot()
+	}
+	return snapshot
 }
 
 func (m *WeaponM4) SetSnapshot(tick int64, snapshot *protocol.ObjectSnapshot) {
-	if snapshot != nil && snapshot.Weapon != nil && snapshot.Weapon.M4 != nil {
-		ss := snapshot.Weapon.M4
-		m.playerID = ss.PlayerID
-		m.mag = ss.Mag
-		m.ammo = ss.Ammo
-		m.triggerTime = time.Unix(0, ss.TriggerTime)
-		m.reloadTime = time.Unix(0, ss.ReloadTime)
-	}
+	m.lock.Lock()
+	defer m.lock.Unlock()
+	m.tickSnapshots = append(m.tickSnapshots, &protocol.TickSnapshot{
+		Tick:     tick,
+		Snapshot: snapshot,
+	})
 }
 
 func (m *WeaponM4) Trigger() (ok bool) {
@@ -256,4 +288,56 @@ func (m *WeaponM4) GetScopeRadius(dist float64) float64 {
 
 func (m *WeaponM4) GetWeaponType() int {
 	return config.M4Weapon
+}
+
+func (m *WeaponM4) getLastSnapshot() *protocol.ObjectSnapshot {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+	if len(m.tickSnapshots) > 0 {
+		return m.tickSnapshots[len(m.tickSnapshots)-1].Snapshot
+	}
+	return m.getCurrentSnapshot()
+}
+
+func (m *WeaponM4) getLerpSnapshot() *protocol.ObjectSnapshot {
+	return m.getSnapshotsByTime(ticktime.GetLerpTime())
+}
+
+func (m *WeaponM4) getSnapshotsByTime(t time.Time) *protocol.ObjectSnapshot {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+	_, b, _ := protocol.GetSnapshotByTime(t, m.tickSnapshots)
+	if b == nil {
+		b = m.getCurrentSnapshot()
+	}
+	ssB := b.Weapon.M4
+	return &protocol.ObjectSnapshot{
+		ID:   m.GetID(),
+		Type: m.GetType(),
+		Weapon: &protocol.WeaponSnapshot{
+			M4: &protocol.WeaponM4Snapshot{
+				PlayerID:    ssB.PlayerID,
+				Mag:         ssB.Mag,
+				Ammo:        ssB.Ammo,
+				TriggerTime: ssB.TriggerTime,
+				ReloadTime:  ssB.ReloadTime,
+			},
+		},
+	}
+}
+
+func (m *WeaponM4) getCurrentSnapshot() *protocol.ObjectSnapshot {
+	return &protocol.ObjectSnapshot{
+		ID:   m.GetID(),
+		Type: m.GetType(),
+		Weapon: &protocol.WeaponSnapshot{
+			M4: &protocol.WeaponM4Snapshot{
+				PlayerID:    m.playerID,
+				Mag:         m.mag,
+				Ammo:        m.ammo,
+				TriggerTime: m.triggerTime.UnixNano(),
+				ReloadTime:  m.reloadTime.UnixNano(),
+			},
+		},
+	}
 }

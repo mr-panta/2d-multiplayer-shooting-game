@@ -19,12 +19,13 @@ var (
 const (
 	minNextItemPerd       = 10
 	maxNextItemPerd       = 20
-	worldFieldWidth       = 8
-	worldFieldHeight      = 8
+	worldFieldWidth       = 16
+	worldFieldHeight      = 16
 	worldTreeAmount       = 0
 	worldTerrainAmount    = 16
 	worldMinSpawnDist     = 48
 	worldMinWindowRenderZ = 1000
+	worldBoundarySize     = 200
 )
 
 type world struct {
@@ -128,19 +129,19 @@ func (w *world) getSizeRect() pixel.Rect {
 func (w *world) setupBoundaries() {
 	size := w.getSizeRect()
 	w.objectDB.Set(entity.NewBoundary(w, w.objectDB.GetAvailableID(), pixel.Rect{
-		Min: pixel.V(size.Min.X-200, size.Min.Y-200),
-		Max: pixel.V(size.Max.X+200, size.Min.Y),
+		Min: pixel.V(size.Min.X-worldBoundarySize, size.Min.Y-worldBoundarySize),
+		Max: pixel.V(size.Max.X+worldBoundarySize, size.Min.Y),
 	}))
 	w.objectDB.Set(entity.NewBoundary(w, w.objectDB.GetAvailableID(), pixel.Rect{
-		Min: pixel.V(size.Min.X-200, size.Max.Y),
-		Max: pixel.V(size.Max.X+200, size.Max.Y+200),
+		Min: pixel.V(size.Min.X-worldBoundarySize, size.Max.Y),
+		Max: pixel.V(size.Max.X+worldBoundarySize, size.Max.Y+worldBoundarySize),
 	}))
 	w.objectDB.Set(entity.NewBoundary(w, w.objectDB.GetAvailableID(), pixel.Rect{
-		Min: pixel.V(size.Min.X-200, size.Min.Y-200),
-		Max: pixel.V(size.Min.X, size.Max.Y+200),
+		Min: pixel.V(size.Min.X-worldBoundarySize, size.Min.Y-worldBoundarySize),
+		Max: pixel.V(size.Min.X, size.Max.Y+worldBoundarySize),
 	}))
 	w.objectDB.Set(entity.NewBoundary(w, w.objectDB.GetAvailableID(), pixel.Rect{
-		Min: pixel.V(size.Max.X, size.Min.Y-200),
-		Max: pixel.V(size.Max.X+200, size.Max.Y+200),
+		Min: pixel.V(size.Max.X, size.Min.Y-worldBoundarySize),
+		Max: pixel.V(size.Max.X+worldBoundarySize, size.Max.Y+worldBoundarySize),
 	}))
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/entity/item"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
+	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/sound"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/util"
 )
@@ -55,6 +56,7 @@ type player struct {
 	respawnTime   time.Time
 	hitTime       time.Time
 	triggerTime   time.Time
+	pickupTime    time.Time
 	isDestroyed   bool
 	isMainPlayer  bool
 	isDropping    bool
@@ -163,6 +165,9 @@ func (p *player) SetSnapshot(tick int64, snapshot *protocol.ObjectSnapshot) {
 
 func (p *player) ServerUpdate(tick int64) {
 	now := ticktime.GetServerTime()
+	if ticktime.IsZeroTime(p.pickupTime) {
+		p.pickupTime = ticktime.GetServerTime()
+	}
 	// Check respawn
 	preRespawnTime := p.respawnTime.Add(-config.LerpPeriod)
 	if now.After(preRespawnTime) && !p.updateTime.After(preRespawnTime) {
@@ -176,6 +181,7 @@ func (p *player) ServerUpdate(tick int64) {
 			}
 			item := o.(common.Item)
 			if ok := item.UsedBy(p); ok {
+				p.pickupTime = now
 				p.world.GetObjectDB().Delete(item.GetID())
 			}
 		}
@@ -250,6 +256,13 @@ func (p *player) ClientUpdate() {
 		// Check collision
 		_, _, dynamicAdjust := p.world.CheckCollision(p.id, p.getCollider(), p.getColliderByPos(pos))
 		p.pos = pos.Sub(dynamicAdjust)
+		// Play sound
+		if p.streak < ss.Streak {
+			sound.PlayCommonKill()
+		}
+		if !ticktime.IsZeroTime(p.pickupTime) && !p.pickupTime.Equal(time.Unix(0, ss.PickupTime)) {
+			sound.PlayCommonPickup()
+		}
 		p.updateTime = now
 
 	} else {
@@ -273,6 +286,7 @@ func (p *player) ClientUpdate() {
 	p.respawnTime = time.Unix(0, lastSS.RespawnTime)
 	p.hitTime = time.Unix(0, lastSS.HitTime)
 	p.triggerTime = time.Unix(0, lastSS.TriggerTime)
+	p.pickupTime = time.Unix(0, lastSS.PickupTime)
 	p.playerName = lastSS.PlayerName
 	// Update weapon
 	if weapon := p.GetWeapon(); weapon != nil {
@@ -575,6 +589,7 @@ func (p *player) getSnapshotsByTime(t time.Time) *protocol.ObjectSnapshot {
 			RespawnTime:  ssB.RespawnTime,
 			HitTime:      ssB.HitTime,
 			TriggerTime:  ssB.TriggerTime,
+			PickupTime:   ssB.PickupTime,
 		},
 	}
 }
@@ -619,6 +634,7 @@ func (p *player) getCurrentSnapshot() *protocol.ObjectSnapshot {
 			RespawnTime:  p.respawnTime.UnixNano(),
 			HitTime:      p.hitTime.UnixNano(),
 			TriggerTime:  p.triggerTime.UnixNano(),
+			PickupTime:   p.pickupTime.UnixNano(),
 		},
 	}
 }

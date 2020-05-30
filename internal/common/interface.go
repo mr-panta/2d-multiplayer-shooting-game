@@ -29,6 +29,7 @@ type World interface {
 	ClientUpdate()
 	SetMainPlayerID(playerID string)
 	GetMainPlayerID() string
+	GetMainPlayer() Player
 	SetSnapshot(tick int64, snapshot *protocol.WorldSnapshot)
 	GetInputSnapshot() *protocol.InputSnapshot
 	GetCameraViewPos() pixel.Vec

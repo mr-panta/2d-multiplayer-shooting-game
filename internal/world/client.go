@@ -131,8 +131,8 @@ func (w *world) GetScope() common.Scope {
 }
 
 func (w *world) GetCameraViewPos() pixel.Vec {
-	if w.getMainPlayer() != nil {
-		w.cameraPos = w.getMainPlayer().GetPivot()
+	if w.GetMainPlayer() != nil {
+		w.cameraPos = w.GetMainPlayer().GetPivot()
 	}
 	r := w.win.Bounds()
 	return w.cameraPos.Sub(r.Center())
@@ -179,7 +179,7 @@ func (w *world) updateFPS() {
 // Input
 
 func (w *world) GetInputSnapshot() *protocol.InputSnapshot {
-	player := w.getMainPlayer()
+	player := w.GetMainPlayer()
 	if player == nil {
 		return nil
 	}
@@ -252,7 +252,7 @@ func (w *world) addPlayer(ss *protocol.ObjectSnapshot) common.Player {
 	return player
 }
 
-func (w *world) getMainPlayer() common.Player {
+func (w *world) GetMainPlayer() common.Player {
 	if w.mainPlayerID == "" {
 		return nil
 	}

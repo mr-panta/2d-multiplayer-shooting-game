@@ -3,6 +3,7 @@ module github.com/mr-panta/2d-multiplayer-shooting-game
 go 1.12
 
 require (
+	github.com/faiface/beep v1.0.2
 	github.com/faiface/pixel v0.8.1-0.20200420174812-8012403b8f8a
 	github.com/go-gl/glfw v0.0.0-20200420212212-258d9bec320e // indirect
 	github.com/go-gl/mathgl v0.0.0-20190713194549-592312d8590a // indirect

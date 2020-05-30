@@ -12,6 +12,7 @@ import (
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/menu"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
+	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/sound"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/world"
 	"github.com/mr-panta/go-logger"
 	"golang.org/x/image/colornames"
@@ -42,7 +43,11 @@ func NewClientProcessor() (processor common.ClientProcessor, err error) {
 		return nil, err
 	}
 	// Load sprite
-	if err := animation.LoadAllSprite(); err != nil {
+	if err := animation.LoadAllSprites(); err != nil {
+		return nil, err
+	}
+	// Load sound
+	if err := sound.LoadAllSounds(); err != nil {
 		return nil, err
 	}
 	// Create menu

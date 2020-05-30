@@ -14,7 +14,7 @@ var (
 	objectSheet *pixel.PictureData
 )
 
-func LoadAllSprite() (err error) {
+func LoadAllSprites() (err error) {
 	path := "./"
 	if !config.EnvGorun() {
 		if path, err = filepath.Abs(filepath.Dir(os.Args[0])); err != nil {

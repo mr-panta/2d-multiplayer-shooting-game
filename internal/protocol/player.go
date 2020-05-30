@@ -16,4 +16,5 @@ type PlayerSnapshot struct {
 	RespawnTime  int64   `json:"respawn_time,omitempty"`
 	HitTime      int64   `json:"hit_time,omitempty"`
 	TriggerTime  int64   `json:"trigger_time,omitempty"`
+	PickupTime   int64   `json:"pickup_time,omitempty"`
 }

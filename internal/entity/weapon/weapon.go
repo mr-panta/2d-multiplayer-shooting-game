@@ -56,7 +56,7 @@ func Random(world common.World, id string) common.Weapon {
 			}
 		}
 	}
-	if sniperExists {
+	if !sniperExists {
 		return NewWeaponSniper(world, id)
 	}
 	dropRates := []int{

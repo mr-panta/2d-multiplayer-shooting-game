@@ -21,10 +21,10 @@ import (
 const (
 	m4DropRate        = 15
 	m4Width           = 124
-	m4BulletSpeed     = 1000
+	m4BulletSpeed     = 2000
 	m4MaxRange        = 1000
 	m4BulletLength    = 12
-	m4Damage          = 20
+	m4Damage          = 24
 	m4TriggerCooldown = 200 * time.Millisecond
 	m4ReloadCooldown  = 2 * time.Second
 	m4Ammo            = 60

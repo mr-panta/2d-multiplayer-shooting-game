@@ -22,7 +22,7 @@ const (
 	sniperBulletSpeed     = 4000
 	sniperMaxRange        = 4000
 	sniperBulletLength    = 12
-	sniperDamage          = 80
+	sniperDamage          = 100
 	sniperTriggerCooldown = 2000 * time.Millisecond
 	sniperReloadCooldown  = 3 * time.Second
 	sniperAmmo            = 10

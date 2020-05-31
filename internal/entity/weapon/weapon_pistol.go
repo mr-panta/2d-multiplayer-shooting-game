@@ -21,11 +21,11 @@ import (
 const (
 	pistolDropRate        = 35
 	pistolWidth           = 72
-	pistolBulletSpeed     = 1000
+	pistolBulletSpeed     = 1500
 	pistolMaxRange        = 800
 	pistolBulletLength    = 8
-	pistolDamage          = 10
-	pistolTriggerCooldown = 500 * time.Millisecond
+	pistolDamage          = 15
+	pistolTriggerCooldown = 400 * time.Millisecond
 	pistolReloadCooldown  = 2 * time.Second
 	pistolAmmo            = 40
 	pistolMag             = 20

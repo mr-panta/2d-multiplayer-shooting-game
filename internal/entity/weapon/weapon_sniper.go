@@ -1,8 +1,6 @@
 package weapon
 
 import (
-	"math"
-	"math/rand"
 	"sync"
 	"time"
 
@@ -19,22 +17,21 @@ import (
 )
 
 const (
-	m4DropRate        = 15
-	m4Width           = 124
-	m4BulletSpeed     = 1000
-	m4MaxRange        = 1000
-	m4BulletLength    = 12
-	m4Damage          = 20
-	m4TriggerCooldown = 200 * time.Millisecond
-	m4ReloadCooldown  = 2 * time.Second
-	m4Ammo            = 60
-	m4Mag             = 30
-	m4MaxScopeRadius  = 160
-	m4MaxScopeRange   = 600
-	m4RecoilAngle     = math.Pi / 180 * 6
+	sniperDropRate        = 10
+	sniperWidth           = 196
+	sniperBulletSpeed     = 4000
+	sniperMaxRange        = 4000
+	sniperBulletLength    = 12
+	sniperDamage          = 80
+	sniperTriggerCooldown = 2000 * time.Millisecond
+	sniperReloadCooldown  = 3 * time.Second
+	sniperAmmo            = 10
+	sniperMag             = 5
+	sniperMaxScopeRadius  = 80
+	sniperMaxScopeRange   = 240
 )
 
-type WeaponM4 struct {
+type WeaponSniper struct {
 	id            string
 	playerID      string
 	world         common.World
@@ -53,53 +50,53 @@ type WeaponM4 struct {
 	lock          sync.RWMutex
 }
 
-func NewWeaponM4(world common.World, id string) common.Weapon {
-	return &WeaponM4{
+func NewWeaponSniper(world common.World, id string) common.Weapon {
+	return &WeaponSniper{
 		id:     id,
 		world:  world,
 		pos:    util.GetHighVec(),
 		posImd: imdraw.New(nil),
 		dirImd: imdraw.New(nil),
-		mag:    m4Mag,
+		mag:    sniperMag,
 	}
 }
 
-func (m *WeaponM4) GetID() string {
+func (m *WeaponSniper) GetID() string {
 	return m.id
 }
 
-func (m *WeaponM4) Destroy() {
+func (m *WeaponSniper) Destroy() {
 	m.isDestroyed = true
 }
 
-func (m *WeaponM4) Exists() bool {
+func (m *WeaponSniper) Exists() bool {
 	return !m.isDestroyed
 }
 
-func (m *WeaponM4) SetPos(pos pixel.Vec) {
+func (m *WeaponSniper) SetPos(pos pixel.Vec) {
 	m.pos = pos
 }
 
-func (m *WeaponM4) SetDir(dir pixel.Vec) {
+func (m *WeaponSniper) SetDir(dir pixel.Vec) {
 	m.dir = dir
 }
 
-func (m *WeaponM4) GetShape() pixel.Rect {
-	min := m.pos.Sub(pixel.V(m4Width, m4Width).Scaled(0.5))
-	max := m.pos.Add(pixel.V(m4Width, m4Width).Scaled(0.5))
+func (m *WeaponSniper) GetShape() pixel.Rect {
+	min := m.pos.Sub(pixel.V(sniperWidth, sniperWidth).Scaled(0.5))
+	max := m.pos.Add(pixel.V(sniperWidth, sniperWidth).Scaled(0.5))
 	return pixel.Rect{Min: min, Max: max}
 }
 
-func (m *WeaponM4) GetCollider() (pixel.Rect, bool) {
+func (m *WeaponSniper) GetCollider() (pixel.Rect, bool) {
 	return pixel.ZR, false
 }
 
-func (m *WeaponM4) GetRenderObjects() []common.RenderObject {
+func (m *WeaponSniper) GetRenderObjects() []common.RenderObject {
 	return nil
 }
 
-func (m *WeaponM4) Render(target pixel.Target, viewPos pixel.Vec) {
-	anim := animation.NewWeaponM4()
+func (m *WeaponSniper) Render(target pixel.Target, viewPos pixel.Vec) {
+	anim := animation.NewWeaponSniper()
 	anim.Pos = m.pos.Sub(viewPos)
 	anim.Dir = m.dir
 	if m.isReloading {
@@ -115,11 +112,11 @@ func (m *WeaponM4) Render(target pixel.Target, viewPos pixel.Vec) {
 	}
 }
 
-func (m *WeaponM4) GetType() int {
+func (m *WeaponSniper) GetType() int {
 	return config.WeaponObject
 }
 
-func (m *WeaponM4) renderPos(target pixel.Target, viewPos pixel.Vec) { // For debugging
+func (m *WeaponSniper) renderPos(target pixel.Target, viewPos pixel.Vec) { // For debugging
 	m.posImd.Clear()
 	m.posImd.Color = colornames.Red
 	m.posImd.Push(m.pos)
@@ -128,7 +125,7 @@ func (m *WeaponM4) renderPos(target pixel.Target, viewPos pixel.Vec) { // For de
 	m.posImd.Draw(target)
 }
 
-func (m *WeaponM4) renderDir(target pixel.Target, viewPos pixel.Vec) { // For debugging
+func (m *WeaponSniper) renderDir(target pixel.Target, viewPos pixel.Vec) { // For debugging
 	m.dirImd.Clear()
 	m.dirImd.Color = colornames.Blue
 	m.dirImd.Push(m.pos, m.pos.Add(m.dir.Unit().Scaled(80)))
@@ -137,7 +134,7 @@ func (m *WeaponM4) renderDir(target pixel.Target, viewPos pixel.Vec) { // For de
 	m.dirImd.Draw(target)
 }
 
-func (m *WeaponM4) ServerUpdate(tick int64) {
+func (m *WeaponSniper) ServerUpdate(tick int64) {
 	if ticktime.IsZeroTime(m.triggerTime) {
 		m.triggerTime = ticktime.GetServerTime()
 	}
@@ -149,8 +146,8 @@ func (m *WeaponM4) ServerUpdate(tick int64) {
 		m.reloadTime = ticktime.GetServerStartTime()
 	} else {
 		now := ticktime.GetServerTime()
-		m.isTriggering = now.Sub(m.triggerTime) < m4TriggerCooldown
-		isReloading := now.Sub(m.reloadTime) < m4ReloadCooldown
+		m.isTriggering = now.Sub(m.triggerTime) < sniperTriggerCooldown
+		isReloading := now.Sub(m.reloadTime) < sniperReloadCooldown
 		if !isReloading && m.isReloading {
 			m.finishReloading()
 		}
@@ -161,17 +158,17 @@ func (m *WeaponM4) ServerUpdate(tick int64) {
 	m.cleanTickSnapshots()
 }
 
-func (m *WeaponM4) ClientUpdate() {
+func (m *WeaponSniper) ClientUpdate() {
 	var now time.Time
-	var ss *protocol.WeaponM4Snapshot
+	var ss *protocol.WeaponSniperSnapshot
 	if m.playerID != m.world.GetMainPlayerID() {
 		now = ticktime.GetServerTime()
 		snapshot := m.getLastSnapshot()
-		ss = snapshot.Weapon.M4
+		ss = snapshot.Weapon.Sniper
 	} else {
 		now = ticktime.GetLerpTime()
 		snapshot := m.getLerpSnapshot()
-		ss = snapshot.Weapon.M4
+		ss = snapshot.Weapon.Sniper
 	}
 	prevTriggerTime := m.triggerTime
 	prevReloadTime := m.reloadTime
@@ -180,22 +177,23 @@ func (m *WeaponM4) ClientUpdate() {
 	m.ammo = ss.Ammo
 	m.triggerTime = time.Unix(0, ss.TriggerTime)
 	m.reloadTime = time.Unix(0, ss.ReloadTime)
-	m.isTriggering = now.Sub(m.triggerTime) < m4TriggerCooldown
-	m.isReloading = now.Sub(m.reloadTime) < m4ReloadCooldown
+	m.isTriggering = now.Sub(m.triggerTime) < sniperTriggerCooldown
+	m.isReloading = now.Sub(m.reloadTime) < sniperReloadCooldown
 	if mainPlayer := m.world.GetMainPlayer(); mainPlayer != nil {
 		dist := m.world.GetMainPlayer().GetPivot().Sub(m.pos).Len()
 		if !ticktime.IsZeroTime(prevTriggerTime) && prevTriggerTime.Before(m.triggerTime) {
-			sound.PlayWeaponM4Fire(dist)
+			sound.PlayWeaponSniperFire(dist)
 		}
 		if !ticktime.IsZeroTime(prevReloadTime) && prevReloadTime.Before(m.reloadTime) {
-			sound.PlayWeaponM4Reload(dist)
+			sound.PlayWeaponSniperReload(dist)
 		}
 	}
+
 	// Clean snapshot
 	m.cleanTickSnapshots()
 }
 
-func (m *WeaponM4) GetSnapshot(tick int64) (snapshot *protocol.ObjectSnapshot) {
+func (m *WeaponSniper) GetSnapshot(tick int64) (snapshot *protocol.ObjectSnapshot) {
 	m.lock.RLock()
 	defer m.lock.RUnlock()
 	for i := len(m.tickSnapshots) - 1; i >= 0; i-- {
@@ -212,7 +210,7 @@ func (m *WeaponM4) GetSnapshot(tick int64) (snapshot *protocol.ObjectSnapshot) {
 	return snapshot
 }
 
-func (m *WeaponM4) SetSnapshot(tick int64, snapshot *protocol.ObjectSnapshot) {
+func (m *WeaponSniper) SetSnapshot(tick int64, snapshot *protocol.ObjectSnapshot) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 	m.tickSnapshots = append(m.tickSnapshots, &protocol.TickSnapshot{
@@ -221,21 +219,19 @@ func (m *WeaponM4) SetSnapshot(tick int64, snapshot *protocol.ObjectSnapshot) {
 	})
 }
 
-func (m *WeaponM4) Trigger() (ok bool) {
+func (m *WeaponSniper) Trigger() (ok bool) {
 	ok = false
 	if !m.isTriggering && m.mag > 0 && !m.isReloading {
 		bullet := NewBullet(m.world, m.world.GetObjectDB().GetAvailableID())
-		recoilAngle := rand.Float64()*m4RecoilAngle - m4RecoilAngle/2
-		dir := m.dir.Rotated(recoilAngle)
 		bullet.Fire(
 			m.playerID,
 			m.id,
-			m.pos.Add(m.dir.Unit().Scaled(m4Width/2)),
-			dir,
-			m4BulletSpeed,
-			m4MaxRange,
-			m4Damage,
-			m4BulletLength,
+			m.pos.Add(m.dir.Unit().Scaled(sniperWidth/2)),
+			m.dir,
+			sniperBulletSpeed,
+			sniperMaxRange,
+			sniperDamage,
+			sniperBulletLength,
 		)
 		m.world.GetObjectDB().Set(bullet)
 		m.triggerTime = ticktime.GetServerTime()
@@ -248,52 +244,52 @@ func (m *WeaponM4) Trigger() (ok bool) {
 	return ok
 }
 
-func (m *WeaponM4) Reload() bool {
-	if !m.isReloading && m.mag < m4Mag && m.ammo > 0 {
+func (m *WeaponSniper) Reload() bool {
+	if !m.isReloading && m.mag < sniperMag && m.ammo > 0 {
 		m.reloadTime = ticktime.GetServerTime()
 		return true
 	}
 	return false
 }
 
-func (m *WeaponM4) SetPlayerID(playerID string) {
+func (m *WeaponSniper) SetPlayerID(playerID string) {
 	m.playerID = playerID
 }
 
-func (m *WeaponM4) AddAmmo(ammo int) bool {
-	if m.ammo >= m4Ammo {
+func (m *WeaponSniper) AddAmmo(ammo int) bool {
+	if m.ammo >= sniperAmmo {
 		return false
 	}
 	if ammo == -1 {
-		ammo = m4Ammo
+		ammo = sniperAmmo
 	} else if ammo == -2 {
-		ammo = m4Mag
+		ammo = sniperMag
 	}
-	if m.ammo += ammo; m.ammo > m4Ammo {
-		m.ammo = m4Ammo
+	if m.ammo += ammo; m.ammo > sniperAmmo {
+		m.ammo = sniperAmmo
 	}
 	return true
 }
-func (m *WeaponM4) GetAmmo() (mag, ammo int) {
+func (m *WeaponSniper) GetAmmo() (mag, ammo int) {
 	return m.mag, m.ammo
 }
 
-func (m *WeaponM4) GetScopeRadius(dist float64) float64 {
-	if dist > m4MaxScopeRange {
-		return 0
+func (m *WeaponSniper) GetScopeRadius(dist float64) float64 {
+	if dist > sniperMaxScopeRange {
+		return sniperMaxScopeRadius
 	}
-	return m4MaxScopeRadius * (1.0 - (dist / m4MaxScopeRange))
+	return sniperMaxScopeRadius * (dist / sniperMaxScopeRange)
 }
 
-func (m *WeaponM4) GetWeaponType() int {
-	return config.M4Weapon
+func (m *WeaponSniper) GetWeaponType() int {
+	return config.SniperWeapon
 }
 
-func (m *WeaponM4) finishReloading() {
-	if m.mag < m4Mag && m.ammo > 0 {
+func (m *WeaponSniper) finishReloading() {
+	if m.mag < sniperMag && m.ammo > 0 {
 		totalAmmo := m.ammo + m.mag
-		if totalAmmo > m4Mag {
-			m.mag = m4Mag
+		if totalAmmo > sniperMag {
+			m.mag = sniperMag
 		} else {
 			m.mag = totalAmmo
 		}
@@ -301,7 +297,7 @@ func (m *WeaponM4) finishReloading() {
 	}
 }
 
-func (m *WeaponM4) getLastSnapshot() *protocol.ObjectSnapshot {
+func (m *WeaponSniper) getLastSnapshot() *protocol.ObjectSnapshot {
 	m.lock.RLock()
 	defer m.lock.RUnlock()
 	if len(m.tickSnapshots) > 0 {
@@ -310,23 +306,23 @@ func (m *WeaponM4) getLastSnapshot() *protocol.ObjectSnapshot {
 	return m.getCurrentSnapshot()
 }
 
-func (m *WeaponM4) getLerpSnapshot() *protocol.ObjectSnapshot {
+func (m *WeaponSniper) getLerpSnapshot() *protocol.ObjectSnapshot {
 	return m.getSnapshotsByTime(ticktime.GetLerpTime())
 }
 
-func (m *WeaponM4) getSnapshotsByTime(t time.Time) *protocol.ObjectSnapshot {
+func (m *WeaponSniper) getSnapshotsByTime(t time.Time) *protocol.ObjectSnapshot {
 	m.lock.RLock()
 	defer m.lock.RUnlock()
 	_, b, _ := protocol.GetSnapshotByTime(t, m.tickSnapshots)
 	if b == nil {
 		b = m.getCurrentSnapshot()
 	}
-	ssB := b.Weapon.M4
+	ssB := b.Weapon.Sniper
 	return &protocol.ObjectSnapshot{
 		ID:   m.GetID(),
 		Type: m.GetType(),
 		Weapon: &protocol.WeaponSnapshot{
-			M4: &protocol.WeaponM4Snapshot{
+			Sniper: &protocol.WeaponSniperSnapshot{
 				PlayerID:    ssB.PlayerID,
 				Mag:         ssB.Mag,
 				Ammo:        ssB.Ammo,
@@ -337,12 +333,12 @@ func (m *WeaponM4) getSnapshotsByTime(t time.Time) *protocol.ObjectSnapshot {
 	}
 }
 
-func (m *WeaponM4) getCurrentSnapshot() *protocol.ObjectSnapshot {
+func (m *WeaponSniper) getCurrentSnapshot() *protocol.ObjectSnapshot {
 	return &protocol.ObjectSnapshot{
 		ID:   m.GetID(),
 		Type: m.GetType(),
 		Weapon: &protocol.WeaponSnapshot{
-			M4: &protocol.WeaponM4Snapshot{
+			Sniper: &protocol.WeaponSniperSnapshot{
 				PlayerID:    m.playerID,
 				Mag:         m.mag,
 				Ammo:        m.ammo,
@@ -353,7 +349,7 @@ func (m *WeaponM4) getCurrentSnapshot() *protocol.ObjectSnapshot {
 	}
 }
 
-func (m *WeaponM4) cleanTickSnapshots() {
+func (m *WeaponSniper) cleanTickSnapshots() {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 	if len(m.tickSnapshots) <= 1 {

@@ -107,7 +107,6 @@ func (w *world) spawnItem() (nextItemTime time.Time) {
 		w.spawnAmmoItem,
 		w.spawnAmmoSMItem,
 	}
-	// i := int(rand.Uint32()) % len(spawnItemFnList)
 	for _, fn := range spawnItemFnList {
 		item := fn()
 		item.SetPos(w.getFreePos())
@@ -121,7 +120,7 @@ func (w *world) spawnItem() (nextItemTime time.Time) {
 
 func (w *world) spawnWeaponItem() common.Item {
 	weaponID := w.objectDB.GetAvailableID()
-	weapon := weapon.NewWeaponM4(w, weaponID)
+	weapon := weapon.Random(w, weaponID)
 	w.objectDB.Set(weapon)
 	logger.Debugf(nil, "spawn_weapon:%s", weaponID)
 	itemID := w.objectDB.GetAvailableID()

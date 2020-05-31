@@ -18,10 +18,46 @@ type BulletSnapshot struct {
 // Weapon
 
 type WeaponSnapshot struct {
-	M4 *WeaponM4Snapshot `json:"m4,omitempty"`
+	M4      *WeaponM4Snapshot      `json:"m4,omitempty"`
+	Shotgun *WeaponShotgunSnapshot `json:"shotgun,omitempty"`
+	Sniper  *WeaponSniperSnapshot  `json:"sniper,omitempty"`
+	Pistol  *WeaponPistolSnapshot  `json:"pistol,omitempty"`
+	SMG     *WeaponSMGSnapshot     `json:"smg,omitempty"`
 }
 
 type WeaponM4Snapshot struct {
+	PlayerID    string `json:"player_id,omitempty"`
+	Mag         int    `json:"mag,omitempty"`
+	Ammo        int    `json:"ammo,omitempty"`
+	TriggerTime int64  `json:"trigger_time,omitempty"`
+	ReloadTime  int64  `json:"reload_time,omitempty"`
+}
+
+type WeaponShotgunSnapshot struct {
+	PlayerID    string `json:"player_id,omitempty"`
+	Mag         int    `json:"mag,omitempty"`
+	Ammo        int    `json:"ammo,omitempty"`
+	TriggerTime int64  `json:"trigger_time,omitempty"`
+	ReloadTime  int64  `json:"reload_time,omitempty"`
+}
+
+type WeaponSniperSnapshot struct {
+	PlayerID    string `json:"player_id,omitempty"`
+	Mag         int    `json:"mag,omitempty"`
+	Ammo        int    `json:"ammo,omitempty"`
+	TriggerTime int64  `json:"trigger_time,omitempty"`
+	ReloadTime  int64  `json:"reload_time,omitempty"`
+}
+
+type WeaponPistolSnapshot struct {
+	PlayerID    string `json:"player_id,omitempty"`
+	Mag         int    `json:"mag,omitempty"`
+	Ammo        int    `json:"ammo,omitempty"`
+	TriggerTime int64  `json:"trigger_time,omitempty"`
+	ReloadTime  int64  `json:"reload_time,omitempty"`
+}
+
+type WeaponSMGSnapshot struct {
 	PlayerID    string `json:"player_id,omitempty"`
 	Mag         int    `json:"mag,omitempty"`
 	Ammo        int    `json:"ammo,omitempty"`

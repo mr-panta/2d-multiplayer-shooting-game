@@ -71,7 +71,11 @@ const (
 
 // weapon type
 const (
-	M4Weapon = 1
+	M4Weapon      = 1
+	ShotgunWeapon = 2
+	SniperWeapon  = 3
+	PistolWeapon  = 4
+	SMGWeapon     = 5
 )
 
 // tree type

@@ -41,15 +41,6 @@ func loadCommonKillSound(assetPath string) (err error) {
 	return nil
 }
 
-func PlayCommonKill() {
-	streamer := commonKillBuffer.Streamer(0, commonKillBuffer.Len())
-	speaker.Play(&effects.Volume{
-		Streamer: streamer,
-		Base:     2,
-		Volume:   2,
-	})
-}
-
 func loadCommonPickupSound(assetPath string) (err error) {
 	file, err := os.Open(assetPath + "/common/pickup.mp3")
 	if err != nil {
@@ -66,11 +57,20 @@ func loadCommonPickupSound(assetPath string) (err error) {
 	return nil
 }
 
+func PlayCommonKill() {
+	streamer := commonKillBuffer.Streamer(0, commonKillBuffer.Len())
+	speaker.Play(&effects.Volume{
+		Streamer: streamer,
+		Base:     2,
+		Volume:   0,
+	})
+}
+
 func PlayCommonPickup() {
 	streamer := commonPickupBuffer.Streamer(0, commonPickupBuffer.Len())
 	speaker.Play(&effects.Volume{
 		Streamer: streamer,
 		Base:     2,
-		Volume:   2,
+		Volume:   -1,
 	})
 }

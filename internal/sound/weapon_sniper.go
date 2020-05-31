@@ -63,7 +63,7 @@ func PlayWeaponSniperFire(dist float64) {
 	speaker.Play(&effects.Volume{
 		Streamer: streamer,
 		Base:     2,
-		Volume:   1 - dist*k,
+		Volume:   -dist * k,
 	})
 }
 
@@ -73,6 +73,6 @@ func PlayWeaponSniperReload(dist float64) {
 	speaker.Play(&effects.Volume{
 		Streamer: streamer,
 		Base:     2,
-		Volume:   dist * k,
+		Volume:   -dist * k,
 	})
 }

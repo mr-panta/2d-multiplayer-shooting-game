@@ -102,9 +102,9 @@ func (m *WeaponM4) Render(target pixel.Target, viewPos pixel.Vec) {
 	anim.Pos = m.pos.Sub(viewPos)
 	anim.Dir = m.dir
 	if m.isReloading {
-		anim.State = animation.WeaponM4ReloadState
+		anim.State = animation.WeaponReloadState
 	} else {
-		anim.State = animation.WeaponM4IdleState
+		anim.State = animation.WeaponIdleState
 	}
 	anim.Draw(target)
 	// debug

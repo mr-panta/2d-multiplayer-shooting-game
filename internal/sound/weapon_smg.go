@@ -11,22 +11,22 @@ import (
 
 // buffer
 var (
-	weaponM4FireBuffer   *beep.Buffer
-	weaponM4ReloadBuffer *beep.Buffer
+	weaponSMGFireBuffer   *beep.Buffer
+	weaponSMGReloadBuffer *beep.Buffer
 )
 
-func loadWeaponM4Sounds(assetPath string) (err error) {
-	if err = loadWeaponM4FireSound(assetPath); err != nil {
+func loadWeaponSMGSounds(assetPath string) (err error) {
+	if err = loadWeaponSMGFireSound(assetPath); err != nil {
 		return err
 	}
-	if err = loadWeaponM4ReloadSound(assetPath); err != nil {
+	if err = loadWeaponSMGReloadSound(assetPath); err != nil {
 		return err
 	}
 	return nil
 }
 
-func loadWeaponM4FireSound(assetPath string) (err error) {
-	file, err := os.Open(assetPath + "/weapon_m4/fire.mp3")
+func loadWeaponSMGFireSound(assetPath string) (err error) {
+	file, err := os.Open(assetPath + "/weapon_smg/fire.mp3")
 	if err != nil {
 		return err
 	}
@@ -36,13 +36,13 @@ func loadWeaponM4FireSound(assetPath string) (err error) {
 	}
 	defer streamer.Close()
 	resampled := beep.Resample(4, format.SampleRate, sampleRate, streamer)
-	weaponM4FireBuffer = beep.NewBuffer(format)
-	weaponM4FireBuffer.Append(resampled)
+	weaponSMGFireBuffer = beep.NewBuffer(format)
+	weaponSMGFireBuffer.Append(resampled)
 	return nil
 }
 
-func loadWeaponM4ReloadSound(assetPath string) (err error) {
-	file, err := os.Open(assetPath + "/weapon_m4/reload.mp3")
+func loadWeaponSMGReloadSound(assetPath string) (err error) {
+	file, err := os.Open(assetPath + "/weapon_smg/reload.mp3")
 	if err != nil {
 		return err
 	}
@@ -52,14 +52,14 @@ func loadWeaponM4ReloadSound(assetPath string) (err error) {
 	}
 	defer streamer.Close()
 	resampled := beep.Resample(4, format.SampleRate, sampleRate, streamer)
-	weaponM4ReloadBuffer = beep.NewBuffer(format)
-	weaponM4ReloadBuffer.Append(resampled)
+	weaponSMGReloadBuffer = beep.NewBuffer(format)
+	weaponSMGReloadBuffer.Append(resampled)
 	return nil
 }
 
-func PlayWeaponM4Fire(dist float64) {
+func PlayWeaponSMGFire(dist float64) {
 	k := 1.0 / 500.0
-	streamer := weaponM4FireBuffer.Streamer(0, weaponM4FireBuffer.Len())
+	streamer := weaponSMGFireBuffer.Streamer(0, weaponSMGFireBuffer.Len())
 	speaker.Play(&effects.Volume{
 		Streamer: streamer,
 		Base:     2,
@@ -67,9 +67,9 @@ func PlayWeaponM4Fire(dist float64) {
 	})
 }
 
-func PlayWeaponM4Reload(dist float64) {
+func PlayWeaponSMGReload(dist float64) {
 	k := 1.0 / 100.0
-	streamer := weaponM4ReloadBuffer.Streamer(0, weaponM4ReloadBuffer.Len())
+	streamer := weaponSMGReloadBuffer.Streamer(0, weaponSMGReloadBuffer.Len())
 	speaker.Play(&effects.Volume{
 		Streamer: streamer,
 		Base:     2,

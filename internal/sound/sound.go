@@ -11,9 +11,9 @@ import (
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
 )
 
-var (
-	sampleRate = beep.SampleRate(44100)
-)
+var sampleRate = beep.SampleRate(44100)
+
+type loadSoundFunc func(assetPath string) error
 
 func LoadAllSounds() (err error) {
 	err = speaker.Init(sampleRate, sampleRate.N(time.Second/20))
@@ -27,11 +27,18 @@ func LoadAllSounds() (err error) {
 		}
 	}
 	assetPath := fmt.Sprintf("%s/asset/sound", path)
-	if err = loadCommonSounds(assetPath); err != nil {
-		return err
+	fnList := []loadSoundFunc{
+		loadCommonSounds,
+		loadWeaponM4Sounds,
+		loadWeaponShotgunSounds,
+		loadWeaponSniperSounds,
+		loadWeaponSMGSounds,
+		loadWeaponPistolSounds,
 	}
-	if err = loadWeaponM4Sounds(assetPath); err != nil {
-		return err
+	for _, fn := range fnList {
+		if err = fn(assetPath); err != nil {
+			return err
+		}
 	}
 	return nil
 }

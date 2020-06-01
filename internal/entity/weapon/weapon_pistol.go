@@ -19,9 +19,9 @@ import (
 )
 
 const (
-	pistolDropRate        = 35
+	pistolDropRate        = 40
 	pistolWidth           = 72
-	pistolBulletSpeed     = 1500
+	pistolBulletSpeed     = 2000
 	pistolMaxRange        = 800
 	pistolBulletLength    = 8
 	pistolDamage          = 15
@@ -31,7 +31,7 @@ const (
 	pistolMag             = 20
 	pistolMaxScopeRadius  = 140
 	pistolMaxScopeRange   = 400
-	pistolRecoilAngle     = math.Pi / 180 * 12
+	pistolRecoilAngle     = math.Pi / 180 * 4
 )
 
 type WeaponPistol struct {
@@ -102,8 +102,12 @@ func (m *WeaponPistol) Render(target pixel.Target, viewPos pixel.Vec) {
 	anim := animation.NewWeaponPistol()
 	anim.Pos = m.pos.Sub(viewPos)
 	anim.Dir = m.dir
+	anim.TriggerTime = m.triggerTime
+	anim.TriggerCooldown = pistolTriggerCooldown
 	if m.isReloading {
 		anim.State = animation.WeaponReloadState
+	} else if m.isTriggering {
+		anim.State = animation.WeaponTriggerState
 	} else {
 		anim.State = animation.WeaponIdleState
 	}

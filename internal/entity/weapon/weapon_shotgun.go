@@ -103,8 +103,12 @@ func (m *WeaponShotgun) Render(target pixel.Target, viewPos pixel.Vec) {
 	anim := animation.NewWeaponShotgun()
 	anim.Pos = m.pos.Sub(viewPos)
 	anim.Dir = m.dir
+	anim.TriggerTime = m.triggerTime
+	anim.TriggerCooldown = shotgunTriggerCooldown
 	if m.isReloading {
 		anim.State = animation.WeaponReloadState
+	} else if m.isTriggering {
+		anim.State = animation.WeaponTriggerState
 	} else {
 		anim.State = animation.WeaponIdleState
 	}

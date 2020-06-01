@@ -33,7 +33,7 @@ const (
 	playerMaxScopeRadius     = 240
 	playerMaxScopeRange      = 400
 	playerStartRegenTime     = 3 * time.Second
-	playerRegenRate          = 1
+	playerRegenRate          = 5
 	playerSpeedCooldown      = 300 * time.Millisecond
 	playerMaxPosError        = 100
 	playerNameOffset         = 8

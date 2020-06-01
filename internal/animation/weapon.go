@@ -3,10 +3,12 @@ package animation
 import (
 	"image/color"
 	"math"
+	"time"
 
 	_ "image/png"
 
 	"github.com/faiface/pixel"
+	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
 )
 
 var (
@@ -28,9 +30,13 @@ var (
 )
 
 const (
+	// Recoil
+	recoilAngle   = 6
+	recoilPosDiff = 6
 	// state
-	WeaponIdleState   = 0
-	WeaponReloadState = 1
+	WeaponIdleState    = 0
+	WeaponReloadState  = 1
+	WeaponTriggerState = 2
 )
 
 func NewWeaponM4() *Weapon {
@@ -69,24 +75,34 @@ func NewWeaponSMG() *Weapon {
 }
 
 type Weapon struct {
-	frame  pixel.Rect
-	offset pixel.Vec
-	Pos    pixel.Vec
-	Dir    pixel.Vec
-	Color  color.Color
-	State  int
+	frame           pixel.Rect
+	offset          pixel.Vec
+	Pos             pixel.Vec
+	Dir             pixel.Vec
+	Color           color.Color
+	TriggerTime     time.Time
+	TriggerCooldown time.Duration
+	State           int
 }
 
 func (m *Weapon) Draw(target pixel.Target) {
+	now := ticktime.GetServerTime()
 	sprite := pixel.NewSprite(objectSheet, m.frame)
 	var dir pixel.Vec
+	var posDiff pixel.Vec
+	var angleDiff float64
 	switch m.State {
 	case WeaponIdleState:
 		dir = m.Dir
 	case WeaponReloadState:
 		dir = pixel.V(m.Dir.X, -math.Abs(m.Dir.X))
+	case WeaponTriggerState:
+		fac := 1.0 - (float64(now.Sub(m.TriggerTime)) / float64(m.TriggerCooldown))
+		posDiff = pixel.V(recoilPosDiff*fac, 0)
+		angleDiff = -math.Pi / 180 * (recoilAngle * fac)
+		dir = m.Dir
 	}
-	matrix := pixel.IM.Moved(m.offset)
+	matrix := pixel.IM.Moved(m.offset.Add(posDiff)).Rotated(pixel.ZV, angleDiff)
 	if m.Dir.X > 0 {
 		matrix = matrix.ScaledXY(pixel.ZV, pixel.V(-1, 1))
 		matrix = matrix.Rotated(pixel.ZV, dir.Angle())

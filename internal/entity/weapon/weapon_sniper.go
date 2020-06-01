@@ -17,7 +17,6 @@ import (
 )
 
 const (
-	sniperDropRate        = 10
 	sniperWidth           = 196
 	sniperBulletSpeed     = 4000
 	sniperMaxRange        = 4000
@@ -99,8 +98,12 @@ func (m *WeaponSniper) Render(target pixel.Target, viewPos pixel.Vec) {
 	anim := animation.NewWeaponSniper()
 	anim.Pos = m.pos.Sub(viewPos)
 	anim.Dir = m.dir
+	anim.TriggerTime = m.triggerTime
+	anim.TriggerCooldown = sniperTriggerCooldown
 	if m.isReloading {
 		anim.State = animation.WeaponReloadState
+	} else if m.isTriggering {
+		anim.State = animation.WeaponTriggerState
 	} else {
 		anim.State = animation.WeaponIdleState
 	}
@@ -188,7 +191,6 @@ func (m *WeaponSniper) ClientUpdate() {
 			sound.PlayWeaponSniperReload(dist)
 		}
 	}
-
 	// Clean snapshot
 	m.cleanTickSnapshots()
 }

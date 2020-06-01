@@ -96,4 +96,4 @@ var TreeTypes = []string{
 }
 
 // terrain
-const TerrainTypeAmount = 4
+const TerrainTypeAmount = 5

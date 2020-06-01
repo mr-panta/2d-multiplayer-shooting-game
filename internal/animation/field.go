@@ -11,6 +11,7 @@ var (
 		pixel.R(1*96, 0, 2*96, 96).Moved(fieldFrameOffset),
 		pixel.R(2*96, 0, 3*96, 96).Moved(fieldFrameOffset),
 		pixel.R(3*96, 0, 4*96, 96).Moved(fieldFrameOffset),
+		pixel.R(4*96, 0, 5*96, 96).Moved(fieldFrameOffset),
 	}
 )
 

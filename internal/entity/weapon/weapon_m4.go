@@ -19,13 +19,13 @@ import (
 )
 
 const (
-	m4DropRate        = 15
+	m4DropRate        = 150
 	m4Width           = 124
 	m4BulletSpeed     = 2000
 	m4MaxRange        = 1000
 	m4BulletLength    = 12
-	m4Damage          = 24
-	m4TriggerCooldown = 200 * time.Millisecond
+	m4Damage          = 18
+	m4TriggerCooldown = 150 * time.Millisecond
 	m4ReloadCooldown  = 2 * time.Second
 	m4Ammo            = 60
 	m4Mag             = 30
@@ -102,8 +102,12 @@ func (m *WeaponM4) Render(target pixel.Target, viewPos pixel.Vec) {
 	anim := animation.NewWeaponM4()
 	anim.Pos = m.pos.Sub(viewPos)
 	anim.Dir = m.dir
+	anim.TriggerTime = m.triggerTime
+	anim.TriggerCooldown = m4TriggerCooldown
 	if m.isReloading {
 		anim.State = animation.WeaponReloadState
+	} else if m.isTriggering {
+		anim.State = animation.WeaponTriggerState
 	} else {
 		anim.State = animation.WeaponIdleState
 	}

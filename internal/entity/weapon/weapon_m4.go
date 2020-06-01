@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	m4DropRate        = 150
+	m4DropRate        = 15
 	m4Width           = 124
 	m4BulletSpeed     = 2000
 	m4MaxRange        = 1000

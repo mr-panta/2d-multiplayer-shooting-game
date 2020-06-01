@@ -41,14 +41,18 @@ const (
 
 // key
 const (
-	FireKey   = pixelgl.MouseButton1
-	FocusKey  = pixelgl.MouseButton2
-	UpKey     = pixelgl.KeyW
-	LeftKey   = pixelgl.KeyA
-	DownKey   = pixelgl.KeyS
-	RightKey  = pixelgl.KeyD
-	ReloadKey = pixelgl.KeyR
-	DropKey   = pixelgl.KeyG
+	FireKey          = pixelgl.MouseButton1
+	FocusKey         = pixelgl.MouseButton2
+	UpKey            = pixelgl.KeyW
+	LeftKey          = pixelgl.KeyA
+	DownKey          = pixelgl.KeyS
+	RightKey         = pixelgl.KeyD
+	ReloadKey        = pixelgl.KeyR
+	DropKey          = pixelgl.KeyG
+	ToggleMuteKey    = pixelgl.KeyM
+	VolumeUpKey      = pixelgl.KeyUp
+	VolumeDownKey    = pixelgl.KeyDown
+	ToggleFullScreen = pixelgl.KeyF10
 )
 
 // color

@@ -13,6 +13,7 @@ import (
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/entity/item"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/entity/weapon"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
+	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/sound"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/util"
 )
@@ -25,6 +26,7 @@ func (w *world) GetWindow() *pixelgl.Window {
 
 func (w *world) ClientUpdate() {
 	w.updateRawInput()
+	w.updateSetting()
 	for _, o := range w.objectDB.SelectAll() {
 		o.ClientUpdate()
 	}
@@ -203,15 +205,19 @@ func (w *world) GetInputSnapshot() *protocol.InputSnapshot {
 
 func (w *world) getRawInput() *common.RawInput {
 	return &common.RawInput{
-		MousePos:         w.win.MousePosition(),
-		PressedFireKey:   w.win.Pressed(config.FireKey),
-		PressedFocusKey:  w.win.Pressed(config.FocusKey),
-		PressedUpKey:     w.win.Pressed(config.UpKey),
-		PressedLeftKey:   w.win.Pressed(config.LeftKey),
-		PressedDownKey:   w.win.Pressed(config.DownKey),
-		PressedRightKey:  w.win.Pressed(config.RightKey),
-		PressedReloadKey: w.win.Pressed(config.ReloadKey),
-		PressedDropKey:   w.win.Pressed(config.DropKey),
+		MousePos:                w.win.MousePosition(),
+		PressedFireKey:          w.win.Pressed(config.FireKey),
+		PressedFocusKey:         w.win.Pressed(config.FocusKey),
+		PressedUpKey:            w.win.Pressed(config.UpKey),
+		PressedLeftKey:          w.win.Pressed(config.LeftKey),
+		PressedDownKey:          w.win.Pressed(config.DownKey),
+		PressedRightKey:         w.win.Pressed(config.RightKey),
+		PressedReloadKey:        w.win.Pressed(config.ReloadKey),
+		PressedDropKey:          w.win.Pressed(config.DropKey),
+		PressedToggleMuteKey:    w.win.Pressed(config.ToggleMuteKey),
+		PressedVolumeUpKey:      w.win.Pressed(config.VolumeUpKey),
+		PressedVolumeDownKey:    w.win.Pressed(config.VolumeDownKey),
+		PressedToggleFullScreen: w.win.Pressed(config.ToggleFullScreen),
 	}
 }
 
@@ -229,6 +235,28 @@ func (w *world) updateRawInput() {
 		PressedDropKey:   rawInput.PressedDropKey || w.currRawInput.PressedDropKey,
 	}
 	w.currRawInput = currRawInput
+}
+
+func (w *world) updateSetting() {
+	w.prevSettingInput = w.currSettingInput
+	w.currSettingInput = w.getRawInput()
+	// Settings
+	if !w.prevSettingInput.PressedToggleMuteKey && w.currSettingInput.PressedToggleMuteKey {
+		sound.ToggleMute()
+	}
+	if !w.prevSettingInput.PressedVolumeUpKey && w.currSettingInput.PressedVolumeUpKey {
+		sound.VolumeUp()
+	}
+	if !w.prevSettingInput.PressedVolumeDownKey && w.currSettingInput.PressedVolumeDownKey {
+		sound.VolumeDown()
+	}
+	if !w.prevSettingInput.PressedToggleFullScreen && w.currSettingInput.PressedToggleFullScreen {
+		if w.win.Monitor() != nil {
+			w.win.SetMonitor(nil)
+		} else {
+			w.win.SetMonitor(pixelgl.PrimaryMonitor())
+		}
+	}
 }
 
 // Player

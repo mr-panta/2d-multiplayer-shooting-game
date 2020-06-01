@@ -19,19 +19,20 @@ import (
 )
 
 const (
-	pistolDropRate        = 40
-	pistolWidth           = 72
-	pistolBulletSpeed     = 2000
-	pistolMaxRange        = 800
-	pistolBulletLength    = 8
-	pistolDamage          = 15
-	pistolTriggerCooldown = 400 * time.Millisecond
-	pistolReloadCooldown  = 2 * time.Second
-	pistolAmmo            = 40
-	pistolMag             = 20
-	pistolMaxScopeRadius  = 140
-	pistolMaxScopeRange   = 400
-	pistolRecoilAngle     = math.Pi / 180 * 4
+	pistolDropRate           = 40
+	pistolWidth              = 72
+	pistolBulletSpeed        = 2000
+	pistolMaxRange           = 800
+	pistolBulletLength       = 8
+	pistolDamage             = 15
+	pistolTriggerVisibleTime = time.Second
+	pistolTriggerCooldown    = 400 * time.Millisecond
+	pistolReloadCooldown     = 2 * time.Second
+	pistolAmmo               = 40
+	pistolMag                = 20
+	pistolMaxScopeRadius     = 140
+	pistolMaxScopeRange      = 400
+	pistolRecoilAngle        = math.Pi / 180 * 4
 )
 
 type WeaponPistol struct {
@@ -292,6 +293,10 @@ func (m *WeaponPistol) GetScopeRadius(dist float64) float64 {
 
 func (m *WeaponPistol) GetWeaponType() int {
 	return config.PistolWeapon
+}
+
+func (m *WeaponPistol) GetTriggerVisibleTime() time.Duration {
+	return pistolTriggerVisibleTime
 }
 
 func (m *WeaponPistol) finishReloading() {

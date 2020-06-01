@@ -114,6 +114,7 @@ type Weapon interface {
 	Trigger() bool
 	Reload() bool
 	GetScopeRadius(dist float64) float64
+	GetTriggerVisibleTime() time.Duration
 }
 
 type Bullet interface {

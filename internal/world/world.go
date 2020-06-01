@@ -33,17 +33,19 @@ type world struct {
 	objectDB common.ObjectDB
 	hud      common.Hud
 	// client
-	win           *pixelgl.Window
-	batch         *pixel.Batch
-	currRawInput  *common.RawInput
-	prevRawInput  *common.RawInput
-	mainPlayerID  string
-	cameraPos     pixel.Vec
-	scope         common.Scope
-	water         common.Water
-	fps           int
-	frameCount    int
-	fpsUpdateTime time.Time
+	win              *pixelgl.Window
+	batch            *pixel.Batch
+	currRawInput     *common.RawInput
+	prevRawInput     *common.RawInput
+	currSettingInput *common.RawInput
+	prevSettingInput *common.RawInput
+	mainPlayerID     string
+	cameraPos        pixel.Vec
+	scope            common.Scope
+	water            common.Water
+	fps              int
+	frameCount       int
+	fpsUpdateTime    time.Time
 	// server
 	tick         int64
 	nextItemTime time.Time
@@ -54,8 +56,10 @@ func New(clientProcessor common.ClientProcessor) common.World {
 		// common
 		objectDB: common.NewObjectDB(),
 		// client
-		currRawInput: &common.RawInput{},
-		prevRawInput: &common.RawInput{},
+		currRawInput:     &common.RawInput{},
+		prevRawInput:     &common.RawInput{},
+		currSettingInput: &common.RawInput{},
+		prevSettingInput: &common.RawInput{},
 		// server
 		nextItemTime: ticktime.GetServerTime(),
 	}

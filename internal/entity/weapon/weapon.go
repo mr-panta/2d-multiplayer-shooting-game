@@ -3,26 +3,12 @@ package weapon
 import (
 	"math/rand"
 
-	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
-
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
+	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
 )
 
 type newFunc func(world common.World, id string) common.Weapon
-
-type weaponTickSnapshot struct {
-	tick     int64
-	snapshot *protocol.WeaponSnapshot
-}
-
-func (ts *weaponTickSnapshot) GetTick() int64 {
-	return ts.tick
-}
-
-func (ts *weaponTickSnapshot) GetSnapshot() interface{} {
-	return ts.snapshot
-}
 
 func New(world common.World, id string, snapshot *protocol.ObjectSnapshot) common.Weapon {
 	if snapshot != nil && snapshot.Weapon != nil {

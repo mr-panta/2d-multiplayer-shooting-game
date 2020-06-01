@@ -11,7 +11,17 @@ import (
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
 )
 
-var sampleRate = beep.SampleRate(44100)
+const (
+	maxVolume  = 1.0
+	minVolume  = -5.0
+	volumeDiff = 0.5
+)
+
+var (
+	sampleRate = beep.SampleRate(44100)
+	mute       = false
+	volume     = -2.0
+)
 
 type loadSoundFunc func(assetPath string) error
 
@@ -41,4 +51,24 @@ func LoadAllSounds() (err error) {
 		}
 	}
 	return nil
+}
+
+func ToggleMute() {
+	mute = !mute
+}
+
+func VolumeUp() {
+	v := volume + volumeDiff
+	if v > maxVolume {
+		v = maxVolume
+	}
+	volume = v
+}
+
+func VolumeDown() {
+	v := volume - volumeDiff
+	if v < minVolume {
+		v = minVolume
+	}
+	volume = v
 }

@@ -19,20 +19,21 @@ import (
 )
 
 const (
-	shotgunDropRate        = 20
-	shotgunWidth           = 124
-	shotgunBulletAmount    = 8
-	shotgunBulletSpeed     = 1500
-	shotgunMaxRange        = 450
-	shotgunBulletLength    = 6
-	shotgunDamage          = 10
-	shotgunTriggerCooldown = 1000 * time.Millisecond
-	shotgunReloadCooldown  = 2 * time.Second
-	shotgunAmmo            = 16
-	shotgunMag             = 8
-	shotgunMaxScopeRadius  = 200
-	shotgunMaxScopeRange   = 450
-	shotgunRecoilAngle     = math.Pi / 180 * 60
+	shotgunDropRate           = 20
+	shotgunWidth              = 124
+	shotgunBulletAmount       = 8
+	shotgunBulletSpeed        = 1500
+	shotgunMaxRange           = 450
+	shotgunBulletLength       = 6
+	shotgunDamage             = 10
+	shotgunTriggerVisibleTime = time.Second
+	shotgunTriggerCooldown    = 1000 * time.Millisecond
+	shotgunReloadCooldown     = 2 * time.Second
+	shotgunAmmo               = 16
+	shotgunMag                = 8
+	shotgunMaxScopeRadius     = 200
+	shotgunMaxScopeRange      = 450
+	shotgunRecoilAngle        = math.Pi / 180 * 60
 )
 
 type WeaponShotgun struct {
@@ -295,6 +296,10 @@ func (m *WeaponShotgun) GetScopeRadius(dist float64) float64 {
 
 func (m *WeaponShotgun) GetWeaponType() int {
 	return config.ShotgunWeapon
+}
+
+func (m *WeaponShotgun) GetTriggerVisibleTime() time.Duration {
+	return shotgunTriggerVisibleTime
 }
 
 func (m *WeaponShotgun) finishReloading() {

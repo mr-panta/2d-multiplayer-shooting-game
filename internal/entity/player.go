@@ -37,51 +37,57 @@ const (
 	playerSpeedCooldown      = 300 * time.Millisecond
 	playerMaxPosError        = 100
 	playerNameOffset         = 8
+	playerInvulnerableTime   = 3 * time.Second
 )
 
 type player struct {
-	id            string
-	playerName    string
-	weaponID      string
-	world         common.World
-	tickSnapshots []*protocol.TickSnapshot
-	kill          int
-	death         int
-	streak        int
-	maxStreak     int
-	pos           pixel.Vec
-	posError      pixel.Vec
-	errorTime     time.Time
-	updateTime    time.Time
-	respawnTime   time.Time
-	hitTime       time.Time
-	triggerTime   time.Time
-	pickupTime    time.Time
-	isDestroyed   bool
-	isMainPlayer  bool
-	isDropping    bool
-	isTriggering  bool
-	isReloading   bool
-	hp            float64
-	maxMoveSpeed  float64
-	moveSpeed     float64
-	moveDir       pixel.Vec
-	cursorDir     pixel.Vec
-	lock          sync.RWMutex
-	colliderImd   *imdraw.IMDraw
-	shapeImd      *imdraw.IMDraw
+	id                 string
+	playerName         string
+	weaponID           string
+	world              common.World
+	tickSnapshots      []*protocol.TickSnapshot
+	kill               int
+	death              int
+	streak             int
+	maxStreak          int
+	pos                pixel.Vec
+	posError           pixel.Vec
+	errorTime          time.Time
+	updateTime         time.Time
+	respawnTime        time.Time
+	hitTime            time.Time
+	triggerTime        time.Time
+	pickupTime         time.Time
+	hitVisibleTime     time.Duration
+	triggerVisibleTime time.Duration
+	isDestroyed        bool
+	isMainPlayer       bool
+	isDropping         bool
+	isTriggering       bool
+	isReloading        bool
+	isInvulnerable     bool
+	hp                 float64
+	maxMoveSpeed       float64
+	moveSpeed          float64
+	moveDir            pixel.Vec
+	cursorDir          pixel.Vec
+	lock               sync.RWMutex
+	colliderImd        *imdraw.IMDraw
+	shapeImd           *imdraw.IMDraw
 }
 
 func NewPlayer(world common.World, id string) common.Player {
 	return &player{
-		id:           id,
-		world:        world,
-		pos:          util.GetHighVec(),
-		maxMoveSpeed: playerBaseMoveSpeed,
-		updateTime:   ticktime.GetServerTime(),
-		colliderImd:  imdraw.New(nil),
-		shapeImd:     imdraw.New(nil),
-		hp:           playerInitHP,
+		id:             id,
+		world:          world,
+		pos:            util.GetHighVec(),
+		maxMoveSpeed:   playerBaseMoveSpeed,
+		updateTime:     ticktime.GetServerTime(),
+		colliderImd:    imdraw.New(nil),
+		shapeImd:       imdraw.New(nil),
+		hp:             playerInitHP,
+		respawnTime:    ticktime.GetServerTime(),
+		isInvulnerable: true,
 	}
 }
 
@@ -171,7 +177,14 @@ func (p *player) ServerUpdate(tick int64) {
 	// Check respawn
 	preRespawnTime := p.respawnTime.Add(-config.LerpPeriod)
 	if now.After(preRespawnTime) && !p.updateTime.After(preRespawnTime) {
+		p.isInvulnerable = true
 		p.world.SpawnPlayer(p.id, p.playerName)
+	}
+	if p.isInvulnerable {
+		if (now.Sub(p.respawnTime) > playerInvulnerableTime) ||
+			(p.respawnTime.Before(p.triggerTime) && p.triggerTime.Sub(p.respawnTime) < playerInvulnerableTime) {
+			p.isInvulnerable = false
+		}
 	}
 	if p.Exists() {
 		// Check item
@@ -201,7 +214,11 @@ func (p *player) ServerUpdate(tick int64) {
 					p.triggerTime = now
 				}
 			}
+			p.triggerVisibleTime = weapon.GetTriggerVisibleTime()
+		} else {
+			p.triggerVisibleTime = playerVisibleTime
 		}
+		p.hitVisibleTime = playerVisibleTime
 		// Update position
 		moveSpeed := p.moveSpeed
 		if now.Sub(p.triggerTime) < playerSpeedCooldown {
@@ -228,12 +245,12 @@ func (p *player) ServerUpdate(tick int64) {
 }
 
 func (p *player) ClientUpdate() {
+	now := ticktime.GetServerTime()
 	if p.isMainPlayer {
 		// Set weapon
 		ss := p.getLastSnapshot().Player
 		p.weaponID = ss.WeaponID
 		// Update position
-		now := ticktime.GetServerTime()
 		moveSpeed := p.moveSpeed
 		if now.Sub(p.triggerTime) < playerSpeedCooldown {
 			moveSpeed /= 2
@@ -287,6 +304,9 @@ func (p *player) ClientUpdate() {
 	p.hitTime = time.Unix(0, lastSS.HitTime)
 	p.triggerTime = time.Unix(0, lastSS.TriggerTime)
 	p.pickupTime = time.Unix(0, lastSS.PickupTime)
+	p.hitVisibleTime = time.Duration(lastSS.HitVisibleMS) * time.Millisecond
+	p.triggerVisibleTime = time.Duration(lastSS.TriggerVisibleMS) * time.Millisecond
+	p.isInvulnerable = lastSS.IsInvulnerable
 	p.playerName = lastSS.PlayerName
 	// Update weapon
 	if weapon := p.GetWeapon(); weapon != nil {
@@ -354,6 +374,9 @@ func (p *player) GetType() int {
 }
 
 func (p *player) AddDamage(firingPlayerID string, weaponID string, damage float64) {
+	if p.isInvulnerable {
+		return
+	}
 	p.hp -= damage
 	p.hitTime = ticktime.GetServerTime()
 	if p.hp <= 0 {
@@ -413,7 +436,8 @@ func (p *player) GetTriggerTime() time.Time {
 
 func (p *player) IsVisible() bool {
 	now := ticktime.GetServerTime()
-	return now.Sub(p.hitTime) <= playerVisibleTime || now.Sub(p.triggerTime) <= playerVisibleTime
+	return now.Sub(p.hitTime) <= p.hitVisibleTime ||
+		now.Sub(p.triggerTime) <= p.triggerVisibleTime
 }
 
 func (p *player) SetPlayerName(name string) {
@@ -465,6 +489,7 @@ func (p *player) render(target pixel.Target, viewPos pixel.Vec) {
 	anim.Right = p.cursorDir.X > 0
 	anim.FrameTime = playerFrameTime
 	anim.Hit = now.Sub(p.hitTime) <= playerHitHeightlightTime
+	anim.Invulnerable = p.isInvulnerable
 	anim.Shadow = true
 	if p.moveSpeed == 0 {
 		anim.State = animation.CharacterIdleState
@@ -574,22 +599,25 @@ func (p *player) getSnapshotsByTime(t time.Time) *protocol.ObjectSnapshot {
 		ID:   p.id,
 		Type: config.PlayerObject,
 		Player: &protocol.PlayerSnapshot{
-			PlayerName:   ssB.PlayerName,
-			WeaponID:     ssB.WeaponID,
-			Kill:         ssB.Kill,
-			Death:        ssB.Death,
-			Streak:       ssB.Streak,
-			MaxStreak:    ssB.MaxStreak,
-			CursorDir:    util.ConvertVec(pixel.Lerp(ssA.CursorDir.Convert(), ssA.CursorDir.Convert(), d)),
-			Pos:          util.ConvertVec(pixel.Lerp(ssA.Pos.Convert(), ssB.Pos.Convert(), d)),
-			MoveDir:      util.ConvertVec(pixel.Lerp(ssA.MoveDir.Convert(), ssB.MoveDir.Convert(), d)),
-			MoveSpeed:    util.LerpScalar(ssA.MoveSpeed, ssB.MoveSpeed, d),
-			MaxMoveSpeed: util.LerpScalar(ssA.MaxMoveSpeed, ssB.MaxMoveSpeed, d),
-			HP:           util.LerpScalar(ssA.HP, ssB.HP, d),
-			RespawnTime:  ssB.RespawnTime,
-			HitTime:      ssB.HitTime,
-			TriggerTime:  ssB.TriggerTime,
-			PickupTime:   ssB.PickupTime,
+			PlayerName:       ssB.PlayerName,
+			WeaponID:         ssB.WeaponID,
+			Kill:             ssB.Kill,
+			Death:            ssB.Death,
+			Streak:           ssB.Streak,
+			MaxStreak:        ssB.MaxStreak,
+			CursorDir:        util.ConvertVec(pixel.Lerp(ssA.CursorDir.Convert(), ssA.CursorDir.Convert(), d)),
+			Pos:              util.ConvertVec(pixel.Lerp(ssA.Pos.Convert(), ssB.Pos.Convert(), d)),
+			MoveDir:          util.ConvertVec(pixel.Lerp(ssA.MoveDir.Convert(), ssB.MoveDir.Convert(), d)),
+			MoveSpeed:        util.LerpScalar(ssA.MoveSpeed, ssB.MoveSpeed, d),
+			MaxMoveSpeed:     util.LerpScalar(ssA.MaxMoveSpeed, ssB.MaxMoveSpeed, d),
+			HP:               util.LerpScalar(ssA.HP, ssB.HP, d),
+			RespawnTime:      ssB.RespawnTime,
+			HitTime:          ssB.HitTime,
+			TriggerTime:      ssB.TriggerTime,
+			PickupTime:       ssB.PickupTime,
+			HitVisibleMS:     ssB.HitVisibleMS,
+			TriggerVisibleMS: ssB.TriggerVisibleMS,
+			IsInvulnerable:   ssB.IsInvulnerable,
 		},
 	}
 }
@@ -619,22 +647,25 @@ func (p *player) getCurrentSnapshot() *protocol.ObjectSnapshot {
 		ID:   p.id,
 		Type: config.PlayerObject,
 		Player: &protocol.PlayerSnapshot{
-			PlayerName:   p.playerName,
-			WeaponID:     p.weaponID,
-			Kill:         p.kill,
-			Death:        p.death,
-			Streak:       p.streak,
-			MaxStreak:    p.maxStreak,
-			CursorDir:    util.ConvertVec(p.cursorDir),
-			Pos:          util.ConvertVec(p.pos),
-			MoveDir:      util.ConvertVec(p.moveDir),
-			MoveSpeed:    p.moveSpeed,
-			MaxMoveSpeed: p.maxMoveSpeed,
-			HP:           p.hp,
-			RespawnTime:  p.respawnTime.UnixNano(),
-			HitTime:      p.hitTime.UnixNano(),
-			TriggerTime:  p.triggerTime.UnixNano(),
-			PickupTime:   p.pickupTime.UnixNano(),
+			PlayerName:       p.playerName,
+			WeaponID:         p.weaponID,
+			Kill:             p.kill,
+			Death:            p.death,
+			Streak:           p.streak,
+			MaxStreak:        p.maxStreak,
+			CursorDir:        util.ConvertVec(p.cursorDir),
+			Pos:              util.ConvertVec(p.pos),
+			MoveDir:          util.ConvertVec(p.moveDir),
+			MoveSpeed:        p.moveSpeed,
+			MaxMoveSpeed:     p.maxMoveSpeed,
+			HP:               p.hp,
+			RespawnTime:      p.respawnTime.UnixNano(),
+			HitTime:          p.hitTime.UnixNano(),
+			TriggerTime:      p.triggerTime.UnixNano(),
+			PickupTime:       p.pickupTime.UnixNano(),
+			HitVisibleMS:     int(p.hitVisibleTime.Seconds() * 1000),
+			TriggerVisibleMS: int(p.triggerVisibleTime.Seconds() * 1000),
+			IsInvulnerable:   p.isInvulnerable,
 		},
 	}
 }

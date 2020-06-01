@@ -61,9 +61,10 @@ func PlayWeaponPistolFire(dist float64) {
 	k := 1.0 / 500.0
 	streamer := weaponPistolFireBuffer.Streamer(0, weaponPistolFireBuffer.Len())
 	speaker.Play(&effects.Volume{
+		Silent:   mute,
 		Streamer: streamer,
 		Base:     2,
-		Volume:   -dist * k,
+		Volume:   volume - dist*k,
 	})
 }
 
@@ -71,8 +72,9 @@ func PlayWeaponPistolReload(dist float64) {
 	k := 1.0 / 100.0
 	streamer := weaponPistolReloadBuffer.Streamer(0, weaponPistolReloadBuffer.Len())
 	speaker.Play(&effects.Volume{
+		Silent:   mute,
 		Streamer: streamer,
 		Base:     2,
-		Volume:   -dist * k,
+		Volume:   volume - dist*k,
 	})
 }

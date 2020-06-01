@@ -61,9 +61,10 @@ func PlayWeaponSMGFire(dist float64) {
 	k := 1.0 / 500.0
 	streamer := weaponSMGFireBuffer.Streamer(0, weaponSMGFireBuffer.Len())
 	speaker.Play(&effects.Volume{
+		Silent:   mute,
 		Streamer: streamer,
 		Base:     2,
-		Volume:   -dist * k,
+		Volume:   volume - dist*k,
 	})
 }
 
@@ -71,8 +72,9 @@ func PlayWeaponSMGReload(dist float64) {
 	k := 1.0 / 100.0
 	streamer := weaponSMGReloadBuffer.Streamer(0, weaponSMGReloadBuffer.Len())
 	speaker.Play(&effects.Volume{
+		Silent:   mute,
 		Streamer: streamer,
 		Base:     2,
-		Volume:   -dist * k,
+		Volume:   volume - dist*k,
 	})
 }

@@ -20,6 +20,7 @@ var (
 type ItemWeapon struct {
 	id            string
 	weaponID      string
+	isSniper      bool
 	world         common.World
 	pos           pixel.Vec
 	createTime    time.Time
@@ -106,6 +107,11 @@ func (w *ItemWeapon) ServerUpdate(tick int64) {
 func (w *ItemWeapon) ClientUpdate() {
 	ss := w.getLerpSnapshot().Item.Weapon
 	w.pos = ss.Pos.Convert()
+	w.weaponID = ss.WeaponID
+	if obj, exists := w.world.GetObjectDB().SelectOne(w.weaponID); exists {
+		weapon := obj.(common.Weapon)
+		w.isSniper = weapon.GetWeaponType() == config.SniperWeapon
+	}
 	w.cleanTickSnapshots()
 }
 
@@ -150,14 +156,20 @@ func (w *ItemWeapon) getCurrentSnapshot() *protocol.ObjectSnapshot {
 		Type: w.GetType(),
 		Item: &protocol.ItemSnapshot{
 			Weapon: &protocol.ItemWeaponSnapshot{
-				Pos: util.ConvertVec(w.pos),
+				WeaponID: w.weaponID,
+				Pos:      util.ConvertVec(w.pos),
 			},
 		},
 	}
 }
 
 func (w *ItemWeapon) render(target pixel.Target, viewPos pixel.Vec) {
-	anim := animation.NewItemWeapon()
+	var anim *animation.Item
+	if w.isSniper {
+		anim = animation.NewItemWeaponSniper()
+	} else {
+		anim = animation.NewItemWeapon()
+	}
 	anim.Pos = w.pos.Sub(viewPos)
 	anim.Draw(target)
 }
@@ -181,7 +193,8 @@ func (w *ItemWeapon) getSnapshotsByTime(t time.Time) *protocol.ObjectSnapshot {
 		Type: w.GetType(),
 		Item: &protocol.ItemSnapshot{
 			Weapon: &protocol.ItemWeaponSnapshot{
-				Pos: util.ConvertVec(pixel.Lerp(ssA.Pos.Convert(), ssB.Pos.Convert(), d)),
+				WeaponID: ssB.WeaponID,
+				Pos:      util.ConvertVec(pixel.Lerp(ssA.Pos.Convert(), ssB.Pos.Convert(), d)),
 			},
 		},
 	}

@@ -19,19 +19,20 @@ import (
 )
 
 const (
-	smgDropRate        = 20
-	smgWidth           = 124
-	smgBulletSpeed     = 1000
-	smgMaxRange        = 1000
-	smgBulletLength    = 12
-	smgDamage          = 10
-	smgTriggerCooldown = 100 * time.Millisecond
-	smgReloadCooldown  = 2 * time.Second
-	smgAmmo            = 60
-	smgMag             = 30
-	smgMaxScopeRadius  = 160
-	smgMaxScopeRange   = 600
-	smgRecoilAngle     = math.Pi / 180 * 6
+	smgDropRate           = 20
+	smgWidth              = 124
+	smgBulletSpeed        = 1000
+	smgMaxRange           = 1000
+	smgBulletLength       = 12
+	smgDamage             = 10
+	smgTriggerVisibleTime = time.Second
+	smgTriggerCooldown    = 100 * time.Millisecond
+	smgReloadCooldown     = 2 * time.Second
+	smgAmmo               = 60
+	smgMag                = 30
+	smgMaxScopeRadius     = 160
+	smgMaxScopeRange      = 600
+	smgRecoilAngle        = math.Pi / 180 * 6
 )
 
 type WeaponSMG struct {
@@ -287,6 +288,10 @@ func (m *WeaponSMG) GetScopeRadius(dist float64) float64 {
 		return 0
 	}
 	return smgMaxScopeRadius * (1.0 - (dist / smgMaxScopeRange))
+}
+
+func (m *WeaponSMG) GetTriggerVisibleTime() time.Duration {
+	return smgTriggerVisibleTime
 }
 
 func (m *WeaponSMG) GetWeaponType() int {

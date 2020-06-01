@@ -60,17 +60,19 @@ func loadCommonPickupSound(assetPath string) (err error) {
 func PlayCommonKill() {
 	streamer := commonKillBuffer.Streamer(0, commonKillBuffer.Len())
 	speaker.Play(&effects.Volume{
+		Silent:   mute,
 		Streamer: streamer,
 		Base:     2,
-		Volume:   0,
+		Volume:   volume + 0,
 	})
 }
 
 func PlayCommonPickup() {
 	streamer := commonPickupBuffer.Streamer(0, commonPickupBuffer.Len())
 	speaker.Play(&effects.Volume{
+		Silent:   mute,
 		Streamer: streamer,
 		Base:     2,
-		Volume:   -1,
+		Volume:   volume - 1,
 	})
 }

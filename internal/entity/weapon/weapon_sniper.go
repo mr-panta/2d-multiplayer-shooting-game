@@ -17,17 +17,18 @@ import (
 )
 
 const (
-	sniperWidth           = 196
-	sniperBulletSpeed     = 4000
-	sniperMaxRange        = 4000
-	sniperBulletLength    = 12
-	sniperDamage          = 100
-	sniperTriggerCooldown = 2000 * time.Millisecond
-	sniperReloadCooldown  = 3 * time.Second
-	sniperAmmo            = 10
-	sniperMag             = 5
-	sniperMaxScopeRadius  = 80
-	sniperMaxScopeRange   = 240
+	sniperWidth              = 196
+	sniperBulletSpeed        = 4000
+	sniperMaxRange           = 4000
+	sniperBulletLength       = 12
+	sniperDamage             = 100
+	sniperTriggerVisibleTime = 2 * time.Second
+	sniperTriggerCooldown    = 2000 * time.Millisecond
+	sniperReloadCooldown     = 3 * time.Second
+	sniperAmmo               = 10
+	sniperMag                = 5
+	sniperMaxScopeRadius     = 80
+	sniperMaxScopeRange      = 240
 )
 
 type WeaponSniper struct {
@@ -285,6 +286,10 @@ func (m *WeaponSniper) GetScopeRadius(dist float64) float64 {
 
 func (m *WeaponSniper) GetWeaponType() int {
 	return config.SniperWeapon
+}
+
+func (m *WeaponSniper) GetTriggerVisibleTime() time.Duration {
+	return sniperTriggerVisibleTime
 }
 
 func (m *WeaponSniper) finishReloading() {

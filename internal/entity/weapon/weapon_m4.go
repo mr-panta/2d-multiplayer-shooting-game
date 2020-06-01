@@ -19,19 +19,20 @@ import (
 )
 
 const (
-	m4DropRate        = 15
-	m4Width           = 124
-	m4BulletSpeed     = 2000
-	m4MaxRange        = 1000
-	m4BulletLength    = 12
-	m4Damage          = 18
-	m4TriggerCooldown = 150 * time.Millisecond
-	m4ReloadCooldown  = 2 * time.Second
-	m4Ammo            = 60
-	m4Mag             = 30
-	m4MaxScopeRadius  = 160
-	m4MaxScopeRange   = 600
-	m4RecoilAngle     = math.Pi / 180 * 6
+	m4DropRate           = 15
+	m4Width              = 124
+	m4BulletSpeed        = 2000
+	m4MaxRange           = 1000
+	m4BulletLength       = 12
+	m4Damage             = 18
+	m4TriggerVisibleTime = time.Second
+	m4TriggerCooldown    = 150 * time.Millisecond
+	m4ReloadCooldown     = 2 * time.Second
+	m4Ammo               = 60
+	m4Mag                = 30
+	m4MaxScopeRadius     = 160
+	m4MaxScopeRange      = 600
+	m4RecoilAngle        = math.Pi / 180 * 6
 )
 
 type WeaponM4 struct {
@@ -291,6 +292,10 @@ func (m *WeaponM4) GetScopeRadius(dist float64) float64 {
 
 func (m *WeaponM4) GetWeaponType() int {
 	return config.M4Weapon
+}
+
+func (m *WeaponM4) GetTriggerVisibleTime() time.Duration {
+	return m4TriggerVisibleTime
 }
 
 func (m *WeaponM4) finishReloading() {

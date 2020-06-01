@@ -22,8 +22,9 @@ var (
 		pixel.R(6*128, 0, 7*128, 128),
 		pixel.R(7*128, 0, 8*128, 128),
 	}
-	characterHitColor    = colornames.Red
-	characterShadowColor = color.RGBA{0, 0, 0, 88}
+	characterHitColor          = colornames.Red
+	characterInvulnerableColor = color.RGBA{160, 160, 160, 160}
+	characterShadowColor       = color.RGBA{0, 0, 0, 88}
 )
 
 const (
@@ -36,14 +37,15 @@ const (
 )
 
 type Character struct {
-	shadowImd *imdraw.IMDraw
-	Pos       pixel.Vec
-	Right     bool
-	State     int
-	FrameTime int // in milliseconds
-	Color     color.Color
-	Hit       bool
-	Shadow    bool
+	shadowImd    *imdraw.IMDraw
+	Pos          pixel.Vec
+	Right        bool
+	State        int
+	FrameTime    int // in milliseconds
+	Color        color.Color
+	Hit          bool
+	Invulnerable bool
+	Shadow       bool
 }
 
 func NewCharacter() *Character {
@@ -79,6 +81,8 @@ func (c *Character) draw(target pixel.Target) {
 	color := c.Color
 	if c.Hit {
 		color = characterHitColor
+	} else if c.Invulnerable {
+		color = characterInvulnerableColor
 	}
 	sprite.DrawColorMask(target, matrix, color)
 }

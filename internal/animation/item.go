@@ -7,12 +7,13 @@ import (
 )
 
 var (
-	itemFrameOffset     = pixel.V(0, 3*64)
-	itemAmmoFrame       = pixel.R(0*64, 0, 1*64, 64).Moved(itemFrameOffset)
-	itemWeaponFrame     = pixel.R(1*64, 0, 2*64, 64).Moved(itemFrameOffset)
-	itemMedicKitFrame   = pixel.R(2*64, 0, 3*64, 64).Moved(itemFrameOffset)
-	itemAmmoSMFrame     = pixel.R(3*64, 0, 3*64+32, 32).Moved(itemFrameOffset)
-	itemMedicKitSMFrame = pixel.R(3*64, 32, 3*64+32, 64).Moved(itemFrameOffset)
+	itemFrameOffset       = pixel.V(0, 3*64)
+	itemAmmoFrame         = pixel.R(0*64, 0, 1*64, 64).Moved(itemFrameOffset)
+	itemWeaponFrame       = pixel.R(1*64, 0, 2*64, 64).Moved(itemFrameOffset)
+	itemMedicKitFrame     = pixel.R(2*64, 0, 3*64, 64).Moved(itemFrameOffset)
+	itemAmmoSMFrame       = pixel.R(3*64, 0, 3*64+32, 32).Moved(itemFrameOffset)
+	itemMedicKitSMFrame   = pixel.R(3*64, 32, 3*64+32, 64).Moved(itemFrameOffset)
+	itemWeaponSniperFrame = pixel.R(7*32, 0, 9*32, 64).Moved(itemFrameOffset)
 )
 
 func NewItemAmmo() *Item {
@@ -33,6 +34,10 @@ func NewItemAmmoSM() *Item {
 
 func NewItemMedicKitSM() *Item {
 	return &Item{frame: itemMedicKitSMFrame}
+}
+
+func NewItemWeaponSniper() *Item {
+	return &Item{frame: itemWeaponSniperFrame}
 }
 
 type Item struct {

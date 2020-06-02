@@ -86,7 +86,7 @@ type Player interface {
 	IncreaseKill()
 	GetStats() (kill, death, streak, maxStreak int)
 	AddDamage(firingPlayerID, weaponID string, damage float64)
-	GetHP() float64
+	GetArmorHP() (float64, float64)
 	GetRespawnTime() time.Time
 	GetHitTime() time.Time
 	GetTriggerTime() time.Time

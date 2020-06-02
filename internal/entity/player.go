@@ -27,6 +27,7 @@ const (
 	playerDropRange          = 64
 	playerDropDiff           = 40
 	playerInitHP             = 100
+	playerInitArmor          = 0
 	playerRespawnTime        = 3 * time.Second
 	playerHitHeightlightTime = 100 * time.Millisecond
 	playerVisibleTime        = 1000 * time.Millisecond
@@ -67,6 +68,7 @@ type player struct {
 	isReloading        bool
 	isInvulnerable     bool
 	hp                 float64
+	armor              float64
 	maxMoveSpeed       float64
 	moveSpeed          float64
 	moveDir            pixel.Vec
@@ -86,6 +88,7 @@ func NewPlayer(world common.World, id string) common.Player {
 		colliderImd:    imdraw.New(nil),
 		shapeImd:       imdraw.New(nil),
 		hp:             playerInitHP,
+		armor:          playerInitArmor,
 		respawnTime:    ticktime.GetServerTime(),
 		isInvulnerable: true,
 	}
@@ -300,6 +303,7 @@ func (p *player) ClientUpdate() {
 	p.streak = lastSS.Streak
 	p.maxStreak = lastSS.MaxStreak
 	p.hp = lastSS.HP
+	p.armor = lastSS.Armor
 	p.respawnTime = time.Unix(0, lastSS.RespawnTime)
 	p.hitTime = time.Unix(0, lastSS.HitTime)
 	p.triggerTime = time.Unix(0, lastSS.TriggerTime)
@@ -377,12 +381,23 @@ func (p *player) AddDamage(firingPlayerID string, weaponID string, damage float6
 	if p.isInvulnerable {
 		return
 	}
+	if armor := p.armor; armor > 0 {
+		armor -= damage
+		if armor >= 0 {
+			damage = 0
+		} else {
+			damage = -armor
+			armor = 0
+		}
+		p.armor = armor
+	}
 	p.hp -= damage
 	p.hitTime = ticktime.GetServerTime()
 	if p.hp <= 0 {
 		p.death++
 		p.streak = 0
 		p.hp = playerInitHP
+		p.armor = playerInitArmor
 		p.respawnTime = ticktime.GetServerTime().Add(playerRespawnTime)
 		p.DropWeapon()
 		if obj, exists := p.world.GetObjectDB().SelectOne(firingPlayerID); exists {
@@ -393,8 +408,8 @@ func (p *player) AddDamage(firingPlayerID string, weaponID string, damage float6
 	}
 }
 
-func (p *player) GetHP() float64 {
-	return p.hp
+func (p *player) GetArmorHP() (armor float64, hp float64) {
+	return p.armor, p.hp
 }
 
 func (p *player) GetRespawnTime() time.Time {
@@ -488,7 +503,13 @@ func (p *player) render(target pixel.Target, viewPos pixel.Vec) {
 	anim.Pos = base
 	anim.Right = p.cursorDir.X > 0
 	anim.FrameTime = playerFrameTime
-	anim.Hit = now.Sub(p.hitTime) <= playerHitHeightlightTime
+	if now.Sub(p.hitTime) <= playerHitHeightlightTime {
+		if p.armor > 0 {
+			anim.ArmorHit = true
+		} else {
+			anim.Hit = true
+		}
+	}
 	anim.Invulnerable = p.isInvulnerable
 	anim.Shadow = true
 	if p.moveSpeed == 0 {
@@ -611,6 +632,7 @@ func (p *player) getSnapshotsByTime(t time.Time) *protocol.ObjectSnapshot {
 			MoveSpeed:        util.LerpScalar(ssA.MoveSpeed, ssB.MoveSpeed, d),
 			MaxMoveSpeed:     util.LerpScalar(ssA.MaxMoveSpeed, ssB.MaxMoveSpeed, d),
 			HP:               util.LerpScalar(ssA.HP, ssB.HP, d),
+			Armor:            util.LerpScalar(ssA.Armor, ssB.Armor, d),
 			RespawnTime:      ssB.RespawnTime,
 			HitTime:          ssB.HitTime,
 			TriggerTime:      ssB.TriggerTime,
@@ -659,6 +681,7 @@ func (p *player) getCurrentSnapshot() *protocol.ObjectSnapshot {
 			MoveSpeed:        p.moveSpeed,
 			MaxMoveSpeed:     p.maxMoveSpeed,
 			HP:               p.hp,
+			Armor:            p.armor,
 			RespawnTime:      p.respawnTime.UnixNano(),
 			HitTime:          p.hitTime.UnixNano(),
 			TriggerTime:      p.triggerTime.UnixNano(),

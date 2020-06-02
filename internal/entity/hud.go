@@ -25,9 +25,10 @@ var (
 	// ammo
 	hudAmmoMarginBottomRight = pixel.V(-24, 24)
 	hudAmmoColor             = colornames.White
-	// hp
-	hudHPMarginBottomLeft = pixel.V(24, 24)
-	hudHPColor            = colornames.White
+	// armor and hp
+	hudHPMarginBottomLeft    = pixel.V(24, 24)
+	hudArmorMarginBottomLeft = pixel.V(24, 72)
+	hudHPColor               = colornames.White
 	// crosshair
 	crosshairColor = colornames.Red
 	// scoreboard
@@ -63,6 +64,7 @@ type Hud struct {
 	mag               int
 	ammo              int
 	hp                float64
+	armor             float64
 	respawnCountdown  int
 	crosshair         *animation.Crosshair
 	scoreboardImd     *imdraw.IMDraw
@@ -95,7 +97,7 @@ func (h *Hud) AddKillFeedRow(killerPlayerID, victimPlayerID, weaponID string) {
 
 func (h *Hud) ClientUpdate() {
 	h.updateAmmo()
-	h.updateHP()
+	h.updateArmorHP()
 	h.updateRespawnCountdown()
 	h.updateScoreboard()
 }
@@ -139,12 +141,13 @@ func (h *Hud) getPlayer() common.Player {
 	return nil
 }
 
-func (h *Hud) updateHP() {
-	var hp float64
+func (h *Hud) updateArmorHP() {
+	var armor, hp float64
 	if player := h.getPlayer(); player != nil {
-		hp = player.GetHP()
+		armor, hp = player.GetArmorHP()
 	}
 	h.hp = hp
+	h.armor = armor
 }
 
 func (h *Hud) updateAmmo() {
@@ -226,6 +229,7 @@ func (h *Hud) Render(target pixel.Target) {
 	// render
 	h.renderAmmo(target)
 	h.renderHP(target)
+	h.renderArmor(target)
 	h.renderRespawnCountdown(target)
 	h.renderCursor(target)
 	h.renderScoreboard(target)
@@ -244,6 +248,21 @@ func (h *Hud) renderHP(target pixel.Target) {
 	txt.Draw(target, m.Moved(shadowOffset.Scaled(4)))
 	txt.Color = hudHPColor
 	fmt.Fprintf(txt, "\rHP: %d", int(math.Ceil(h.hp)))
+	txt.Draw(target, m)
+}
+
+func (h *Hud) renderArmor(target pixel.Target) {
+	pos := hudArmorMarginBottomLeft
+	atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
+	txt := text.New(pos, atlas)
+	txt.Clear()
+	txt.LineHeight = atlas.LineHeight()
+	txt.Color = color.Black
+	fmt.Fprintf(txt, "AM: %d", int(math.Ceil(h.armor)))
+	m := pixel.IM.Scaled(txt.Orig, 4)
+	txt.Draw(target, m.Moved(shadowOffset.Scaled(4)))
+	txt.Color = hudHPColor
+	fmt.Fprintf(txt, "\rAM: %d", int(math.Ceil(h.armor)))
 	txt.Draw(target, m)
 }
 

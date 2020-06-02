@@ -23,6 +23,7 @@ var (
 		pixel.R(7*128, 0, 8*128, 128),
 	}
 	characterHitColor          = colornames.Red
+	characterArmorHitColor     = color.RGBA{0x2e, 0xde, 0xff, 0xff}
 	characterInvulnerableColor = color.RGBA{160, 160, 160, 160}
 	characterShadowColor       = color.RGBA{0, 0, 0, 88}
 )
@@ -44,6 +45,7 @@ type Character struct {
 	FrameTime    int // in milliseconds
 	Color        color.Color
 	Hit          bool
+	ArmorHit     bool
 	Invulnerable bool
 	Shadow       bool
 }
@@ -81,6 +83,8 @@ func (c *Character) draw(target pixel.Target) {
 	color := c.Color
 	if c.Hit {
 		color = characterHitColor
+	} else if c.ArmorHit {
+		color = characterArmorHitColor
 	} else if c.Invulnerable {
 		color = characterInvulnerableColor
 	}

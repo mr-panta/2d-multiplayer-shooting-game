@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"image/color"
 	"sync"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/sound"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/util"
+	"golang.org/x/image/colornames"
 )
 
 const (
@@ -27,7 +29,9 @@ const (
 	playerDropRange          = 64
 	playerDropDiff           = 40
 	playerInitHP             = 100
+	playerMaxHP              = 100
 	playerInitArmor          = 0
+	playerMaxArmor           = 300
 	playerRespawnTime        = 3 * time.Second
 	playerHitHeightlightTime = 100 * time.Millisecond
 	playerVisibleTime        = 1000 * time.Millisecond
@@ -39,6 +43,12 @@ const (
 	playerMaxPosError        = 100
 	playerNameOffset         = 8
 	playerInvulnerableTime   = 3 * time.Second
+	playerTopIconOffset      = 44
+)
+
+var (
+	playerNameTopColor       = color.RGBA{148, 0, 4, 255}
+	playerNameTopStrokeColor = colornames.White
 )
 
 type player struct {
@@ -236,8 +246,8 @@ func (p *player) ServerUpdate(tick int64) {
 		p.pos = pos.Sub(dynamicAdjust)
 		// Update HP
 		if now.Sub(p.hitTime) > playerStartRegenTime {
-			if p.hp += diff * playerRegenRate; p.hp > playerInitHP {
-				p.hp = playerInitHP
+			if p.hp += diff * playerRegenRate; p.hp > playerMaxHP {
+				p.hp = playerMaxHP
 			}
 		}
 	}
@@ -394,22 +404,27 @@ func (p *player) AddDamage(firingPlayerID string, weaponID string, damage float6
 	p.hp -= damage
 	p.hitTime = ticktime.GetServerTime()
 	if p.hp <= 0 {
-		p.death++
-		p.streak = 0
-		p.hp = playerInitHP
-		p.armor = playerInitArmor
-		p.respawnTime = ticktime.GetServerTime().Add(playerRespawnTime)
-		p.DropWeapon()
-		if obj, exists := p.world.GetObjectDB().SelectOne(firingPlayerID); exists {
-			firingPlayer := obj.(common.Player)
-			firingPlayer.IncreaseKill()
-		}
-		p.world.GetHud().AddKillFeedRow(firingPlayerID, p.id, weaponID)
+		p.dead(firingPlayerID, weaponID)
 	}
 }
 
 func (p *player) GetArmorHP() (armor float64, hp float64) {
 	return p.armor, p.hp
+}
+
+func (p *player) AddArmorHP(armor, hp float64) (canAdd bool) {
+	if armor += p.armor; armor > playerMaxArmor {
+		armor = playerMaxArmor
+	}
+	if hp += p.hp; hp > playerMaxHP {
+		hp = playerMaxHP
+	}
+	if p.armor == armor && p.hp == hp {
+		return false
+	}
+	p.armor = armor
+	p.hp = hp
+	return true
 }
 
 func (p *player) GetRespawnTime() time.Time {
@@ -489,10 +504,18 @@ func (p *player) renderPlayerName(target pixel.Target, viewPos pixel.Vec) {
 	defer func() {
 		p.world.GetWindow().SetSmooth(smooth)
 	}()
-
 	shape := p.GetShape()
 	pos := pixel.V(shape.Min.X+shape.W()/2, shape.Max.Y+playerNameOffset).Sub(viewPos)
-	animation.DrawStrokeTextCenter(target, pos, p.playerName, 2)
+	if p.getScoreboardPlace() == 1 {
+		anim := animation.NewIconSkull()
+		anim.Pos = pos.Add(pixel.V(0, playerTopIconOffset))
+		anim.Draw(target)
+		animation.DrawStrokeTextCenter(target, pos, p.playerName, 2,
+			playerNameTopColor, playerNameTopStrokeColor)
+	} else {
+		animation.DrawStrokeTextCenter(target, pos, p.playerName, 2,
+			nil, nil)
+	}
 }
 
 func (p *player) render(target pixel.Target, viewPos pixel.Vec) {
@@ -691,4 +714,36 @@ func (p *player) getCurrentSnapshot() *protocol.ObjectSnapshot {
 			IsInvulnerable:   p.isInvulnerable,
 		},
 	}
+}
+
+func (p *player) dead(firingPlayerID string, weaponID string) {
+	// Set status
+	p.death++
+	p.streak = 0
+	p.hp = playerInitHP
+	p.armor = playerInitArmor
+	p.respawnTime = ticktime.GetServerTime().Add(playerRespawnTime)
+	// Drop armor
+	itemID := p.world.GetObjectDB().GetAvailableID()
+	itemArmor := item.NewItemArmor(p.world, itemID, p.getScoreboardPlace() == 1)
+	itemArmor.SetPos(p.pos)
+	p.world.GetObjectDB().Set(itemArmor)
+	// Drop weapon
+	p.DropWeapon()
+	// Add kill feed
+	if obj, exists := p.world.GetObjectDB().SelectOne(firingPlayerID); exists {
+		firingPlayer := obj.(common.Player)
+		firingPlayer.IncreaseKill()
+	}
+	p.world.GetHud().AddKillFeedRow(firingPlayerID, p.id, weaponID)
+}
+
+func (p *player) getScoreboardPlace() int {
+	scoreboard := p.world.GetHud().GetScoreboardPlayers()
+	for i, row := range scoreboard {
+		if row.GetID() == p.GetID() {
+			return i + 1
+		}
+	}
+	return 0
 }

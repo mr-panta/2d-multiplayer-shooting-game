@@ -27,7 +27,10 @@ var (
 	hudAmmoColor             = colornames.White
 	// armor and hp
 	hudHPMarginBottomLeft    = pixel.V(24, 24)
-	hudArmorMarginBottomLeft = pixel.V(24, 72)
+	hudArmorMarginBottomLeft = pixel.V(188, 24)
+	hudHPIconMargin          = pixel.V(24, 20)
+	hudHPTextMrginLeft       = pixel.V(60, 0)
+	hudArmorTextMrginLeft    = pixel.V(64, 0)
 	hudHPColor               = colornames.White
 	// crosshair
 	crosshairColor = colornames.Red
@@ -103,7 +106,12 @@ func (h *Hud) ClientUpdate() {
 }
 
 func (h *Hud) ServerUpdate() {
+	h.updateScoreboard()
 	h.updateKillFeed()
+}
+
+func (h *Hud) GetScoreboardPlayers() []common.Player {
+	return h.scoreboardPlayers
 }
 
 func (h *Hud) GetKillFeedSnapshot() *protocol.KillFeedSnapshot {
@@ -239,31 +247,39 @@ func (h *Hud) Render(target pixel.Target) {
 func (h *Hud) renderHP(target pixel.Target) {
 	pos := hudHPMarginBottomLeft
 	atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
-	txt := text.New(pos, atlas)
+	txt := text.New(pos.Add(hudHPTextMrginLeft), atlas)
 	txt.Clear()
 	txt.LineHeight = atlas.LineHeight()
 	txt.Color = color.Black
-	fmt.Fprintf(txt, "HP: %d", int(math.Ceil(h.hp)))
+	fmt.Fprintf(txt, "%d", int(math.Ceil(h.hp)))
 	m := pixel.IM.Scaled(txt.Orig, 4)
 	txt.Draw(target, m.Moved(shadowOffset.Scaled(4)))
 	txt.Color = hudHPColor
-	fmt.Fprintf(txt, "\rHP: %d", int(math.Ceil(h.hp)))
+	fmt.Fprintf(txt, "\r%d", int(math.Ceil(h.hp)))
 	txt.Draw(target, m)
+	// Render icon
+	icon := animation.NewIconHeart()
+	icon.Pos = pos.Add(hudHPIconMargin)
+	icon.Draw(target)
 }
 
 func (h *Hud) renderArmor(target pixel.Target) {
 	pos := hudArmorMarginBottomLeft
 	atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
-	txt := text.New(pos, atlas)
+	txt := text.New(pos.Add(hudArmorTextMrginLeft), atlas)
 	txt.Clear()
 	txt.LineHeight = atlas.LineHeight()
 	txt.Color = color.Black
-	fmt.Fprintf(txt, "AM: %d", int(math.Ceil(h.armor)))
+	fmt.Fprintf(txt, "%d", int(math.Ceil(h.armor)))
 	m := pixel.IM.Scaled(txt.Orig, 4)
 	txt.Draw(target, m.Moved(shadowOffset.Scaled(4)))
 	txt.Color = hudHPColor
-	fmt.Fprintf(txt, "\rAM: %d", int(math.Ceil(h.armor)))
+	fmt.Fprintf(txt, "\r%d", int(math.Ceil(h.armor)))
 	txt.Draw(target, m)
+	// Render icon
+	icon := animation.NewIconShield()
+	icon.Pos = pos.Add(hudHPIconMargin)
+	icon.Draw(target)
 }
 
 func (h *Hud) renderAmmo(target pixel.Target) {

@@ -87,6 +87,7 @@ type Player interface {
 	GetStats() (kill, death, streak, maxStreak int)
 	AddDamage(firingPlayerID, weaponID string, damage float64)
 	GetArmorHP() (float64, float64)
+	AddArmorHP(armor, hp float64) (canAdd bool)
 	GetRespawnTime() time.Time
 	GetHitTime() time.Time
 	GetTriggerTime() time.Time
@@ -143,6 +144,7 @@ type Hud interface {
 	GetKillFeedSnapshot() *protocol.KillFeedSnapshot
 	SetKillFeedSnapshot(snapshot *protocol.KillFeedSnapshot)
 	AddKillFeedRow(killerPlayerID, victimPlayerID, weaponID string)
+	GetScoreboardPlayers() []Player
 }
 
 type Scope interface {

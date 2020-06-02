@@ -20,6 +20,8 @@ func New(world common.World, itemID string, snapshot *protocol.ObjectSnapshot) c
 			return NewItemAmmo(world, itemID)
 		} else if snapshot.Item.AmmoSM != nil {
 			return NewItemAmmoSM(world, itemID)
+		} else if snapshot.Item.Armor != nil {
+			return NewItemArmor(world, itemID, false)
 		}
 	}
 	return nil

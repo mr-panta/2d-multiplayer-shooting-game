@@ -23,7 +23,7 @@ var (
 		pixel.R(7*128, 0, 8*128, 128),
 	}
 	characterHitColor          = colornames.Red
-	characterArmorHitColor     = color.RGBA{0x2e, 0xde, 0xff, 0xff}
+	characterArmorHitColor     = color.RGBA{0x1f, 0xa7, 0xff, 0xff}
 	characterInvulnerableColor = color.RGBA{160, 160, 160, 160}
 	characterShadowColor       = color.RGBA{0, 0, 0, 88}
 )

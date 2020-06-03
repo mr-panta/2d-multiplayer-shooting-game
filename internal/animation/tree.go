@@ -9,7 +9,7 @@ import (
 
 var (
 	// frame
-	treeFrameOffset = pixel.V(0, 4*64)
+	treeFrameOffset = pixel.V(0, 384)
 	treeAFrame      = pixel.R(0, 0, 2*64, 4*64).Moved(treeFrameOffset)
 	treeBFrame      = pixel.R(2*64, 0, 5*64, 4*64+32).Moved(treeFrameOffset)
 	treeCFrame      = pixel.R(5*64+1, 0, 9*64-1, 4*64+32-1).Moved(treeFrameOffset)

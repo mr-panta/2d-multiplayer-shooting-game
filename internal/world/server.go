@@ -82,8 +82,15 @@ func (w *world) SpawnPlayer(playerID string, playerName string) {
 	if exists {
 		player = o.(common.Player)
 	} else {
+		// Create Knife
+		knifeID := w.GetObjectDB().GetAvailableID()
+		weaponKnife := weapon.NewWeaponKnife(w, knifeID)
+		weaponKnife.SetPlayerID(playerID)
+		w.objectDB.Set(weaponKnife)
+		// Create Player
 		player = entity.NewPlayer(w, playerID)
 		player.SetPlayerName(playerName)
+		player.SetMeleeWeapon(weaponKnife)
 	}
 	player.SetPos(w.getFreePos())
 	w.objectDB.Set(player)

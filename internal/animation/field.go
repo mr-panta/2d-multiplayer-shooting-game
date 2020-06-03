@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	fieldFrameOffset = pixel.V(0, 544)
+	fieldFrameOffset = pixel.V(0, 672)
 	fieldFrames      = []pixel.Rect{
 		pixel.R(0*96, 0, 1*96, 96).Moved(fieldFrameOffset),
 		pixel.R(1*96, 0, 2*96, 96).Moved(fieldFrameOffset),

@@ -23,6 +23,7 @@ type WeaponSnapshot struct {
 	Sniper  *WeaponSniperSnapshot  `json:"sniper,omitempty"`
 	Pistol  *WeaponPistolSnapshot  `json:"pistol,omitempty"`
 	SMG     *WeaponSMGSnapshot     `json:"smg,omitempty"`
+	Knife   *WeaponKnifeSnapshot   `json:"knife,omitempty"`
 }
 
 type WeaponM4Snapshot struct {
@@ -63,4 +64,9 @@ type WeaponSMGSnapshot struct {
 	Ammo        int    `json:"ammo,omitempty"`
 	TriggerTime int64  `json:"trigger_time,omitempty"`
 	ReloadTime  int64  `json:"reload_time,omitempty"`
+}
+
+type WeaponKnifeSnapshot struct {
+	PlayerID    string `json:"player_id,omitempty"`
+	TriggerTime int64  `json:"trigger_time,omitempty"`
 }

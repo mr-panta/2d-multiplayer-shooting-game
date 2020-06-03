@@ -42,7 +42,7 @@ const (
 // key
 const (
 	FireKey          = pixelgl.MouseButton1
-	FocusKey         = pixelgl.MouseButton2
+	MeleeKey         = pixelgl.MouseButton2
 	UpKey            = pixelgl.KeyW
 	LeftKey          = pixelgl.KeyA
 	DownKey          = pixelgl.KeyS
@@ -80,6 +80,7 @@ const (
 	SniperWeapon  = 3
 	PistolWeapon  = 4
 	SMGWeapon     = 5
+	KnifeWeapon   = 6
 )
 
 // tree type

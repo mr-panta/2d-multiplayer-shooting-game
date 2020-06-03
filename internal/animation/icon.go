@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	iconFrameOffset = pixel.V(0, 768)
+	iconFrameOffset = pixel.V(0, 896)
 	iconSkullFrame  = pixel.R(0, 1, 64, 63).Moved(iconFrameOffset)
 	iconHeartFrame  = pixel.R(64, 1, 2*64, 63).Moved(iconFrameOffset)
 	iconShieldFrame = pixel.R(2*64, 1, 3*64, 63).Moved(iconFrameOffset)

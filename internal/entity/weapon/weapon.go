@@ -28,6 +28,9 @@ func New(world common.World, id string, snapshot *protocol.ObjectSnapshot) commo
 		if ss.SMG != nil {
 			return NewWeaponSMG(world, id)
 		}
+		if ss.Knife != nil {
+			return NewWeaponKnife(world, id)
+		}
 	}
 	return nil
 }

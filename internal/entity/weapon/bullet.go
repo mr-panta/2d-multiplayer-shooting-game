@@ -238,6 +238,9 @@ func (o *Bullet) checkObjectCollision() common.Object {
 			continue
 		}
 		if obj.GetType() == config.PlayerObject {
+			if player := obj.(common.Player); !player.IsAlive() {
+				continue
+			}
 			staticAdjust, _ := util.CheckCollision(
 				obj.GetShape(),
 				prevCollider,

@@ -10,7 +10,7 @@ const (
 )
 
 var (
-	waterFrameOffset = pixel.V(0, 640)
+	waterFrameOffset = pixel.V(0, 768)
 	waterSouthSet    = [][]pixel.Rect{
 		{
 			pixel.R(0*64, 0, 1*64, 64).Moved(waterFrameOffset),

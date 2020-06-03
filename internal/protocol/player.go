@@ -2,6 +2,7 @@ package protocol
 
 type PlayerSnapshot struct {
 	PlayerName       string  `json:"player_name,omitempty"`
+	MeleeWeaponID    string  `json:"melee_weapon_id,omitempty"`
 	WeaponID         string  `json:"weapon_id,omitempty"`
 	Kill             int     `json:"kill,omitempty"`
 	Death            int     `json:"death,omitempty"`
@@ -16,6 +17,7 @@ type PlayerSnapshot struct {
 	Armor            float64 `json:"armor,omitempty"`
 	RespawnTime      int64   `json:"respawn_time,omitempty"`
 	HitTime          int64   `json:"hit_time,omitempty"`
+	MeleeTime        int64   `json:"melee_time,omitempty"`
 	TriggerTime      int64   `json:"trigger_time,omitempty"`
 	PickupTime       int64   `json:"pickup_time,omitempty"`
 	HitVisibleMS     int     `json:"hit_visible_ms,omitempty"`

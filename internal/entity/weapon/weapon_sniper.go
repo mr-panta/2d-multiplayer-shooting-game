@@ -255,6 +255,11 @@ func (m *WeaponSniper) Reload() bool {
 	return false
 }
 
+func (m *WeaponSniper) StopReloading() {
+	m.isReloading = false
+	m.reloadTime = ticktime.GetServerStartTime()
+}
+
 func (m *WeaponSniper) SetPlayerID(playerID string) {
 	m.playerID = playerID
 }

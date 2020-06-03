@@ -32,7 +32,7 @@ func NewScope(world common.World) common.Scope {
 }
 
 func (s *Scope) Update() {
-	if p := s.getPlayer(); p != nil && p.Exists() {
+	if p := s.getPlayer(); p != nil && p.IsAlive() {
 		pos := s.world.GetWindow().MousePosition()
 		dist := p.GetPivot().Sub(s.world.GetCameraViewPos()).Sub(pos).Len()
 		s.radius = p.GetScopeRadius(dist)

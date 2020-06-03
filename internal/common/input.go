@@ -5,7 +5,7 @@ import "github.com/faiface/pixel"
 type RawInput struct {
 	MousePos                pixel.Vec
 	PressedFireKey          bool
-	PressedFocusKey         bool
+	PressedMeleeKey         bool
 	PressedUpKey            bool
 	PressedLeftKey          bool
 	PressedDownKey          bool

@@ -33,6 +33,7 @@ const (
 	playerInitArmor          = 0
 	playerMaxArmor           = 300
 	playerRespawnTime        = 3 * time.Second
+	playerMeleeTime          = 500 * time.Millisecond
 	playerHitHeightlightTime = 100 * time.Millisecond
 	playerVisibleTime        = 1000 * time.Millisecond
 	playerMaxScopeRadius     = 240
@@ -54,6 +55,7 @@ var (
 type player struct {
 	id                 string
 	playerName         string
+	meleeWeaponID      string
 	weaponID           string
 	world              common.World
 	tickSnapshots      []*protocol.TickSnapshot
@@ -66,6 +68,7 @@ type player struct {
 	errorTime          time.Time
 	updateTime         time.Time
 	respawnTime        time.Time
+	meleeTime          time.Time
 	hitTime            time.Time
 	triggerTime        time.Time
 	pickupTime         time.Time
@@ -73,6 +76,7 @@ type player struct {
 	triggerVisibleTime time.Duration
 	isDestroyed        bool
 	isMainPlayer       bool
+	isMeleeing         bool
 	isDropping         bool
 	isTriggering       bool
 	isReloading        bool
@@ -113,8 +117,11 @@ func (p *player) Destroy() {
 }
 
 func (p *player) Exists() bool {
-	now := ticktime.GetServerTime()
-	return now.After(p.respawnTime) && !p.isDestroyed
+	return !p.isDestroyed
+}
+
+func (p *player) IsAlive() bool {
+	return ticktime.GetServerTime().After(p.respawnTime)
 }
 
 func (p *player) IncreaseKill() {
@@ -130,12 +137,14 @@ func (p *player) GetShape() pixel.Rect {
 }
 
 func (p *player) GetCollider() (pixel.Rect, bool) {
-	return p.getCollider(), true
+	return p.getCollider(), p.IsAlive()
 }
 
 func (p *player) GetRenderObjects() (objs []common.RenderObject) {
 	objs = append(objs, common.NewRenderObject(playerZ, p.GetShape(), p.render))
-	objs = append(objs, common.NewRenderObject(playerNameZ, p.GetShape(), p.renderPlayerName))
+	if p.IsAlive() {
+		objs = append(objs, common.NewRenderObject(playerNameZ, p.GetShape(), p.renderPlayerName))
+	}
 	// debug
 	if config.EnvDebug() {
 		if p.isMainPlayer {
@@ -193,13 +202,13 @@ func (p *player) ServerUpdate(tick int64) {
 		p.isInvulnerable = true
 		p.world.SpawnPlayer(p.id, p.playerName)
 	}
-	if p.isInvulnerable {
-		if (now.Sub(p.respawnTime) > playerInvulnerableTime) ||
-			(p.respawnTime.Before(p.triggerTime) && p.triggerTime.Sub(p.respawnTime) < playerInvulnerableTime) {
-			p.isInvulnerable = false
-		}
+	if p.isInvulnerable &&
+		(now.Sub(p.respawnTime) > playerInvulnerableTime) ||
+		(p.respawnTime.Before(p.triggerTime) && p.triggerTime.Sub(p.respawnTime) < playerInvulnerableTime) ||
+		(p.respawnTime.Before(p.meleeTime) && p.meleeTime.Sub(p.respawnTime) < playerInvulnerableTime) {
+		p.isInvulnerable = false
 	}
-	if p.Exists() {
+	if p.IsAlive() {
 		// Check item
 		for _, o := range p.world.GetObjectDB().SelectAll() {
 			if o.GetType() != config.ItemObject || !o.GetShape().Intersects(p.getCollider()) {
@@ -212,6 +221,16 @@ func (p *player) ServerUpdate(tick int64) {
 			}
 		}
 		// Update weapon
+		if meleeWeapon := p.GetMeleeWeapon(); meleeWeapon != nil {
+			meleeWeapon.SetPos(p.GetPivot())
+			meleeWeapon.SetDir(p.cursorDir)
+			// Interact melee weapon
+			if now.Sub(p.meleeTime) > playerMeleeTime && p.isMeleeing {
+				if meleeWeapon.Trigger() {
+					p.meleeTime = now
+				}
+			}
+		}
 		if weapon := p.GetWeapon(); weapon != nil {
 			weapon.SetPos(p.GetPivot())
 			weapon.SetDir(p.cursorDir)
@@ -219,13 +238,18 @@ func (p *player) ServerUpdate(tick int64) {
 			if p.isDropping {
 				p.DropWeapon()
 				p.isDropping = false
-			} else if p.isReloading {
-				weapon.Reload()
-				p.isReloading = false
-			} else if p.isTriggering {
-				if weapon.Trigger() {
-					p.triggerTime = now
+			}
+			if now.Sub(p.meleeTime) > playerMeleeTime {
+				if p.isReloading {
+					weapon.Reload()
+					p.isReloading = false
+				} else if p.isTriggering {
+					if weapon.Trigger() {
+						p.triggerTime = now
+					}
 				}
+			} else {
+				weapon.StopReloading()
 			}
 			p.triggerVisibleTime = weapon.GetTriggerVisibleTime()
 		} else {
@@ -234,7 +258,8 @@ func (p *player) ServerUpdate(tick int64) {
 		p.hitVisibleTime = playerVisibleTime
 		// Update position
 		moveSpeed := p.moveSpeed
-		if now.Sub(p.triggerTime) < playerSpeedCooldown {
+		if now.Sub(p.triggerTime) < playerSpeedCooldown ||
+			now.Sub(p.meleeTime) < playerSpeedCooldown {
 			moveSpeed /= 2
 		}
 		pos := p.pos
@@ -262,6 +287,7 @@ func (p *player) ClientUpdate() {
 	if p.isMainPlayer {
 		// Set weapon
 		ss := p.getLastSnapshot().Player
+		p.meleeWeaponID = ss.MeleeWeaponID
 		p.weaponID = ss.WeaponID
 		// Update position
 		moveSpeed := p.moveSpeed
@@ -298,6 +324,7 @@ func (p *player) ClientUpdate() {
 	} else {
 		ss := p.getLerpSnapshot().Player
 		// Set weapon
+		p.meleeWeaponID = ss.MeleeWeaponID
 		p.weaponID = ss.WeaponID
 		// Update position
 		p.pos = ss.Pos.Convert()
@@ -316,6 +343,7 @@ func (p *player) ClientUpdate() {
 	p.armor = lastSS.Armor
 	p.respawnTime = time.Unix(0, lastSS.RespawnTime)
 	p.hitTime = time.Unix(0, lastSS.HitTime)
+	p.meleeTime = time.Unix(0, lastSS.MeleeTime)
 	p.triggerTime = time.Unix(0, lastSS.TriggerTime)
 	p.pickupTime = time.Unix(0, lastSS.PickupTime)
 	p.hitVisibleTime = time.Duration(lastSS.HitVisibleMS) * time.Millisecond
@@ -327,6 +355,10 @@ func (p *player) ClientUpdate() {
 		weapon.SetPos(p.GetPivot())
 		weapon.SetDir(p.cursorDir)
 	}
+	if meleeWeapon := p.GetMeleeWeapon(); meleeWeapon != nil {
+		meleeWeapon.SetPos(p.GetPivot())
+		meleeWeapon.SetDir(p.cursorDir)
+	}
 	p.cleanTickSnapshots()
 }
 
@@ -335,7 +367,7 @@ func (p *player) SetPos(pos pixel.Vec) {
 }
 
 func (p *player) SetInput(input *protocol.InputSnapshot) {
-	if input == nil || !p.Exists() {
+	if input == nil || !p.IsAlive() {
 		return
 	}
 	var moveSpeed float64
@@ -359,10 +391,29 @@ func (p *player) SetInput(input *protocol.InputSnapshot) {
 	p.isDropping = input.Drop
 	p.isTriggering = input.Fire
 	p.isReloading = input.Reload
+	p.isMeleeing = input.Melee
 }
 
 func (p *player) SetMainPlayer() {
 	p.isMainPlayer = true
+}
+
+func (p *player) GetMeleeWeapon() common.Weapon {
+	if p.meleeWeaponID == "" {
+		return nil
+	}
+	if o, exists := p.world.GetObjectDB().SelectOne(p.meleeWeaponID); exists && o.GetType() == config.WeaponObject {
+		return o.(common.Weapon)
+	}
+	return nil
+}
+
+func (p *player) SetMeleeWeapon(w common.Weapon) {
+	if w != nil {
+		p.meleeWeaponID = w.GetID()
+	} else {
+		p.meleeWeaponID = ""
+	}
 }
 
 func (p *player) GetWeapon() common.Weapon {
@@ -404,7 +455,7 @@ func (p *player) AddDamage(firingPlayerID string, weaponID string, damage float6
 	p.hp -= damage
 	p.hitTime = ticktime.GetServerTime()
 	if p.hp <= 0 {
-		p.dead(firingPlayerID, weaponID)
+		p.die(firingPlayerID, weaponID)
 	}
 }
 
@@ -466,8 +517,10 @@ func (p *player) GetTriggerTime() time.Time {
 
 func (p *player) IsVisible() bool {
 	now := ticktime.GetServerTime()
-	return now.Sub(p.hitTime) <= p.hitVisibleTime ||
-		now.Sub(p.triggerTime) <= p.triggerVisibleTime
+	return !p.IsAlive() ||
+		now.Sub(p.hitTime) <= p.hitVisibleTime ||
+		now.Sub(p.triggerTime) <= p.triggerVisibleTime ||
+		now.Sub(p.meleeTime) <= playerVisibleTime
 }
 
 func (p *player) SetPlayerName(name string) {
@@ -506,7 +559,7 @@ func (p *player) renderPlayerName(target pixel.Target, viewPos pixel.Vec) {
 	}()
 	shape := p.GetShape()
 	pos := pixel.V(shape.Min.X+shape.W()/2, shape.Max.Y+playerNameOffset).Sub(viewPos)
-	if p.getScoreboardPlace() == 1 {
+	if p.streak > 0 && p.getScoreboardPlace() == 1 {
 		anim := animation.NewIconSkull()
 		anim.Pos = pos.Add(pixel.V(0, playerTopIconOffset))
 		anim.Draw(target)
@@ -535,7 +588,10 @@ func (p *player) render(target pixel.Target, viewPos pixel.Vec) {
 	}
 	anim.Invulnerable = p.isInvulnerable
 	anim.Shadow = true
-	if p.moveSpeed == 0 {
+	anim.DieTime = p.respawnTime.Add(-playerRespawnTime)
+	if p.respawnTime.After(now) {
+		anim.State = animation.CharacterDieState
+	} else if p.moveSpeed == 0 {
 		anim.State = animation.CharacterIdleState
 		anim.FrameTime *= 2
 	} else {
@@ -549,8 +605,10 @@ func (p *player) render(target pixel.Target, viewPos pixel.Vec) {
 		anim.FrameTime = int(float64(playerFrameTime*playerBaseMoveSpeed) / moveSpeed)
 	}
 	anim.Draw(target)
-	if weapon := p.GetWeapon(); weapon != nil {
+	if weapon := p.GetWeapon(); weapon != nil && now.Sub(p.meleeTime) > playerMeleeTime {
 		weapon.Render(target, viewPos)
+	} else if knife := p.GetMeleeWeapon(); knife != nil {
+		knife.Render(target, viewPos)
 	}
 }
 
@@ -644,6 +702,7 @@ func (p *player) getSnapshotsByTime(t time.Time) *protocol.ObjectSnapshot {
 		Type: config.PlayerObject,
 		Player: &protocol.PlayerSnapshot{
 			PlayerName:       ssB.PlayerName,
+			MeleeWeaponID:    ssB.MeleeWeaponID,
 			WeaponID:         ssB.WeaponID,
 			Kill:             ssB.Kill,
 			Death:            ssB.Death,
@@ -658,6 +717,7 @@ func (p *player) getSnapshotsByTime(t time.Time) *protocol.ObjectSnapshot {
 			Armor:            util.LerpScalar(ssA.Armor, ssB.Armor, d),
 			RespawnTime:      ssB.RespawnTime,
 			HitTime:          ssB.HitTime,
+			MeleeTime:        ssB.MeleeTime,
 			TriggerTime:      ssB.TriggerTime,
 			PickupTime:       ssB.PickupTime,
 			HitVisibleMS:     ssB.HitVisibleMS,
@@ -693,6 +753,7 @@ func (p *player) getCurrentSnapshot() *protocol.ObjectSnapshot {
 		Type: config.PlayerObject,
 		Player: &protocol.PlayerSnapshot{
 			PlayerName:       p.playerName,
+			MeleeWeaponID:    p.meleeWeaponID,
 			WeaponID:         p.weaponID,
 			Kill:             p.kill,
 			Death:            p.death,
@@ -707,6 +768,7 @@ func (p *player) getCurrentSnapshot() *protocol.ObjectSnapshot {
 			Armor:            p.armor,
 			RespawnTime:      p.respawnTime.UnixNano(),
 			HitTime:          p.hitTime.UnixNano(),
+			MeleeTime:        p.meleeTime.UnixNano(),
 			TriggerTime:      p.triggerTime.UnixNano(),
 			PickupTime:       p.pickupTime.UnixNano(),
 			HitVisibleMS:     int(p.hitVisibleTime.Seconds() * 1000),
@@ -716,7 +778,7 @@ func (p *player) getCurrentSnapshot() *protocol.ObjectSnapshot {
 	}
 }
 
-func (p *player) dead(firingPlayerID string, weaponID string) {
+func (p *player) die(firingPlayerID string, weaponID string) {
 	// Set status
 	p.death++
 	p.streak = 0
@@ -724,9 +786,10 @@ func (p *player) dead(firingPlayerID string, weaponID string) {
 	p.armor = playerInitArmor
 	p.respawnTime = ticktime.GetServerTime().Add(playerRespawnTime)
 	// Drop armor
+	isXL := p.getScoreboardPlace() == 1 && p.streak > 0
 	itemID := p.world.GetObjectDB().GetAvailableID()
-	itemArmor := item.NewItemArmor(p.world, itemID, p.getScoreboardPlace() == 1)
-	itemArmor.SetPos(p.pos)
+	itemArmor := item.NewItemArmor(p.world, itemID, isXL)
+	itemArmor.SetPos(p.pos.Add(pixel.V(0, -1)))
 	p.world.GetObjectDB().Set(itemArmor)
 	// Drop weapon
 	p.DropWeapon()

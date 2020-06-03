@@ -47,6 +47,7 @@ type WorldSnapshot struct {
 type InputSnapshot struct {
 	CursorDir *Vec `json:"cursor_dir,omitempty"`
 	Fire      bool `json:"fire,omitempty"`
+	Melee     bool `json:"melee,omitempty"`
 	Focus     bool `json:"focus,omitempty"`
 	Up        bool `json:"up,omitempty"`
 	Left      bool `json:"left,omitempty"`

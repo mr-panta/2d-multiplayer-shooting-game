@@ -80,6 +80,8 @@ type Player interface {
 	SetMainPlayer()
 	GetPivot() pixel.Vec
 	SetInput(input *protocol.InputSnapshot)
+	GetMeleeWeapon() Weapon
+	SetMeleeWeapon(w Weapon)
 	GetWeapon() Weapon
 	SetWeapon(w Weapon)
 	DropWeapon()
@@ -93,6 +95,7 @@ type Player interface {
 	GetTriggerTime() time.Time
 	GetScopeRadius(dist float64) float64
 	IsVisible() bool
+	IsAlive() bool
 	SetPlayerName(name string)
 	GetPlayerName() string
 }
@@ -114,6 +117,7 @@ type Weapon interface {
 	GetAmmo() (mag, ammo int)
 	Trigger() bool
 	Reload() bool
+	StopReloading()
 	GetScopeRadius(dist float64) float64
 	GetTriggerVisibleTime() time.Duration
 }

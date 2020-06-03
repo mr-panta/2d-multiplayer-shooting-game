@@ -261,6 +261,11 @@ func (m *WeaponSMG) Reload() bool {
 	return false
 }
 
+func (m *WeaponSMG) StopReloading() {
+	m.isReloading = false
+	m.reloadTime = ticktime.GetServerStartTime()
+}
+
 func (m *WeaponSMG) SetPlayerID(playerID string) {
 	m.playerID = playerID
 }

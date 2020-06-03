@@ -2,6 +2,8 @@ package animation
 
 import (
 	"image/color"
+	"math"
+	"time"
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/imdraw"
@@ -11,12 +13,22 @@ import (
 
 var (
 	characterIdleFrames = []pixel.Rect{
+		pixel.R(0*128, 128, 1*128, 256),
+		pixel.R(1*128, 128, 2*128, 256),
+		pixel.R(2*128, 128, 3*128, 256),
+		pixel.R(3*128, 128, 4*128, 256),
+	}
+	characterMoveFrames = []pixel.Rect{
+		pixel.R(4*128, 128, 5*128, 256),
+		pixel.R(5*128, 128, 6*128, 256),
+		pixel.R(6*128, 128, 7*128, 256),
+		pixel.R(7*128, 128, 8*128, 256),
+	}
+	characterDieFrames = []pixel.Rect{
 		pixel.R(0*128, 0, 1*128, 128),
 		pixel.R(1*128, 0, 2*128, 128),
 		pixel.R(2*128, 0, 3*128, 128),
 		pixel.R(3*128, 0, 4*128, 128),
-	}
-	characterMoveFrames = []pixel.Rect{
 		pixel.R(4*128, 0, 5*128, 128),
 		pixel.R(5*128, 0, 6*128, 128),
 		pixel.R(6*128, 0, 7*128, 128),
@@ -35,6 +47,9 @@ const (
 	// States
 	CharacterIdleState = 0
 	CharacterRunState  = 1
+	CharacterDieState  = 2
+	// dead duration
+	characterDeadDuration = 800
 )
 
 type Character struct {
@@ -48,6 +63,7 @@ type Character struct {
 	ArmorHit     bool
 	Invulnerable bool
 	Shadow       bool
+	DieTime      time.Time
 }
 
 func NewCharacter() *Character {
@@ -71,10 +87,21 @@ func (c *Character) draw(target pixel.Target) {
 		frames = characterIdleFrames
 	case CharacterRunState:
 		frames = characterMoveFrames
+	case CharacterDieState:
+		frames = characterDieFrames
 	default:
 		return
 	}
-	frame := frames[int((ticktime.GetServerTimeMS()/int64(c.FrameTime))%int64(len(frames)))]
+	keyFrame := int((ticktime.GetServerTimeMS() / int64(c.FrameTime)) % int64(len(frames)))
+	if c.State == CharacterDieState {
+		deadMS := ticktime.GetServerTime().Sub(c.DieTime).Seconds() * 1000
+		keyFrame = int(math.Floor(deadMS * float64(len(frames)) / float64(characterDeadDuration)))
+		if keyFrame >= len(frames) {
+			// Render nothing
+			return
+		}
+	}
+	frame := frames[keyFrame]
 	sprite := pixel.NewSprite(objectSheet, frame)
 	matrix := pixel.IM.Moved(c.Pos)
 	if c.Right {

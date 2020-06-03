@@ -189,7 +189,7 @@ func (w *world) GetInputSnapshot() *protocol.InputSnapshot {
 	inputSS := &protocol.InputSnapshot{
 		CursorDir: util.ConvertVec(w.currRawInput.MousePos.Sub(pivot)),
 		Fire:      w.currRawInput.PressedFireKey,
-		Focus:     w.currRawInput.PressedFocusKey,
+		Melee:     w.currRawInput.PressedMeleeKey,
 		Up:        w.currRawInput.PressedUpKey,
 		Left:      w.currRawInput.PressedLeftKey,
 		Down:      w.currRawInput.PressedDownKey,
@@ -207,7 +207,7 @@ func (w *world) getRawInput() *common.RawInput {
 	return &common.RawInput{
 		MousePos:                w.win.MousePosition(),
 		PressedFireKey:          w.win.Pressed(config.FireKey),
-		PressedFocusKey:         w.win.Pressed(config.FocusKey),
+		PressedMeleeKey:         w.win.Pressed(config.MeleeKey),
 		PressedUpKey:            w.win.Pressed(config.UpKey),
 		PressedLeftKey:          w.win.Pressed(config.LeftKey),
 		PressedDownKey:          w.win.Pressed(config.DownKey),
@@ -226,7 +226,7 @@ func (w *world) updateRawInput() {
 	currRawInput := &common.RawInput{
 		MousePos:         rawInput.MousePos,
 		PressedFireKey:   rawInput.PressedFireKey || w.currRawInput.PressedFireKey,
-		PressedFocusKey:  rawInput.PressedFocusKey || w.currRawInput.PressedFocusKey,
+		PressedMeleeKey:  rawInput.PressedMeleeKey || w.currRawInput.PressedMeleeKey,
 		PressedUpKey:     rawInput.PressedUpKey || w.currRawInput.PressedUpKey,
 		PressedLeftKey:   rawInput.PressedLeftKey || w.currRawInput.PressedLeftKey,
 		PressedDownKey:   rawInput.PressedDownKey || w.currRawInput.PressedDownKey,

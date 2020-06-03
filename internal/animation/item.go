@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	itemFrameOffset       = pixel.V(0, 3*64)
+	itemFrameOffset       = pixel.V(0, 320)
 	itemAmmoFrame         = pixel.R(0*64, 0, 1*64, 64).Moved(itemFrameOffset)
 	itemWeaponFrame       = pixel.R(1*64, 0, 2*64, 64).Moved(itemFrameOffset)
 	itemMedicKitFrame     = pixel.R(2*64, 0, 3*64, 64).Moved(itemFrameOffset)

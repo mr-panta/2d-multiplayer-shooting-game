@@ -187,6 +187,7 @@ func (m *WeaponM4) ClientUpdate() {
 	m.reloadTime = time.Unix(0, ss.ReloadTime)
 	m.isTriggering = now.Sub(m.triggerTime) < m4TriggerCooldown
 	m.isReloading = now.Sub(m.reloadTime) < m4ReloadCooldown
+	// Play sounds
 	if mainPlayer := m.world.GetMainPlayer(); mainPlayer != nil {
 		dist := m.world.GetMainPlayer().GetPivot().Sub(m.pos).Len()
 		if !ticktime.IsZeroTime(prevTriggerTime) && prevTriggerTime.Before(m.triggerTime) {
@@ -259,6 +260,11 @@ func (m *WeaponM4) Reload() bool {
 		return true
 	}
 	return false
+}
+
+func (m *WeaponM4) StopReloading() {
+	m.isReloading = false
+	m.reloadTime = ticktime.GetServerStartTime()
 }
 
 func (m *WeaponM4) SetPlayerID(playerID string) {

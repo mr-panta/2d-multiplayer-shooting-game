@@ -12,21 +12,26 @@ import (
 )
 
 var (
+	// offset
+	weaponOffset = pixel.V(0, 256)
 	// m4
-	weaponM4Frame  = pixel.R(0, 2*64+1, 3*32, 3*64-1)
+	weaponM4Frame  = pixel.R(0, 1, 3*32, 63).Moved(weaponOffset)
 	weaponM4Offset = pixel.V(-16, 0)
 	// shotgun
-	weaponShotgunFrame  = pixel.R(8*32, 2*64+1, 11*32, 3*64-1)
+	weaponShotgunFrame  = pixel.R(8*32, 1, 11*32, 63).Moved(weaponOffset)
 	weaponShotgunOffset = pixel.V(-16, 0)
 	// sniper
-	weaponSniperFrame  = pixel.R(3*32, 2*64+1, 8*32, 3*64-1)
+	weaponSniperFrame  = pixel.R(3*32, 1, 8*32, 63).Moved(weaponOffset)
 	weaponSniperOffset = pixel.V(-24, 0)
 	// pistol
-	weaponPistolFrame  = pixel.R(11*32, 2*64+1, 12*32, 3*64-1)
+	weaponPistolFrame  = pixel.R(11*32, 1, 12*32, 63).Moved(weaponOffset)
 	weaponPistolOffset = pixel.V(-24, 0)
 	// pistol
-	weaponSMGFrame  = pixel.R(12*32, 2*64+1, 14*32, 3*64-1)
+	weaponSMGFrame  = pixel.R(12*32, 1, 14*32, 63).Moved(weaponOffset)
 	weaponSMGOffset = pixel.V(-12, 0)
+	// knife
+	weaponKnifeFrame  = pixel.R(14*32, 1, 16*32, 63).Moved(weaponOffset)
+	weaponKnifeOffset = pixel.V(-19, 0)
 )
 
 const (
@@ -108,6 +113,30 @@ func (m *Weapon) Draw(target pixel.Target) {
 		matrix = matrix.Rotated(pixel.ZV, dir.Angle())
 	} else {
 		matrix = matrix.Rotated(pixel.ZV, pixel.ZV.Sub(dir).Angle())
+	}
+	matrix = matrix.Moved(m.Pos)
+	sprite.DrawColorMask(target, matrix, m.Color)
+}
+
+func NewWeaponKnife() *WeaponKnife {
+	return &WeaponKnife{}
+}
+
+type WeaponKnife struct {
+	Pos    pixel.Vec
+	Dir    pixel.Vec
+	Radius float64
+	Color  color.Color
+}
+
+func (m *WeaponKnife) Draw(target pixel.Target) {
+	sprite := pixel.NewSprite(objectSheet, weaponKnifeFrame)
+	matrix := pixel.IM.Moved(pixel.V(-m.Radius, 0).Add(weaponKnifeOffset))
+	if m.Dir.X > 0 {
+		matrix = matrix.ScaledXY(pixel.ZV, pixel.V(-1, 1))
+		matrix = matrix.Rotated(pixel.ZV, m.Dir.Angle())
+	} else {
+		matrix = matrix.Rotated(pixel.ZV, pixel.ZV.Sub(m.Dir).Angle())
 	}
 	matrix = matrix.Moved(m.Pos)
 	sprite.DrawColorMask(target, matrix, m.Color)

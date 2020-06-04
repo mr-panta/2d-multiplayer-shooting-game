@@ -8,7 +8,6 @@ import (
 	_ "image/png"
 
 	"github.com/faiface/pixel"
-	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
 )
 
 var (
@@ -85,13 +84,12 @@ type Weapon struct {
 	Pos             pixel.Vec
 	Dir             pixel.Vec
 	Color           color.Color
-	TriggerTime     time.Time
+	TriggerDuration time.Duration
 	TriggerCooldown time.Duration
 	State           int
 }
 
 func (m *Weapon) Draw(target pixel.Target) {
-	now := ticktime.GetServerTime()
 	sprite := pixel.NewSprite(objectSheet, m.frame)
 	var dir pixel.Vec
 	var posDiff pixel.Vec
@@ -102,7 +100,7 @@ func (m *Weapon) Draw(target pixel.Target) {
 	case WeaponReloadState:
 		dir = pixel.V(m.Dir.X, -math.Abs(m.Dir.X))
 	case WeaponTriggerState:
-		fac := 1.0 - (float64(now.Sub(m.TriggerTime)) / float64(m.TriggerCooldown))
+		fac := pixel.Clamp(1.0-(float64(m.TriggerDuration)/float64(m.TriggerCooldown)), 0, 1)
 		posDiff = pixel.V(recoilPosDiff*fac, 0)
 		angleDiff = -math.Pi / 180 * (recoilAngle * fac)
 		dir = m.Dir

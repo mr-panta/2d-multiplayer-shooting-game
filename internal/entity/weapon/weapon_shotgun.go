@@ -101,10 +101,14 @@ func (m *WeaponShotgun) GetRenderObjects() []common.RenderObject {
 }
 
 func (m *WeaponShotgun) Render(target pixel.Target, viewPos pixel.Vec) {
+	now := ticktime.GetLerpTime()
+	if m.playerID == m.world.GetMainPlayerID() {
+		now = ticktime.GetServerTime()
+	}
 	anim := animation.NewWeaponShotgun()
 	anim.Pos = m.pos.Sub(viewPos)
 	anim.Dir = m.dir
-	anim.TriggerTime = m.triggerTime
+	anim.TriggerDuration = now.Sub(m.triggerTime)
 	anim.TriggerCooldown = shotgunTriggerCooldown
 	if m.isReloading {
 		anim.State = animation.WeaponReloadState
@@ -170,7 +174,7 @@ func (m *WeaponShotgun) ServerUpdate(tick int64) {
 func (m *WeaponShotgun) ClientUpdate() {
 	var now time.Time
 	var ss *protocol.WeaponShotgunSnapshot
-	if m.playerID != m.world.GetMainPlayerID() {
+	if m.playerID == m.world.GetMainPlayerID() {
 		now = ticktime.GetServerTime()
 		snapshot := m.getLastSnapshot()
 		ss = snapshot.Weapon.Shotgun

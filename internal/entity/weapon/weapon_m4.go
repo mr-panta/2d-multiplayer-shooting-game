@@ -100,10 +100,14 @@ func (m *WeaponM4) GetRenderObjects() []common.RenderObject {
 }
 
 func (m *WeaponM4) Render(target pixel.Target, viewPos pixel.Vec) {
+	now := ticktime.GetLerpTime()
+	if m.playerID == m.world.GetMainPlayerID() {
+		now = ticktime.GetServerTime()
+	}
 	anim := animation.NewWeaponM4()
 	anim.Pos = m.pos.Sub(viewPos)
 	anim.Dir = m.dir
-	anim.TriggerTime = m.triggerTime
+	anim.TriggerDuration = now.Sub(m.triggerTime)
 	anim.TriggerCooldown = m4TriggerCooldown
 	if m.isReloading {
 		anim.State = animation.WeaponReloadState
@@ -169,7 +173,7 @@ func (m *WeaponM4) ServerUpdate(tick int64) {
 func (m *WeaponM4) ClientUpdate() {
 	var now time.Time
 	var ss *protocol.WeaponM4Snapshot
-	if m.playerID != m.world.GetMainPlayerID() {
+	if m.playerID == m.world.GetMainPlayerID() {
 		now = ticktime.GetServerTime()
 		snapshot := m.getLastSnapshot()
 		ss = snapshot.Weapon.M4

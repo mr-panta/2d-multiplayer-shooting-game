@@ -96,10 +96,14 @@ func (m *WeaponSniper) GetRenderObjects() []common.RenderObject {
 }
 
 func (m *WeaponSniper) Render(target pixel.Target, viewPos pixel.Vec) {
+	now := ticktime.GetLerpTime()
+	if m.playerID == m.world.GetMainPlayerID() {
+		now = ticktime.GetServerTime()
+	}
 	anim := animation.NewWeaponSniper()
 	anim.Pos = m.pos.Sub(viewPos)
 	anim.Dir = m.dir
-	anim.TriggerTime = m.triggerTime
+	anim.TriggerDuration = now.Sub(m.triggerTime)
 	anim.TriggerCooldown = sniperTriggerCooldown
 	if m.isReloading {
 		anim.State = animation.WeaponReloadState
@@ -165,7 +169,7 @@ func (m *WeaponSniper) ServerUpdate(tick int64) {
 func (m *WeaponSniper) ClientUpdate() {
 	var now time.Time
 	var ss *protocol.WeaponSniperSnapshot
-	if m.playerID != m.world.GetMainPlayerID() {
+	if m.playerID == m.world.GetMainPlayerID() {
 		now = ticktime.GetServerTime()
 		snapshot := m.getLastSnapshot()
 		ss = snapshot.Weapon.Sniper

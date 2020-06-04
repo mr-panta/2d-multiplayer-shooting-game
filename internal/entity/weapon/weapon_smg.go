@@ -100,10 +100,11 @@ func (m *WeaponSMG) GetRenderObjects() []common.RenderObject {
 }
 
 func (m *WeaponSMG) Render(target pixel.Target, viewPos pixel.Vec) {
+	now := ticktime.GetLerpTime()
 	anim := animation.NewWeaponSMG()
 	anim.Pos = m.pos.Sub(viewPos)
 	anim.Dir = m.dir
-	anim.TriggerTime = m.triggerTime
+	anim.TriggerDuration = now.Sub(m.triggerTime)
 	anim.TriggerCooldown = smgTriggerCooldown
 	if m.isReloading {
 		anim.State = animation.WeaponReloadState
@@ -167,14 +168,12 @@ func (m *WeaponSMG) ServerUpdate(tick int64) {
 }
 
 func (m *WeaponSMG) ClientUpdate() {
-	var now time.Time
+	now := ticktime.GetLerpTime()
 	var ss *protocol.WeaponSMGSnapshot
-	if m.playerID != m.world.GetMainPlayerID() {
-		now = ticktime.GetServerTime()
+	if m.playerID == m.world.GetMainPlayerID() {
 		snapshot := m.getLastSnapshot()
 		ss = snapshot.Weapon.SMG
 	} else {
-		now = ticktime.GetLerpTime()
 		snapshot := m.getLerpSnapshot()
 		ss = snapshot.Weapon.SMG
 	}

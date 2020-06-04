@@ -312,11 +312,11 @@ func (p *player) ClientUpdate() {
 			pos = ss.Pos.Convert()
 		} else {
 			ms := 1000.0
-			d := time.Duration(ms/config.ServerSyncRate) * time.Millisecond
-			// if now.Sub(p.errorTime) <= d {
-			errorCorrectionDist := p.posError.Scaled(diff / d.Seconds())
-			pos = pos.Sub(errorCorrectionDist)
-			// }
+			d := time.Duration(1.5*ms/config.ServerSyncRate) * time.Millisecond
+			if now.Sub(p.errorTime) <= d {
+				errorCorrectionDist := p.posError.Scaled(diff / d.Seconds())
+				pos = pos.Sub(errorCorrectionDist)
+			}
 		}
 		// Check collision
 		_, _, dynamicAdjust := p.world.CheckCollision(p.id, p.getCollider(), p.getColliderByPos(pos))

@@ -21,7 +21,7 @@ import (
 const (
 	smgDropRate           = 20
 	smgWidth              = 80
-	smgBulletSpeed        = 1000
+	smgBulletSpeed        = 1500
 	smgMaxRange           = 1000
 	smgBulletLength       = 12
 	smgDamage             = 10

@@ -24,14 +24,14 @@ const (
 	m4BulletSpeed        = 2000
 	m4MaxRange           = 1000
 	m4BulletLength       = 12
-	m4Damage             = 18
+	m4Damage             = 20
 	m4TriggerVisibleTime = time.Second
 	m4TriggerCooldown    = 150 * time.Millisecond
 	m4ReloadCooldown     = 2 * time.Second
 	m4Ammo               = 60
 	m4Mag                = 30
 	m4MaxScopeRadius     = 160
-	m4MaxScopeRange      = 600
+	m4MaxScopeRange      = 720
 	m4RecoilAngle        = math.Pi / 180 * 6
 )
 

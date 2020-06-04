@@ -8,7 +8,7 @@ import (
 	"golang.org/x/image/colornames"
 )
 
-const Version = "0.0.5"
+const Version = "0.0.6"
 
 // default
 const (

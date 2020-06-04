@@ -796,6 +796,7 @@ func (p *player) getCurrentSnapshot() *protocol.ObjectSnapshot {
 }
 
 func (p *player) die(firingPlayerID string, weaponID string) {
+	streak := p.streak
 	// Set status
 	p.death++
 	p.streak = 0
@@ -803,7 +804,7 @@ func (p *player) die(firingPlayerID string, weaponID string) {
 	p.armor = playerInitArmor
 	p.respawnTime = ticktime.GetServerTime().Add(playerRespawnTime)
 	// Drop armor
-	isXL := p.getScoreboardPlace() == 1 && p.streak > 0
+	isXL := p.getScoreboardPlace() == 1 && streak > 0
 	itemID := p.world.GetObjectDB().GetAvailableID()
 	itemArmor := item.NewItemArmor(p.world, itemID, isXL)
 	itemArmor.SetPos(p.pos.Add(pixel.V(0, -1)))

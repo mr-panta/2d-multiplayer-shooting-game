@@ -74,7 +74,7 @@ func NewCharacter() *Character {
 }
 
 func (c *Character) Draw(target pixel.Target) {
-	if c.Shadow {
+	if c.Shadow && c.State != CharacterDieState {
 		c.drawShadow(target)
 	}
 	c.draw(target)

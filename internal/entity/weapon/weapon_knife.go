@@ -1,7 +1,6 @@
 package weapon
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
@@ -134,7 +133,6 @@ func (o *WeaponKnife) checkPlayerCollision() common.Player {
 				continue
 			}
 			if player.GetShape().Intersects(o.GetShape()) {
-				fmt.Println("HI")
 				return player
 			}
 		}

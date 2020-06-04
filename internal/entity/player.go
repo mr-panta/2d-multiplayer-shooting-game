@@ -22,7 +22,7 @@ const (
 	playerShapeHeigth        = 128
 	playerShapeWidth         = 48
 	playerColliderSize       = 40
-	playerBaseMoveSpeed      = 300
+	playerBaseMoveSpeed      = 360
 	playerFrameTime          = 150
 	playerZ                  = 10
 	playerNameZ              = 1000

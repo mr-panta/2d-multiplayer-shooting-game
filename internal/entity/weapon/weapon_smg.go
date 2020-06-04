@@ -20,7 +20,7 @@ import (
 
 const (
 	smgDropRate           = 20
-	smgWidth              = 124
+	smgWidth              = 80
 	smgBulletSpeed        = 1000
 	smgMaxRange           = 1000
 	smgBulletLength       = 12
@@ -32,7 +32,7 @@ const (
 	smgMag                = 30
 	smgMaxScopeRadius     = 160
 	smgMaxScopeRange      = 600
-	smgRecoilAngle        = math.Pi / 180 * 6
+	smgRecoilAngle        = math.Pi / 180 * 10
 )
 
 type WeaponSMG struct {

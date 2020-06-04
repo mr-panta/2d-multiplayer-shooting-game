@@ -7,6 +7,7 @@ import (
 	"github.com/faiface/pixel/pixelgl"
 	"github.com/faiface/pixel/text"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
+	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
 	"golang.org/x/image/colornames"
 	"golang.org/x/image/font/basicfont"
 )
@@ -25,8 +26,8 @@ func New(clientProcessor common.ClientProcessor) *Menu {
 	return &Menu{
 		win:             win,
 		clientProcessor: clientProcessor,
-		hostAddrInput:   NewInput(win),
-		playerNameInput: NewInput(win),
+		hostAddrInput:   NewInput(win, config.TCPIP),
+		playerNameInput: NewInput(win, ""),
 		playButton:      NewButton(win),
 	}
 }

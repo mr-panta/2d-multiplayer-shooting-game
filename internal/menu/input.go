@@ -39,7 +39,7 @@ type Input struct {
 	Label      string
 }
 
-func NewInput(win *pixelgl.Window) *Input {
+func NewInput(win *pixelgl.Window, defaultValue string) *Input {
 	return &Input{
 		win:        win,
 		lineImd:    imdraw.New(nil),
@@ -47,6 +47,7 @@ func NewInput(win *pixelgl.Window) *Input {
 		Color:      colornames.White,
 		FocusColor: colornames.White,
 		HoverColor: colornames.White,
+		value:      defaultValue,
 	}
 }
 

@@ -46,6 +46,8 @@ const (
 	playerNameOffset         = 8
 	playerInvulnerableTime   = 3 * time.Second
 	playerTopIconOffset      = 44
+	playerDropInitArmor      = 30
+	playerDropArmorRate      = 10
 )
 
 var (
@@ -804,9 +806,9 @@ func (p *player) die(firingPlayerID string, weaponID string) {
 	p.armor = playerInitArmor
 	p.respawnTime = ticktime.GetServerTime().Add(playerRespawnTime)
 	// Drop armor
-	isXL := p.getScoreboardPlace() == 1 && streak > 0
+	armor := float64(streak*playerDropArmorRate + playerDropInitArmor)
 	itemID := p.world.GetObjectDB().GetAvailableID()
-	itemArmor := item.NewItemArmor(p.world, itemID, isXL)
+	itemArmor := item.NewItemArmor(p.world, itemID, armor)
 	itemArmor.SetPos(p.pos.Add(pixel.V(0, -1)))
 	p.world.GetObjectDB().Set(itemArmor)
 	// Drop weapon

@@ -30,11 +30,7 @@ type ItemArmor struct {
 	lock          sync.RWMutex
 }
 
-func NewItemArmor(world common.World, id string, isXL bool) *ItemArmor {
-	armor := itemArmorSize
-	if isXL {
-		armor = itemArmorXLSize
-	}
+func NewItemArmor(world common.World, id string, armor float64) *ItemArmor {
 	return &ItemArmor{
 		id:         id,
 		world:      world,
@@ -158,10 +154,9 @@ func (w *ItemArmor) getCurrentSnapshot() *protocol.ObjectSnapshot {
 
 func (w *ItemArmor) render(target pixel.Target, viewPos pixel.Vec) {
 	var anim *animation.Item
-	switch w.armor {
-	case itemArmorXLSize:
+	if w.armor >= itemArmorXLSize {
 		anim = animation.NewItemArmorBlue()
-	default:
+	} else {
 		anim = animation.NewItemArmor()
 	}
 	anim.Pos = w.pos.Sub(viewPos)

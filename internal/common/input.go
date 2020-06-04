@@ -16,4 +16,5 @@ type RawInput struct {
 	PressedVolumeUpKey      bool
 	PressedVolumeDownKey    bool
 	PressedToggleFullScreen bool
+	PressedToggleFPSLimit   bool
 }

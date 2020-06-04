@@ -45,6 +45,7 @@ type World interface {
 
 type ClientProcessor interface {
 	Restart()
+	ToggleFPSLimit()
 	Close()
 	GetWindow() *pixelgl.Window
 	Run()

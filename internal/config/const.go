@@ -13,6 +13,7 @@ const Version = "0.0.4"
 // default
 const (
 	DefaultRefreshRate  = 60
+	MaxRefreshRate      = 300
 	DefaultWindowWidth  = float64(768)
 	DefaultWindowHeight = float64(512)
 )
@@ -52,6 +53,7 @@ const (
 	VolumeUpKey      = pixelgl.KeyUp
 	VolumeDownKey    = pixelgl.KeyDown
 	ToggleFullScreen = pixelgl.KeyF10
+	ToggleFPSLimit   = pixelgl.KeyF9
 )
 
 // color

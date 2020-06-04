@@ -4,15 +4,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/sound"
-
-	"github.com/faiface/pixel/imdraw"
-
 	"github.com/faiface/pixel"
+	"github.com/faiface/pixel/imdraw"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/animation"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
+	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/sound"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/util"
 )
@@ -20,14 +18,14 @@ import (
 const (
 	knifeTriggerVisibleTime = time.Second
 	knifeTriggerCooldown    = 250 * time.Millisecond
-	knifeTriggerMinRange    = 8
-	knifeTriggerMaxRange    = 32
+	knifeTriggerMinRange    = 12
+	knifeTriggerMaxRange    = 36
 	knifeDamage             = 20
 )
 
 var (
 	knifeShape       = pixel.R(-10, -10, 10, 10)
-	knifeShapeOffset = pixel.V(-40, 0)
+	knifeShapeOffset = pixel.V(-45, 0)
 )
 
 type WeaponKnife struct {

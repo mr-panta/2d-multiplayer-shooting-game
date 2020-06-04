@@ -34,6 +34,7 @@ type world struct {
 	hud      common.Hud
 	// client
 	win              *pixelgl.Window
+	toggleFPSLimit   func()
 	batch            *pixel.Batch
 	currRawInput     *common.RawInput
 	prevRawInput     *common.RawInput
@@ -69,6 +70,7 @@ func New(clientProcessor common.ClientProcessor) common.World {
 	if clientProcessor != nil {
 		// client
 		world.win = clientProcessor.GetWindow()
+		world.toggleFPSLimit = clientProcessor.ToggleFPSLimit
 		world.batch = pixel.NewBatch(&pixel.TrianglesData{}, animation.GetObjectSheet())
 		world.scope = entity.NewScope(world)
 		world.water = entity.NewWater(world)

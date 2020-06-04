@@ -1,6 +1,7 @@
 package world
 
 import (
+	"fmt"
 	"image/color"
 	"sort"
 	"time"
@@ -175,6 +176,7 @@ func (w *world) updateFPS() {
 		w.fps = w.frameCount
 		w.frameCount = 0
 		w.fpsUpdateTime = now
+		fmt.Println(w.fps)
 	}
 }
 
@@ -218,6 +220,7 @@ func (w *world) getRawInput() *common.RawInput {
 		PressedVolumeUpKey:      w.win.Pressed(config.VolumeUpKey),
 		PressedVolumeDownKey:    w.win.Pressed(config.VolumeDownKey),
 		PressedToggleFullScreen: w.win.Pressed(config.ToggleFullScreen),
+		PressedToggleFPSLimit:   w.win.Pressed(config.ToggleFPSLimit),
 	}
 }
 
@@ -257,6 +260,10 @@ func (w *world) updateSetting() {
 			w.win.SetMonitor(pixelgl.PrimaryMonitor())
 		}
 	}
+	if !w.prevSettingInput.PressedToggleFPSLimit && w.currSettingInput.PressedToggleFPSLimit {
+		w.toggleFPSLimit()
+	}
+
 }
 
 // Player

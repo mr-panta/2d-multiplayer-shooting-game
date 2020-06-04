@@ -55,6 +55,16 @@ func NewClientProcessor() (processor common.ClientProcessor, err error) {
 	return p, nil
 }
 
+func (p *clientProcessor) ToggleFPSLimit() {
+	cfg := config.GetConfig()
+	if cfg.RefreshRate == config.MaxRefreshRate {
+		cfg.RefreshRate = config.DefaultRefreshRate
+	} else {
+		cfg.RefreshRate = config.MaxRefreshRate
+	}
+	p.Restart()
+}
+
 func (p *clientProcessor) Restart() {
 	fmt.Println(config.GetConfig())
 	p.restartSig <- false
@@ -117,8 +127,11 @@ func (p *clientProcessor) startRenderLoop(restartCount int) {
 	cfg := config.GetConfig()
 	ticker := time.NewTicker(time.Second / time.Duration(cfg.RefreshRate))
 	for range ticker.C {
-		if p.win.Closed() || restartCount != p.restartCount {
+		if p.win.Closed() {
 			p.Close()
+			return
+		}
+		if restartCount != p.restartCount {
 			return
 		}
 		p.win.Clear(colornames.Black)

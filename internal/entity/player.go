@@ -7,6 +7,7 @@ import (
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/imdraw"
+	"github.com/faiface/pixel/text"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/animation"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
@@ -53,11 +54,12 @@ var (
 )
 
 type player struct {
+	world              common.World
 	id                 string
 	playerName         string
 	meleeWeaponID      string
 	weaponID           string
-	world              common.World
+	playerNameTxt      *text.Text
 	tickSnapshots      []*protocol.TickSnapshot
 	kill               int
 	death              int
@@ -96,6 +98,7 @@ func NewPlayer(world common.World, id string) common.Player {
 	return &player{
 		id:             id,
 		world:          world,
+		playerNameTxt:  animation.NewText(),
 		pos:            util.GetHighVec(),
 		maxMoveSpeed:   playerBaseMoveSpeed,
 		updateTime:     ticktime.GetServerTime(),
@@ -143,7 +146,11 @@ func (p *player) GetCollider() (pixel.Rect, bool) {
 func (p *player) GetRenderObjects() (objs []common.RenderObject) {
 	objs = append(objs, common.NewRenderObject(playerZ, p.GetShape(), p.render))
 	if p.IsAlive() {
-		objs = append(objs, common.NewRenderObject(playerNameZ, p.GetShape(), p.renderPlayerName))
+		objs = append(objs,
+			common.NewRenderObject(playerNameZ, p.GetShape(), p.renderPlayerName),
+			common.NewRenderObject(playerNameZ-1, p.GetShape(), p.renderTopPlayerIcon),
+		)
+
 	}
 	// debug
 	if config.EnvDebug() {
@@ -560,15 +567,23 @@ func (p *player) renderPlayerName(target pixel.Target, viewPos pixel.Vec) {
 	shape := p.GetShape()
 	pos := pixel.V(shape.Min.X+shape.W()/2, shape.Max.Y+playerNameOffset).Sub(viewPos)
 	if p.streak > 0 && p.getScoreboardPlace() == 1 {
-		anim := animation.NewIconSkull()
-		anim.Pos = pos.Add(pixel.V(0, playerTopIconOffset))
-		anim.Draw(target)
-		animation.DrawStrokeTextCenter(target, pos, p.playerName, 2,
+		animation.DrawStrokeTextCenter(p.playerNameTxt, target, pos, p.playerName, 2,
 			playerNameTopColor, playerNameTopStrokeColor)
 	} else {
-		animation.DrawStrokeTextCenter(target, pos, p.playerName, 2,
+		animation.DrawStrokeTextCenter(p.playerNameTxt, target, pos, p.playerName, 2,
 			nil, nil)
 	}
+}
+
+func (p *player) renderTopPlayerIcon(target pixel.Target, viewPos pixel.Vec) {
+	if p.streak == 0 || p.getScoreboardPlace() != 1 {
+		return
+	}
+	shape := p.GetShape()
+	pos := pixel.V(shape.Min.X+shape.W()/2, shape.Max.Y+playerNameOffset).Sub(viewPos)
+	anim := animation.NewIconSkull()
+	anim.Pos = pos.Add(pixel.V(0, playerTopIconOffset))
+	anim.Draw(target)
 }
 
 func (p *player) render(target pixel.Target, viewPos pixel.Vec) {
@@ -605,10 +620,12 @@ func (p *player) render(target pixel.Target, viewPos pixel.Vec) {
 		anim.FrameTime = int(float64(playerFrameTime*playerBaseMoveSpeed) / moveSpeed)
 	}
 	anim.Draw(target)
-	if weapon := p.GetWeapon(); weapon != nil && now.Sub(p.meleeTime) > playerMeleeTime {
-		weapon.Render(target, viewPos)
-	} else if knife := p.GetMeleeWeapon(); knife != nil {
-		knife.Render(target, viewPos)
+	if p.IsAlive() {
+		if weapon := p.GetWeapon(); weapon != nil && now.Sub(p.meleeTime) > playerMeleeTime {
+			weapon.Render(target, viewPos)
+		} else if knife := p.GetMeleeWeapon(); knife != nil {
+			knife.Render(target, viewPos)
+		}
 	}
 }
 

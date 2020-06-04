@@ -21,6 +21,7 @@ import (
 
 var (
 	// common
+	hudZ         = 999
 	shadowOffset = pixel.V(0.5, -0.5)
 	// ammo
 	hudAmmoMarginBottomRight = pixel.V(-24, 24)
@@ -63,29 +64,43 @@ type killFeedRow struct {
 }
 
 type Hud struct {
-	world             common.World
-	mag               int
-	ammo              int
-	hp                float64
-	armor             float64
-	respawnCountdown  int
-	crosshair         *animation.Crosshair
-	scoreboardImd     *imdraw.IMDraw
-	killFeedRowImds   []*imdraw.IMDraw
-	killFeedRows      []*killFeedRow
-	scoreboardPlayers []common.Player
+	world               common.World
+	mag                 int
+	ammo                int
+	hp                  float64
+	armor               float64
+	respawnCountdown    int
+	crosshair           *animation.Crosshair
+	scoreboardImd       *imdraw.IMDraw
+	killFeedRowImds     []*imdraw.IMDraw
+	killFeedRows        []*killFeedRow
+	killFeedTxts        []*text.Text
+	scoreboardPlayers   []common.Player
+	scoreboardNameTxts  []*text.Text
+	scoreboardScoreTxts []*text.Text
 }
 
 func NewHud(world common.World) common.Hud {
 	killFeedRowImds := []*imdraw.IMDraw{}
+	killFeedTxts := []*text.Text{}
 	for i := 0; i < killFeedLimit; i++ {
 		killFeedRowImds = append(killFeedRowImds, imdraw.New(nil))
+		killFeedTxts = append(killFeedTxts, animation.NewText())
+	}
+	scoreboardNameTxts := []*text.Text{}
+	scoreboardScoreTxts := []*text.Text{}
+	for i := 0; i < scoreboardLimit*2; i++ {
+		scoreboardNameTxts = append(scoreboardNameTxts, animation.NewText())
+		scoreboardScoreTxts = append(scoreboardScoreTxts, animation.NewText())
 	}
 	return &Hud{
-		world:           world,
-		crosshair:       animation.NewCrosshair(),
-		scoreboardImd:   imdraw.New(nil),
-		killFeedRowImds: killFeedRowImds,
+		world:               world,
+		crosshair:           animation.NewCrosshair(),
+		scoreboardImd:       imdraw.New(nil),
+		killFeedRowImds:     killFeedRowImds,
+		killFeedTxts:        killFeedTxts,
+		scoreboardNameTxts:  scoreboardNameTxts,
+		scoreboardScoreTxts: scoreboardScoreTxts,
 	}
 }
 
@@ -244,6 +259,35 @@ func (h *Hud) Render(target pixel.Target) {
 	h.renderKillFeed(target)
 }
 
+func (h *Hud) GetRenderObjects() []common.RenderObject {
+	player := h.world.GetMainPlayer()
+	if player == nil {
+		return nil
+	}
+	p := player.GetPivot()
+	shape := pixel.Rect{Min: p, Max: p}
+	return []common.RenderObject{
+		common.NewRenderObject(hudZ, shape, h.renderIcons),
+	}
+}
+
+func (h *Hud) renderIcons(target pixel.Target, posView pixel.Vec) {
+	// Render hp icon
+	{
+		pos := hudHPMarginBottomLeft
+		icon := animation.NewIconHeart()
+		icon.Pos = pos.Add(hudHPIconMargin)
+		icon.Draw(target)
+	}
+	// Render armor icon
+	{
+		pos := hudArmorMarginBottomLeft
+		icon := animation.NewIconShield()
+		icon.Pos = pos.Add(hudHPIconMargin)
+		icon.Draw(target)
+	}
+}
+
 func (h *Hud) renderHP(target pixel.Target) {
 	pos := hudHPMarginBottomLeft
 	atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
@@ -257,10 +301,6 @@ func (h *Hud) renderHP(target pixel.Target) {
 	txt.Color = hudHPColor
 	fmt.Fprintf(txt, "\r%d", int(math.Ceil(h.hp)))
 	txt.Draw(target, m)
-	// Render icon
-	icon := animation.NewIconHeart()
-	icon.Pos = pos.Add(hudHPIconMargin)
-	icon.Draw(target)
 }
 
 func (h *Hud) renderArmor(target pixel.Target) {
@@ -276,10 +316,6 @@ func (h *Hud) renderArmor(target pixel.Target) {
 	txt.Color = hudHPColor
 	fmt.Fprintf(txt, "\r%d", int(math.Ceil(h.armor)))
 	txt.Draw(target, m)
-	// Render icon
-	icon := animation.NewIconShield()
-	icon.Pos = pos.Add(hudHPIconMargin)
-	icon.Draw(target)
 }
 
 func (h *Hud) renderAmmo(target pixel.Target) {
@@ -361,9 +397,9 @@ func (h *Hud) renderScoreboard(target pixel.Target) {
 			-scoreboardPadding-scoreboardMarginTop,
 		))
 		pos = pos.Add(pixel.V(0, -scoreboardLineHeight))
-		animation.DrawShadowTextLeft(target, pos, "PLAYER", 1)
+		animation.DrawShadowTextLeft(h.scoreboardNameTxts[0], target, pos, "PLAYER", 1)
 		pos = pos.Add(pixel.V(scoreboardWidth, 0))
-		animation.DrawShadowTextRight(target, pos, "STREAK", 1)
+		animation.DrawShadowTextRight(h.scoreboardScoreTxts[0], target, pos, "STREAK", 1)
 	}
 	for i, player := range players {
 		pos := win.Bounds().Vertices()[1]
@@ -376,10 +412,10 @@ func (h *Hud) renderScoreboard(target pixel.Target) {
 		if len(playerName) > scoreboardPlayerNameLength {
 			playerName = playerName[:scoreboardPlayerNameLength] + "..."
 		}
-		animation.DrawShadowTextLeft(target, pos, fmt.Sprintf("%d. %s", i+1, playerName), 1)
+		animation.DrawShadowTextLeft(h.scoreboardNameTxts[i+1], target, pos, fmt.Sprintf("%d. %s", i+1, playerName), 1)
 		_, _, streak, _ := player.GetStats()
 		pos = pos.Add(pixel.V(scoreboardWidth, 0))
-		animation.DrawShadowTextRight(target, pos, fmt.Sprint(streak), 1)
+		animation.DrawShadowTextRight(h.scoreboardScoreTxts[i+1], target, pos, fmt.Sprint(streak), 1)
 	}
 	if mainPlayerPlace > 0 && mainPlayer != nil {
 		playerLen := len(players)
@@ -393,10 +429,10 @@ func (h *Hud) renderScoreboard(target pixel.Target) {
 		if len(playerName) > scoreboardPlayerNameLength {
 			playerName = playerName[:scoreboardPlayerNameLength] + "..."
 		}
-		animation.DrawShadowTextLeft(target, pos, fmt.Sprintf("%d. %s", mainPlayerPlace, playerName), 1)
+		animation.DrawShadowTextLeft(h.scoreboardNameTxts[scoreboardLimit+1], target, pos, fmt.Sprintf("%d. %s", mainPlayerPlace, playerName), 1)
 		_, _, streak, _ := mainPlayer.GetStats()
 		pos = pos.Add(pixel.V(scoreboardWidth, 0))
-		animation.DrawShadowTextRight(target, pos, fmt.Sprint(streak), 1)
+		animation.DrawShadowTextRight(h.scoreboardScoreTxts[scoreboardLimit+1], target, pos, fmt.Sprint(streak), 1)
 	}
 }
 
@@ -443,6 +479,6 @@ func (h *Hud) renderKillFeedRow(target pixel.Target, i int, row *killFeedRow) bo
 	imd.Push(bounds.Min, bounds.Max)
 	imd.Rectangle(0)
 	imd.Draw(target)
-	animation.DrawShadowTextRight(target, pos, message, 1)
+	animation.DrawShadowTextRight(h.killFeedTxts[i], target, pos, message, 1)
 	return true
 }

@@ -1,7 +1,7 @@
 package world
 
 import (
-	"fmt"
+	"context"
 	"image/color"
 	"sort"
 	"time"
@@ -17,6 +17,7 @@ import (
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/sound"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/util"
+	"github.com/mr-panta/go-logger"
 )
 
 // Common
@@ -51,6 +52,7 @@ func (w *world) Render() {
 			objects = append(objects, o.GetRenderObjects()...)
 		}
 	}
+	objects = append(objects, w.hud.GetRenderObjects()...)
 	objects = append(objects, w.water.GetRenderObjects()...)
 	// Filter
 	for _, obj := range objects {
@@ -176,7 +178,7 @@ func (w *world) updateFPS() {
 		w.fps = w.frameCount
 		w.frameCount = 0
 		w.fpsUpdateTime = now
-		fmt.Println(w.fps)
+		logger.Debugf(context.Background(), "FPS:%d|PING:%d", w.fps, ticktime.GetPing()/1000000)
 	}
 }
 

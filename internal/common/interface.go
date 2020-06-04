@@ -144,6 +144,7 @@ type Terrain interface {
 
 type Hud interface {
 	Render(target pixel.Target)
+	GetRenderObjects() []RenderObject
 	ClientUpdate()
 	ServerUpdate()
 	GetKillFeedSnapshot() *protocol.KillFeedSnapshot

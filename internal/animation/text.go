@@ -10,9 +10,17 @@ import (
 	"golang.org/x/image/font/basicfont"
 )
 
+var (
+	atlas      = text.NewAtlas(basicfont.Face7x13, text.ASCII)
+	defaultTxt = text.New(pixel.ZV, atlas)
+)
+
+func NewText() *text.Text {
+	return text.New(pixel.ZV, atlas)
+}
+
 func GetTextCenterBounds(pos pixel.Vec, value string, size float64) pixel.Rect {
-	atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
-	txt := text.New(pixel.ZV, atlas)
+	txt := defaultTxt
 	txt.Clear()
 	txt.LineHeight = atlas.LineHeight()
 	fmt.Fprintf(txt, value)
@@ -25,10 +33,8 @@ func GetTextCenterBounds(pos pixel.Vec, value string, size float64) pixel.Rect {
 	}
 }
 
-func DrawStrokeTextCenter(target pixel.Target, pos pixel.Vec, value string, size float64,
+func DrawStrokeTextCenter(txt *text.Text, target pixel.Target, pos pixel.Vec, value string, size float64,
 	color, strokeColor color.Color) {
-	atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
-	txt := text.New(pixel.ZV, atlas)
 	txt.Clear()
 	txt.LineHeight = atlas.LineHeight()
 	txt.Color = colornames.Black
@@ -54,8 +60,7 @@ func DrawStrokeTextCenter(target pixel.Target, pos pixel.Vec, value string, size
 }
 
 func GetTextLeftBounds(pos pixel.Vec, value string, size float64) pixel.Rect {
-	atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
-	txt := text.New(pixel.ZV, atlas)
+	txt := defaultTxt
 	txt.Clear()
 	txt.LineHeight = atlas.LineHeight()
 	fmt.Fprintf(txt, value)
@@ -66,9 +71,7 @@ func GetTextLeftBounds(pos pixel.Vec, value string, size float64) pixel.Rect {
 	}
 }
 
-func DrawShadowTextLeft(target pixel.Target, pos pixel.Vec, value string, size float64) {
-	atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
-	txt := text.New(pixel.ZV, atlas)
+func DrawShadowTextLeft(txt *text.Text, target pixel.Target, pos pixel.Vec, value string, size float64) {
 	txt.Clear()
 	txt.LineHeight = atlas.LineHeight()
 	txt.Color = colornames.Black
@@ -81,8 +84,7 @@ func DrawShadowTextLeft(target pixel.Target, pos pixel.Vec, value string, size f
 }
 
 func GetTextRightBounds(pos pixel.Vec, value string, size float64) pixel.Rect {
-	atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
-	txt := text.New(pixel.ZV, atlas)
+	txt := defaultTxt
 	txt.Clear()
 	txt.LineHeight = atlas.LineHeight()
 	fmt.Fprintf(txt, value)
@@ -95,9 +97,7 @@ func GetTextRightBounds(pos pixel.Vec, value string, size float64) pixel.Rect {
 	}
 }
 
-func DrawShadowTextRight(target pixel.Target, pos pixel.Vec, value string, size float64) {
-	atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
-	txt := text.New(pixel.ZV, atlas)
+func DrawShadowTextRight(txt *text.Text, target pixel.Target, pos pixel.Vec, value string, size float64) {
 	txt.Clear()
 	txt.LineHeight = atlas.LineHeight()
 	txt.Color = colornames.Black

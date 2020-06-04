@@ -46,7 +46,7 @@ const (
 	playerNameOffset         = 8
 	playerInvulnerableTime   = 3 * time.Second
 	playerTopIconOffset      = 44
-	playerDropInitArmor      = 10
+	playerDropInitArmor      = 30
 	playerDropArmorRate      = 10
 )
 

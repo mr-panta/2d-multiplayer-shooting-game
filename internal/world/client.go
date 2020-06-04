@@ -1,7 +1,7 @@
 package world
 
 import (
-	"context"
+	"fmt"
 	"image/color"
 	"sort"
 	"time"
@@ -17,7 +17,6 @@ import (
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/sound"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/util"
-	"github.com/mr-panta/go-logger"
 )
 
 // Common
@@ -178,7 +177,7 @@ func (w *world) updateFPS() {
 		w.fps = w.frameCount
 		w.frameCount = 0
 		w.fpsUpdateTime = now
-		logger.Debugf(context.Background(), "FPS:%d|PING:%d", w.fps, ticktime.GetPing()/1000000)
+		fmt.Printf("FPS:%d|PING:%d\n", w.fps, ticktime.GetPing()/1000000)
 	}
 }
 

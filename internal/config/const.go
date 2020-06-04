@@ -21,7 +21,7 @@ const (
 // settings
 const (
 	Timestep        = 15 * time.Millisecond
-	LerpPeriod      = 67 * time.Millisecond
+	LerpPeriod      = 100 * time.Millisecond
 	ServerSyncRate  = 30
 	ClientSyncRate  = 30
 	ClientInputRate = 256

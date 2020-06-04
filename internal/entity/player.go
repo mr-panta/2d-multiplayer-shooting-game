@@ -42,7 +42,7 @@ const (
 	playerStartRegenTime     = 3 * time.Second
 	playerRegenRate          = 5
 	playerSpeedCooldown      = 300 * time.Millisecond
-	playerMaxPosError        = 100
+	playerMaxPosError        = 250
 	playerNameOffset         = 8
 	playerInvulnerableTime   = 3 * time.Second
 	playerTopIconOffset      = 44
@@ -313,10 +313,10 @@ func (p *player) ClientUpdate() {
 		} else {
 			ms := 1000.0
 			d := time.Duration(ms/config.ServerSyncRate) * time.Millisecond
-			if now.Sub(p.errorTime) <= d {
-				errorCorrectionDist := p.posError.Scaled(diff / d.Seconds())
-				pos = pos.Sub(errorCorrectionDist)
-			}
+			// if now.Sub(p.errorTime) <= d {
+			errorCorrectionDist := p.posError.Scaled(diff / d.Seconds())
+			pos = pos.Sub(errorCorrectionDist)
+			// }
 		}
 		// Check collision
 		_, _, dynamicAdjust := p.world.CheckCollision(p.id, p.getCollider(), p.getColliderByPos(pos))

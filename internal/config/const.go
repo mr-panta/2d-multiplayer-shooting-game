@@ -12,7 +12,7 @@ const Version = "0.0.5"
 
 // default
 const (
-	DefaultRefreshRate  = 120
+	DefaultRefreshRate  = 60
 	MaxRefreshRate      = 300
 	DefaultWindowWidth  = float64(768)
 	DefaultWindowHeight = float64(512)

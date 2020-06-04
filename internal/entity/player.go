@@ -46,7 +46,7 @@ const (
 	playerNameOffset         = 8
 	playerInvulnerableTime   = 3 * time.Second
 	playerTopIconOffset      = 44
-	playerDropInitArmor      = 30
+	playerDropInitArmor      = 10
 	playerDropArmorRate      = 10
 )
 
@@ -529,7 +529,8 @@ func (p *player) IsVisible() bool {
 	return !p.IsAlive() ||
 		now.Sub(p.hitTime) <= p.hitVisibleTime ||
 		now.Sub(p.triggerTime) <= p.triggerVisibleTime ||
-		now.Sub(p.meleeTime) <= playerVisibleTime
+		now.Sub(p.meleeTime) <= playerVisibleTime ||
+		p.getScoreboardPlace() == 1
 }
 
 func (p *player) SetPlayerName(name string) {

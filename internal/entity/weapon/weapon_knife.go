@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/sound"
+
 	"github.com/faiface/pixel/imdraw"
 
 	"github.com/faiface/pixel"
@@ -163,7 +165,14 @@ func (o *WeaponKnife) ClientUpdate() {
 	}
 	o.playerID = ss.PlayerID
 	o.triggerTime = time.Unix(0, ss.TriggerTime)
+	radius := o.radius
 	o.updateRadius()
+	if mainPlayer := o.world.GetMainPlayer(); mainPlayer != nil {
+		dist := o.world.GetMainPlayer().GetPivot().Sub(o.pos).Len()
+		if radius < o.radius && radius == knifeTriggerMinRange {
+			sound.PlayWeaponKnifeStab(dist)
+		}
+	}
 	o.cleanTickSnapshots()
 }
 

@@ -530,7 +530,7 @@ func (p *player) IsVisible() bool {
 		now.Sub(p.hitTime) <= p.hitVisibleTime ||
 		now.Sub(p.triggerTime) <= p.triggerVisibleTime ||
 		now.Sub(p.meleeTime) <= playerVisibleTime ||
-		p.getScoreboardPlace() == 1
+		(p.getScoreboardPlace() == 1 && p.streak > 0)
 }
 
 func (p *player) SetPlayerName(name string) {

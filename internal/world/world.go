@@ -19,9 +19,9 @@ var (
 const (
 	minNextItemPerd  = 10
 	maxNextItemPerd  = 20
-	worldFieldWidth  = 24
-	worldFieldHeight = 16
-	worldTreeAmount  = 16
+	worldFieldWidth  = 30
+	worldFieldHeight = 30
+	worldTreeAmount  = 36
 	// worldFieldWidth       = 8
 	// worldFieldHeight      = 8
 	// worldTreeAmount       = 0

@@ -8,7 +8,7 @@ import (
 	"golang.org/x/image/colornames"
 )
 
-const Version = "0.0.6"
+const Version = "0.0.7"
 
 // default
 const (
@@ -30,6 +30,7 @@ const (
 	RespawnTime     = 3 * time.Second
 	PlayerTimeOut   = 10 * time.Second
 	BufferSize      = 1000
+	LogFile         = "data.log"
 )
 
 // network

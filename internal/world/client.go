@@ -17,6 +17,7 @@ import (
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/sound"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/util"
+	"github.com/mr-panta/go-logger"
 )
 
 // Common
@@ -161,7 +162,7 @@ func (w *world) addObject(ss *protocol.ObjectSnapshot) (o common.Object) {
 }
 
 func (w *world) removeObject(id string) {
-	// logger.Debugf(nil, "remove_object:%s", id)
+	logger.Debugf(nil, "remove_object:%s", id)
 	w.objectDB.Delete(id)
 }
 
@@ -270,7 +271,7 @@ func (w *world) updateSetting() {
 // Player
 
 func (w *world) SetMainPlayerID(playerID string) {
-	// logger.Debugf(nil, "main_player_id:%s", playerID)
+	logger.Debugf(nil, "main_player_id:%s", playerID)
 	w.mainPlayerID = playerID
 }
 
@@ -279,7 +280,7 @@ func (w *world) GetMainPlayerID() string {
 }
 
 func (w *world) addPlayer(ss *protocol.ObjectSnapshot) common.Player {
-	// logger.Debugf(nil, "add_player:%s", ss.ID)
+	logger.Debugf(nil, "add_player:%s", ss.ID)
 	player := entity.NewPlayer(w, ss.ID)
 	if ss.ID == w.mainPlayerID {
 		player.SetMainPlayer()
@@ -302,7 +303,7 @@ func (w *world) GetMainPlayer() common.Player {
 // Item
 
 func (w *world) addItem(ss *protocol.ObjectSnapshot) common.Item {
-	// logger.Debugf(nil, "add_item:%s", ss.ID)
+	logger.Debugf(nil, "add_item:%s", ss.ID)
 	item := item.New(w, ss.ID, ss)
 	w.objectDB.Set(item)
 	return item
@@ -311,14 +312,14 @@ func (w *world) addItem(ss *protocol.ObjectSnapshot) common.Item {
 // Weapon
 
 func (w *world) addWeapon(snapshot *protocol.ObjectSnapshot) common.Weapon {
-	// logger.Debugf(nil, "add_weapon:%s", snapshot.ID)
+	logger.Debugf(nil, "add_weapon:%s", snapshot.ID)
 	weapon := weapon.New(w, snapshot.ID, snapshot)
 	w.objectDB.Set(weapon)
 	return weapon
 }
 
 func (w *world) addBullet(snapshot *protocol.ObjectSnapshot) common.Bullet {
-	// logger.Debugf(nil, "add_bullet:%s", snapshot.ID)
+	logger.Debugf(nil, "add_bullet:%s", snapshot.ID)
 	bullet := weapon.NewBullet(w, snapshot.ID)
 	w.objectDB.Set(bullet)
 	return bullet
@@ -327,14 +328,14 @@ func (w *world) addBullet(snapshot *protocol.ObjectSnapshot) common.Bullet {
 // Props
 
 func (w *world) addTree(ss *protocol.ObjectSnapshot) common.Tree {
-	// logger.Debugf(nil, "add_tree:%s", ss.ID)
+	logger.Debugf(nil, "add_tree:%s", ss.ID)
 	tree := entity.NewTree(w, ss.ID)
 	w.objectDB.Set(tree)
 	return tree
 }
 
 func (w *world) addTerrain(ss *protocol.ObjectSnapshot) common.Terrain {
-	// logger.Debugf(nil, "add_tree:%s", ss.ID)
+	logger.Debugf(nil, "add_tree:%s", ss.ID)
 	terrain := entity.NewTerrain(w, ss.ID)
 	w.objectDB.Set(terrain)
 	return terrain

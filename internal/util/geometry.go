@@ -21,6 +21,13 @@ func ConvertVec(v pixel.Vec) *protocol.Vec {
 	}
 }
 
+func ConvertRect(r pixel.Rect) *protocol.Rect {
+	return &protocol.Rect{
+		Min: ConvertVec(r.Min),
+		Max: ConvertVec(r.Max),
+	}
+}
+
 func RandomVec(r pixel.Rect) pixel.Vec {
 	x := r.Min.X + rand.Float64()*r.W()
 	y := r.Min.Y + rand.Float64()*r.H()

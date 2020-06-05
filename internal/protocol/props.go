@@ -10,3 +10,7 @@ type TerrainSnapshot struct {
 	Pos         *Vec `json:"pos,omitempty"`
 	TerrainType int  `json:"terrain_type,omitempty"`
 }
+
+type BoundarySnapshot struct {
+	Collider *Rect `json:"collider,omitempty"`
+}

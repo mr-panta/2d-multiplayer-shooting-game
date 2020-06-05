@@ -34,10 +34,12 @@ func (w *world) ServerUpdate(tick int64) {
 
 func (w *world) GetSnapshot(all bool) (int64, *protocol.WorldSnapshot) {
 	snapshot := &protocol.WorldSnapshot{
+		FieldWidth:       w.fieldWidth,
+		FieldHeight:      w.fieldHeight,
 		KillFeedSnapshot: w.hud.GetKillFeedSnapshot(),
 	}
 	for _, o := range w.objectDB.SelectAll() {
-		skip := o.GetType() == 0
+		skip := (!all && o.GetType() == config.BoundaryObject)
 		skip = skip || (!all && o.GetType() == config.TreeObject)
 		skip = skip || (!all && o.GetType() == config.TerrainObject)
 		if skip {
@@ -49,6 +51,26 @@ func (w *world) GetSnapshot(all bool) (int64, *protocol.WorldSnapshot) {
 		)
 	}
 	return w.tick, snapshot
+}
+
+func (w *world) createBoundaries() {
+	size := w.getSizeRect()
+	w.objectDB.Set(entity.NewBoundary(w, w.objectDB.GetAvailableID(), pixel.Rect{
+		Min: pixel.V(size.Min.X-worldBoundarySize, size.Min.Y-worldBoundarySize),
+		Max: pixel.V(size.Max.X+worldBoundarySize, size.Min.Y),
+	}))
+	w.objectDB.Set(entity.NewBoundary(w, w.objectDB.GetAvailableID(), pixel.Rect{
+		Min: pixel.V(size.Min.X-worldBoundarySize, size.Max.Y),
+		Max: pixel.V(size.Max.X+worldBoundarySize, size.Max.Y+worldBoundarySize),
+	}))
+	w.objectDB.Set(entity.NewBoundary(w, w.objectDB.GetAvailableID(), pixel.Rect{
+		Min: pixel.V(size.Min.X-worldBoundarySize, size.Min.Y-worldBoundarySize),
+		Max: pixel.V(size.Min.X, size.Max.Y+worldBoundarySize),
+	}))
+	w.objectDB.Set(entity.NewBoundary(w, w.objectDB.GetAvailableID(), pixel.Rect{
+		Min: pixel.V(size.Max.X, size.Min.Y-worldBoundarySize),
+		Max: pixel.V(size.Max.X+worldBoundarySize, size.Max.Y+worldBoundarySize),
+	}))
 }
 
 func (w *world) getFreePos() pixel.Vec {

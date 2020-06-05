@@ -39,9 +39,23 @@ func (v *Vec) Convert() pixel.Vec {
 	return pixel.V(v.X, v.Y)
 }
 
+type Rect struct {
+	Min *Vec `json:"min"`
+	Max *Vec `json:"max"`
+}
+
+func (r *Rect) Convert() pixel.Rect {
+	return pixel.Rect{
+		Min: r.Min.Convert(),
+		Max: r.Max.Convert(),
+	}
+}
+
 type WorldSnapshot struct {
 	KillFeedSnapshot *KillFeedSnapshot `json:"kill_feed_snapshot,omitempty"`
 	ObjectSnapshots  []*ObjectSnapshot `json:"object_snapshots,omitempty"`
+	FieldWidth       int               `json:"field_width,omitempty"`
+	FieldHeight      int               `json:"field_height,omitempty"`
 }
 
 type InputSnapshot struct {
@@ -69,12 +83,13 @@ type KillFeedRow struct {
 }
 
 type ObjectSnapshot struct {
-	ID      string           `json:"id,omitempty"`
-	Type    int              `json:"type,omitempty"`
-	Player  *PlayerSnapshot  `json:"player,omitempty"`
-	Item    *ItemSnapshot    `json:"item,omitempty"`
-	Weapon  *WeaponSnapshot  `json:"weapon,omitempty"`
-	Bullet  *BulletSnapshot  `json:"bullet,omitempty"`
-	Tree    *TreeSnapshot    `json:"tree,omitempty"`
-	Terrain *TerrainSnapshot `json:"terrain,omitempty"`
+	ID       string            `json:"id,omitempty"`
+	Type     int               `json:"type,omitempty"`
+	Player   *PlayerSnapshot   `json:"player,omitempty"`
+	Item     *ItemSnapshot     `json:"item,omitempty"`
+	Weapon   *WeaponSnapshot   `json:"weapon,omitempty"`
+	Bullet   *BulletSnapshot   `json:"bullet,omitempty"`
+	Tree     *TreeSnapshot     `json:"tree,omitempty"`
+	Terrain  *TerrainSnapshot  `json:"terrain,omitempty"`
+	Boundary *BoundarySnapshot `json:"boundary,omitempty"`
 }

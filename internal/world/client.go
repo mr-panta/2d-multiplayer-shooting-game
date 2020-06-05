@@ -111,6 +111,8 @@ func (w *world) Render() {
 }
 
 func (w *world) SetSnapshot(tick int64, snapshot *protocol.WorldSnapshot) {
+	w.fieldWidth = snapshot.FieldWidth
+	w.fieldHeight = snapshot.FieldHeight
 	existsMap := make(map[string]bool)
 	for _, ss := range snapshot.ObjectSnapshots {
 		existsMap[ss.ID] = true
@@ -122,6 +124,7 @@ func (w *world) SetSnapshot(tick int64, snapshot *protocol.WorldSnapshot) {
 	}
 	for _, o := range w.objectDB.SelectAll() {
 		if o.GetType() != 0 &&
+			o.GetType() != config.BoundaryObject &&
 			o.GetType() != config.TreeObject &&
 			o.GetType() != config.TerrainObject &&
 			!existsMap[o.GetID()] {
@@ -157,6 +160,8 @@ func (w *world) addObject(ss *protocol.ObjectSnapshot) (o common.Object) {
 		return w.addTree(ss)
 	case config.TerrainObject:
 		return w.addTerrain(ss)
+	case config.BoundaryObject:
+		return w.addBoundary(ss)
 	}
 	return nil
 }
@@ -339,4 +344,11 @@ func (w *world) addTerrain(ss *protocol.ObjectSnapshot) common.Terrain {
 	terrain := entity.NewTerrain(w, ss.ID)
 	w.objectDB.Set(terrain)
 	return terrain
+}
+
+func (w *world) addBoundary(ss *protocol.ObjectSnapshot) common.Boundary {
+	logger.Debugf(nil, "add_boundary:%s", ss.ID)
+	boundary := entity.NewBoundary(w, ss.ID, pixel.ZR)
+	w.objectDB.Set(boundary)
+	return boundary
 }

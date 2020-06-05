@@ -140,6 +140,10 @@ type Terrain interface {
 	SetState(pos pixel.Vec, terrainType int)
 }
 
+type Boundary interface {
+	Object
+}
+
 // Etc
 
 type Hud interface {

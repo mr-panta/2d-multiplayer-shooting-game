@@ -6,6 +6,7 @@ import (
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
+	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/util"
 )
 
 type Boundary struct {
@@ -28,7 +29,7 @@ func (o *Boundary) GetID() string {
 	return o.id
 }
 func (o *Boundary) GetType() int {
-	return 0
+	return config.BoundaryObject
 }
 func (o *Boundary) Destroy() {
 	// NOOP
@@ -55,10 +56,13 @@ func (o *Boundary) GetSnapshot(tick int64) *protocol.ObjectSnapshot {
 	return &protocol.ObjectSnapshot{
 		ID:   o.GetID(),
 		Type: o.GetType(),
+		Boundary: &protocol.BoundarySnapshot{
+			Collider: util.ConvertRect(o.collider),
+		},
 	}
 }
 func (o *Boundary) SetSnapshot(tick int64, snapshot *protocol.ObjectSnapshot) {
-	// NOOP
+	o.collider = snapshot.Boundary.Collider.Convert()
 
 }
 func (o *Boundary) ServerUpdate(tick int64) {

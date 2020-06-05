@@ -33,8 +33,10 @@ const (
 
 type world struct {
 	// common
-	objectDB common.ObjectDB
-	hud      common.Hud
+	objectDB    common.ObjectDB
+	hud         common.Hud
+	fieldWidth  int
+	fieldHeight int
 	// client
 	win              *pixelgl.Window
 	toggleFPSLimit   func()
@@ -58,7 +60,9 @@ type world struct {
 func New(clientProcessor common.ClientProcessor) common.World {
 	world := &world{
 		// common
-		objectDB: common.NewObjectDB(),
+		objectDB:    common.NewObjectDB(),
+		fieldWidth:  worldFieldWidth,
+		fieldHeight: worldFieldHeight,
 		// client
 		currRawInput:     &common.RawInput{},
 		prevRawInput:     &common.RawInput{},
@@ -68,7 +72,6 @@ func New(clientProcessor common.ClientProcessor) common.World {
 		nextItemTime: ticktime.GetServerTime(),
 	}
 	// common
-	world.setupBoundaries()
 	world.hud = entity.NewHud(world)
 	if clientProcessor != nil {
 		// client
@@ -82,6 +85,7 @@ func New(clientProcessor common.ClientProcessor) common.World {
 		// server
 		world.createTrees()
 		world.createTerrains()
+		world.createBoundaries()
 	}
 	return world
 }
@@ -124,33 +128,13 @@ func (w *world) GetHud() common.Hud {
 }
 
 func (w *world) GetSize() (width, height int) {
-	return worldFieldWidth, worldFieldHeight
+	return w.fieldWidth, w.fieldHeight
 }
 
 func (w *world) getSizeRect() pixel.Rect {
 	return pixel.R(
 		0, 0,
-		float64(worldFieldWidth)*worldFieldSize.W(),
-		float64(worldFieldHeight)*worldFieldSize.H(),
+		float64(w.fieldWidth)*worldFieldSize.W(),
+		float64(w.fieldHeight)*worldFieldSize.H(),
 	)
-}
-
-func (w *world) setupBoundaries() {
-	size := w.getSizeRect()
-	w.objectDB.Set(entity.NewBoundary(w, w.objectDB.GetAvailableID(), pixel.Rect{
-		Min: pixel.V(size.Min.X-worldBoundarySize, size.Min.Y-worldBoundarySize),
-		Max: pixel.V(size.Max.X+worldBoundarySize, size.Min.Y),
-	}))
-	w.objectDB.Set(entity.NewBoundary(w, w.objectDB.GetAvailableID(), pixel.Rect{
-		Min: pixel.V(size.Min.X-worldBoundarySize, size.Max.Y),
-		Max: pixel.V(size.Max.X+worldBoundarySize, size.Max.Y+worldBoundarySize),
-	}))
-	w.objectDB.Set(entity.NewBoundary(w, w.objectDB.GetAvailableID(), pixel.Rect{
-		Min: pixel.V(size.Min.X-worldBoundarySize, size.Min.Y-worldBoundarySize),
-		Max: pixel.V(size.Min.X, size.Max.Y+worldBoundarySize),
-	}))
-	w.objectDB.Set(entity.NewBoundary(w, w.objectDB.GetAvailableID(), pixel.Rect{
-		Min: pixel.V(size.Max.X, size.Min.Y-worldBoundarySize),
-		Max: pixel.V(size.Max.X+worldBoundarySize, size.Max.Y+worldBoundarySize),
-	}))
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
+	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/util"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/world"
 	"github.com/mr-panta/go-logger"
 )
@@ -28,8 +29,15 @@ func NewServerProcessor() (common.ServerProcessor, error) {
 	if err := p.server.Start(); err != nil {
 		return nil, err
 	}
-	p.world = world.New(nil)
+	p.world = world.NewDefaultWorld(nil, util.GenerateID())
 	return p, nil
+}
+
+func (p *serverProcessor) resetWorld() {
+	p.lastActiveTimeLock.Lock()
+	defer p.lastActiveTimeLock.Unlock()
+	p.lastActiveTimeMap = make(map[string]time.Time)
+	p.world = world.NewDefaultWorld(nil, util.GenerateID())
 }
 
 func (p *serverProcessor) Wait() {
@@ -42,7 +50,11 @@ func (p *serverProcessor) UpdateWorld() {
 		tickTime := ticktime.GetTickTime(tick)
 		waitTime := time.Until(tickTime)
 		<-time.NewTimer(waitTime).C
-		p.world.ServerUpdate(tick)
+		if exists := p.world.ServerUpdate(tick); !exists {
+			tick = 0
+			ticktime.SetServerStartTime(time.Now())
+			p.resetWorld()
+		}
 	}
 }
 

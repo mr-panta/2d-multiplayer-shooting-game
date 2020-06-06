@@ -13,7 +13,6 @@ import (
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/menu"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/sound"
-	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/world"
 	"github.com/mr-panta/go-logger"
 	"golang.org/x/image/colornames"
 )
@@ -26,6 +25,9 @@ type clientProcessor struct {
 	world        common.World
 	client       ClientNetwork
 	started      bool
+	worldID      string
+	playerName   string
+	hostIP       string
 }
 
 func NewClientProcessor() (processor common.ClientProcessor, err error) {
@@ -90,15 +92,29 @@ func (p *clientProcessor) Run() {
 }
 
 func (p *clientProcessor) StartWorld(hostIP, playerName string) (err error) {
+	if playerName == "" {
+		playerName = p.playerName
+	}
+	p.playerName = playerName
+	if hostIP == "" {
+		hostIP = p.hostIP
+	}
+	p.hostIP = hostIP
 	// Create network
+	success := false
 	p.client = NewClientNetwork(hostIP)
 	if err = p.client.Start(); err != nil {
 		logger.Debugf(nil, err.Error())
 		return errors.New("CAN'T CONNECT TO HOST")
 	}
-	// Create world
-	p.world = world.New(p)
-	// Register player
+	defer func() {
+		if !success {
+			if e := p.client.Close(); e != nil {
+				logger.Debugf(nil, e.Error())
+			}
+		}
+	}()
+	// Register player and create world
 	if err := p.registerPlayer(playerName); err != nil {
 		return err
 	}
@@ -107,6 +123,7 @@ func (p *clientProcessor) StartWorld(hostIP, playerName string) (err error) {
 	p.win.SetCursorVisible(false)
 	go p.consumeWorldSnapshot()
 	go p.produceInputSnapshot()
+	success = true
 	return nil
 }
 
@@ -117,8 +134,14 @@ func (p *clientProcessor) startUpdateLoop(restartCount int) {
 			return
 		}
 		if p.started && p.world != nil {
-			p.world.ClientUpdate()
 			p.win.UpdateInput()
+			if exists := p.world.ClientUpdate(); !exists {
+				_ = p.client.Close()
+				if err := p.StartWorld("", ""); err != nil {
+					p.world = nil
+					p.started = false
+				}
+			}
 		}
 	}
 }
@@ -150,7 +173,11 @@ func (p *clientProcessor) consumeWorldSnapshot() {
 		switch cmdData.Cmd {
 		case protocol.CmdAddWorldSnapshot:
 			data := cmdData.Data.(*protocol.AddWorldSnapshotRequest)
-			p.world.SetSnapshot(data.Tick, data.WorldSnapshot)
+			if p.world != nil {
+				p.world.SetSnapshot(data.Tick, data.WorldSnapshot)
+			} else {
+				break
+			}
 		}
 	}
 }

@@ -2,7 +2,7 @@ package network
 
 const (
 	listenBufferSize = 1000
-	poolSize         = 10
+	poolSize         = 8
 	clientIDLength   = 16
 )
 

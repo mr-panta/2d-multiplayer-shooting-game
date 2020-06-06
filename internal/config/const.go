@@ -35,7 +35,8 @@ const (
 
 // network
 const (
-	TCPIP    = "34.87.23.164"
+	// TCPIP    = "34.87.23.164"
+	TCPIP    = ""
 	TCPPortA = ":4999"
 	TCPPortB = ":4998"
 )
@@ -63,6 +64,11 @@ var (
 	LashSnapshotColor = color.RGBA{0x00, 0x80, 0x00, 72}
 	ColliderColor     = colornames.Red
 	ShapeColor        = colornames.Blue
+)
+
+// world type
+const (
+	DefaultWorld = 1
 )
 
 // object type

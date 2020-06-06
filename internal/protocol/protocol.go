@@ -52,6 +52,8 @@ func (r *Rect) Convert() pixel.Rect {
 }
 
 type WorldSnapshot struct {
+	ID               string            `json:"id,omitempty"`
+	Type             int               `json:"type,omitempty`
 	KillFeedSnapshot *KillFeedSnapshot `json:"kill_feed_snapshot,omitempty"`
 	ObjectSnapshots  []*ObjectSnapshot `json:"object_snapshots,omitempty"`
 	FieldWidth       int               `json:"field_width,omitempty"`

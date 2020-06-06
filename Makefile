@@ -3,6 +3,7 @@ build/client:
 	make build/client/windows
 	mkdir -p bundle
 	rm -rf bundle/*
+	echo "client.exe" > bundle/windows_start.bat
 	mv bin/* bundle
 	cp -R asset bundle
 

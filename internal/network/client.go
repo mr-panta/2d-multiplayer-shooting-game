@@ -2,7 +2,9 @@ package network
 
 import (
 	"context"
+	"fmt"
 	"net"
+	"sync"
 
 	"github.com/mr-panta/go-logger"
 )
@@ -27,6 +29,7 @@ type client struct {
 	listenBuffer chan []byte
 	closeSig     chan bool
 	isClosed     bool
+	lock         sync.RWMutex
 }
 
 func (c *client) Start() (err error) {
@@ -53,13 +56,31 @@ func (c *client) Wait() {
 }
 
 func (c *client) Close() error {
+	c.lock.Lock()
+	defer c.lock.Unlock()
 	c.closeSig <- true
 	c.isClosed = true
-	// TODO
+	close(c.tcpConnAPool)
+	close(c.listenBuffer)
+	for conn := range c.tcpConnAPool {
+		if err := conn.Close(); err != nil {
+			return err
+		}
+	}
+	for _, conn := range c.tcpConnBList {
+		if err := conn.Close(); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
 func (c *client) Send(req []byte) (resp []byte, err error) {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+	if c.isClosed {
+		return nil, fmt.Errorf("network client is closed")
+	}
 	tcpConn := <-c.tcpConnAPool
 	// Compress data
 	if req, err = compressData(req); err != nil {
@@ -91,6 +112,7 @@ func (c *client) listenConnB(i int) {
 		return
 	}
 	for !c.isClosed {
+		c.lock.RLock()
 		data, err := conn.Read()
 		if err != nil {
 			logger.Errorf(ctx, "%v|%v", err.Error(), conn.LocalAddr())
@@ -102,6 +124,7 @@ func (c *client) listenConnB(i int) {
 			break
 		}
 		c.listenBuffer <- data
+		c.lock.RUnlock()
 	}
 }
 

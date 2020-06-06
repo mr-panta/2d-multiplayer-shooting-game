@@ -3,6 +3,8 @@ package client
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"sync"
 
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/network"
@@ -19,8 +21,10 @@ type ClientNetwork interface {
 }
 
 type clientNetwork struct {
-	buffer chan *protocol.CmdData
-	client network.Client
+	buffer   chan *protocol.CmdData
+	client   network.Client
+	isClosed bool
+	lock     sync.RWMutex
 }
 
 func NewClientNetwork(hostIP string) ClientNetwork {
@@ -41,6 +45,10 @@ func (c *clientNetwork) Wait() {
 }
 
 func (c *clientNetwork) Close() error {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+	c.isClosed = true
+	close(c.buffer)
 	return c.client.Close()
 }
 
@@ -50,6 +58,10 @@ func (c *clientNetwork) Listen() <-chan *protocol.CmdData {
 
 func (c *clientNetwork) translateCmdData() {
 	for reqBytes := range c.client.Listen() {
+		c.lock.RLock()
+		if c.isClosed {
+			break
+		}
 		// Prepare
 		ctx := context.Background()
 		wrappedData := &protocol.WrappedData{}
@@ -71,10 +83,16 @@ func (c *clientNetwork) translateCmdData() {
 			Cmd:  wrappedData.Cmd,
 			Data: data,
 		}
+		c.lock.RUnlock()
 	}
 }
 
 func (c *clientNetwork) Send(cmd int, req interface{}) (resp interface{}, err error) {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+	if c.isClosed {
+		return nil, fmt.Errorf("processor network client is closed")
+	}
 	wrappedData := &protocol.WrappedData{
 		Cmd: cmd,
 	}

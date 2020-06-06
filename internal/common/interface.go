@@ -18,6 +18,8 @@ type Menu interface {
 
 type World interface {
 	// Common
+	GetID() string
+	GetType() int
 	GetObjectDB() ObjectDB
 	GetSize() (width, height int)
 	CheckCollision(id string, prevCollider, nextCollider pixel.Rect) (
@@ -26,7 +28,7 @@ type World interface {
 	// Client
 	Render()
 	GetWindow() *pixelgl.Window
-	ClientUpdate()
+	ClientUpdate() (exists bool)
 	SetMainPlayerID(playerID string)
 	GetMainPlayerID() string
 	GetMainPlayer() Player
@@ -35,7 +37,7 @@ type World interface {
 	GetCameraViewPos() pixel.Vec
 	GetScope() Scope
 	// Server
-	ServerUpdate(tick int64)
+	ServerUpdate(tick int64) (exists bool)
 	SpawnPlayer(playerID string, playerName string)
 	GetSnapshot(all bool) (tick int64, snapshot *protocol.WorldSnapshot)
 	SetInputSnapshot(playerID string, snapshot *protocol.InputSnapshot)

@@ -164,9 +164,8 @@ func (w *defaultWorld) getSizeRect() pixel.Rect {
 // Server
 
 func (w *defaultWorld) ServerUpdate(tick int64) bool {
-	now := ticktime.GetServerTime()
 	if w.destroyed {
-		return !(now.Sub(w.destroyTime) >= defaultWorldRestartCooldown)
+		return false
 	}
 	w.tick = tick
 	// Item
@@ -366,8 +365,9 @@ func (w *defaultWorld) GetWindow() *pixelgl.Window {
 }
 
 func (w *defaultWorld) ClientUpdate() bool {
+	now := ticktime.GetServerTime()
 	if w.destroyed {
-		return false
+		return !(now.Sub(w.destroyTime) >= defaultWorldRestartCooldown)
 	}
 	w.updateRawInput()
 	w.updateSetting()
@@ -457,7 +457,10 @@ func (w *defaultWorld) Render() {
 
 func (w *defaultWorld) SetSnapshot(tick int64, snapshot *protocol.WorldSnapshot) {
 	if snapshot.ID != w.GetID() {
-		w.destroyed = true
+		if !w.destroyed {
+			w.destroyed = true
+			w.destroyTime = ticktime.GetServerTime()
+		}
 		logger.Debugf(nil, "get different world id, current_id=%s, new_id", w.GetID(), snapshot.ID)
 		return
 	}

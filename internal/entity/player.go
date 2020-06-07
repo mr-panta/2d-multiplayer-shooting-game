@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -51,6 +52,7 @@ type player struct {
 	world              common.World
 	id                 string
 	playerName         string
+	playerSubfix       string
 	meleeWeaponID      string
 	weaponID           string
 	playerNameTxt      *text.Text
@@ -560,6 +562,10 @@ func (p *player) GetPlayerName() string {
 	return p.playerName
 }
 
+func (p *player) SetPlayerSubfix(subfix string) {
+	p.playerSubfix = subfix
+}
+
 func (p *player) GetStats() (kill, death, streak, maxStreak int) {
 	return p.kill, p.death, p.streak, p.maxStreak
 }
@@ -588,7 +594,11 @@ func (p *player) renderPlayerName(target pixel.Target, viewPos pixel.Vec) {
 	}()
 	shape := p.GetShape()
 	pos := pixel.V(shape.Min.X+shape.W()/2, shape.Max.Y+playerNameOffset).Sub(viewPos)
-	animation.DrawStrokeTextCenter(p.playerNameTxt, target, pos, p.playerName, 2, nil, nil)
+	playerName := p.playerName
+	if len(p.playerSubfix) > 0 {
+		playerName += fmt.Sprintf("(%s)", p.playerSubfix)
+	}
+	animation.DrawStrokeTextCenter(p.playerNameTxt, target, pos, playerName, 2, nil, nil)
 }
 
 func (p *player) render(target pixel.Target, viewPos pixel.Vec) {

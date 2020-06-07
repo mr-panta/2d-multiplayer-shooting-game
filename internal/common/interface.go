@@ -104,6 +104,7 @@ type Player interface {
 	IsAlive() bool
 	SetPlayerName(name string)
 	GetPlayerName() string
+	SetPlayerSubfix(subfix string)
 }
 
 type Item interface {

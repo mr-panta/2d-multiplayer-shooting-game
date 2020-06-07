@@ -3,6 +3,7 @@ package item
 import (
 	"fmt"
 	"image/color"
+	"math"
 	"sync"
 	"time"
 
@@ -94,7 +95,7 @@ func (o *ItemSkull) GetRenderObjects() (objs []common.RenderObject) {
 	p := player.GetPivot()
 	shape := pixel.Rect{Min: p, Max: p}
 	objs = append(objs, common.NewRenderObject(itemZ+1, shape, o.renderIcon))
-	if player := o.getPlayer(); !(player != nil && player.IsAlive()) {
+	if player := o.getPlayer(""); !(player != nil && player.IsAlive()) {
 		objs = append(objs, common.NewRenderObject(itemZ, o.GetShape(), o.render))
 	}
 	if o.remainingTime <= 0 {
@@ -130,7 +131,7 @@ func (o *ItemSkull) GetSnapshot(tick int64) (ss *protocol.ObjectSnapshot) {
 }
 
 func (o *ItemSkull) ServerUpdate(tick int64) {
-	if player := o.getPlayer(); player != nil {
+	if player := o.getPlayer(""); player != nil {
 		if player.IsAlive() {
 			if record, exists := o.getRecord(o.playerID); exists {
 				now := ticktime.GetServerTime()
@@ -156,6 +157,7 @@ func (o *ItemSkull) ServerUpdate(tick int64) {
 func (o *ItemSkull) ClientUpdate() {
 	now := ticktime.GetServerTime()
 	ss := o.getLastSnapshot().Item.Skull
+	oldPlayerID := o.playerID
 	o.playerID = ss.PlayerID
 	recordMap := make(map[string]*itemSkullRecord)
 	for playerID, record := range ss.RecordMap {
@@ -165,8 +167,22 @@ func (o *ItemSkull) ClientUpdate() {
 			pickupTime:    time.Unix(0, record.PickupTime),
 		}
 	}
-	if record, exists := recordMap[o.playerID]; o.playerID != "" && exists {
-		o.remainingTime = record.remainingTime - now.Sub(record.pickupTime)
+	if player := o.getPlayer(""); player != nil {
+		if record, exists := recordMap[o.playerID]; exists {
+			o.remainingTime = record.remainingTime - now.Sub(record.pickupTime)
+			if t := o.remainingTime; t > 0 {
+				subfix := fmt.Sprint(int(math.Ceil(t.Seconds())))
+				player.SetPlayerSubfix(fmt.Sprint(subfix))
+			} else {
+				player.SetPlayerSubfix("")
+			}
+		}
+	}
+	if oldPlayerID != o.playerID && oldPlayerID != "" {
+		// Remove subfix
+		if oldPlayer := o.getPlayer(oldPlayerID); oldPlayer != nil {
+			oldPlayer.SetPlayerSubfix("")
+		}
 	}
 	o.recordMap = recordMap
 	o.pos = ss.Pos.Convert()
@@ -174,7 +190,7 @@ func (o *ItemSkull) ClientUpdate() {
 }
 
 func (o *ItemSkull) UsedBy(player common.Player) (ok bool) {
-	if player := o.getPlayer(); player != nil {
+	if player := o.getPlayer(""); player != nil {
 		return false
 	}
 	o.playerID = player.GetID()
@@ -203,11 +219,14 @@ func (o *ItemSkull) getRecord(playerID string) (record *itemSkullRecord, exists 
 	return record, exists
 }
 
-func (o *ItemSkull) getPlayer() common.Player {
-	if o.playerID == "" {
+func (o *ItemSkull) getPlayer(playerID string) common.Player {
+	if playerID == "" {
+		playerID = o.playerID
+	}
+	if playerID == "" {
 		return nil
 	}
-	obj, exists := o.world.GetObjectDB().SelectOne(o.playerID)
+	obj, exists := o.world.GetObjectDB().SelectOne(playerID)
 	if !exists {
 		return nil
 	}
@@ -297,8 +316,8 @@ func (o *ItemSkull) renderIcon(target pixel.Target, viewPos pixel.Vec) {
 		Max: winBound.Max.Sub(pixel.V(1, 1)),
 	}
 	pos := o.pos
-	if player := o.getPlayer(); player != nil {
-		pos = o.getPlayer().GetPos().Add(itemSkullIconOffset)
+	if player := o.getPlayer(""); player != nil {
+		pos = o.getPlayer("").GetPos().Add(itemSkullIconOffset)
 	}
 	pos = pos.Sub(viewPos)
 	mpPos := mainPlayer.GetPos().Add(itemSkullIconOffset).Sub(viewPos)
@@ -313,7 +332,7 @@ func (o *ItemSkull) renderIcon(target pixel.Target, viewPos pixel.Vec) {
 		}
 		ratio := uint8((ticktime.GetServerTimeMS() / itemSkullBlinkDiv) % 256)
 		c = &color.RGBA{R: ratio, G: ratio, B: ratio, A: ratio}
-	} else if player := o.getPlayer(); player == nil {
+	} else if player := o.getPlayer(""); player == nil {
 		return
 	}
 	anim := animation.NewIconSkull()
@@ -327,7 +346,7 @@ func (o *ItemSkull) renderWinner(target pixel.Target, viewPos pixel.Vec) {
 	smooth := win.Smooth()
 	win.SetSmooth(false)
 	defer win.SetSmooth(smooth)
-	if player := o.getPlayer(); player != nil {
+	if player := o.getPlayer(""); player != nil {
 		animation.DrawStrokeTextCenter(
 			o.winnerTxt,
 			target,

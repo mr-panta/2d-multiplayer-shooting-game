@@ -4,7 +4,6 @@ import (
 	"math/rand"
 
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
-	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
 )
 
@@ -36,18 +35,6 @@ func New(world common.World, id string, snapshot *protocol.ObjectSnapshot) commo
 }
 
 func Random(world common.World, id string) common.Weapon {
-	sniperExists := false
-	for _, obj := range world.GetObjectDB().SelectAll() {
-		if obj.GetType() == config.WeaponObject {
-			if w := obj.(common.Weapon); w.GetWeaponType() == config.SniperWeapon {
-				sniperExists = true
-				break
-			}
-		}
-	}
-	if !sniperExists {
-		return NewWeaponSniper(world, id)
-	}
 	dropRates := []int{
 		sniperDropRate,
 		pistolDropRate,

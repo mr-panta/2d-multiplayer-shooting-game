@@ -139,7 +139,7 @@ func (o *ItemSkull) ServerUpdate(tick int64) {
 					o.world.Destroy()
 				}
 			}
-			o.pos = player.GetPos()
+			o.pos = player.GetPos().Sub(pixel.V(0, 1))
 		} else {
 			if record, exists := o.getRecord(o.playerID); exists {
 				now := ticktime.GetServerTime()

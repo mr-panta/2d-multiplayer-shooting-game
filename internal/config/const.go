@@ -41,8 +41,8 @@ const (
 
 // network
 const (
-	// TCPIP    = "34.87.23.164"
-	TCPIP    = ""
+	TCPIP = "34.87.23.164"
+	// TCPIP    = ""
 	TCPPortA = ":4999"
 	TCPPortB = ":4998"
 )

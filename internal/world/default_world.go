@@ -29,9 +29,9 @@ var (
 const (
 	minNextItemPerd             = 10
 	maxNextItemPerd             = 20
-	defaultWorldFieldWidth      = 16
-	defaultWorldFieldHeight     = 16
-	defaultWorldTreeAmount      = 0
+	defaultWorldFieldWidth      = 24
+	defaultWorldFieldHeight     = 24
+	defaultWorldTreeAmount      = 24
 	defaultWorldTerrainAmount   = 12
 	defaultWorldMinSpawnDist    = 48
 	defaultWorldBoundarySize    = 200

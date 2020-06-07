@@ -36,7 +36,7 @@ const (
 // world
 const (
 	MinWindowRenderZ     = 100
-	DefaultWorldInitTime = 5 * time.Second
+	DefaultWorldInitTime = 60 * time.Second
 )
 
 // network

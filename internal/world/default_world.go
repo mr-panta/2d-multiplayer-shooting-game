@@ -449,8 +449,8 @@ func (w *defaultWorld) Render() {
 		obj.Render(w.win, w.GetCameraViewPos())
 	}
 	// Render hud
-	w.hud.Render(w.win)
 	w.scoreboard.Render(w.win)
+	w.hud.Render(w.win)
 	// Update FPS
 	w.updateFPS()
 }

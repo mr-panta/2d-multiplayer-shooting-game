@@ -35,7 +35,7 @@ const (
 
 // world
 const (
-	MinWindowRenderZ     = 100
+	MinWindowRenderZ     = 1000
 	DefaultWorldInitTime = 60 * time.Second
 )
 

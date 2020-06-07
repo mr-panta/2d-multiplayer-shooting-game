@@ -17,6 +17,7 @@ var (
 const crosshairThickness = 4
 
 type Crosshair struct {
+	batch      *pixel.Batch
 	lines      [4]*imdraw.IMDraw
 	shadowList [4]*imdraw.IMDraw
 	Pos        pixel.Vec
@@ -25,6 +26,7 @@ type Crosshair struct {
 
 func NewCrosshair() *Crosshair {
 	return &Crosshair{
+		batch: pixel.NewBatch(&pixel.TrianglesData{}, objectSheet),
 		lines: [4]*imdraw.IMDraw{
 			imdraw.New(nil),
 			imdraw.New(nil),
@@ -41,12 +43,14 @@ func NewCrosshair() *Crosshair {
 }
 
 func (c *Crosshair) Draw(target pixel.Target) {
+	c.batch.Clear()
 	for i := range c.lines {
-		c.drawLineShadow(target, i)
+		c.drawLineShadow(c.batch, i)
 	}
 	for i := range c.lines {
-		c.drawLine(target, i)
+		c.drawLine(c.batch, i)
 	}
+	c.batch.Draw(target)
 }
 
 func (c *Crosshair) drawLineShadow(target pixel.Target, i int) {

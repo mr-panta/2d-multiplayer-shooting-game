@@ -11,26 +11,23 @@ import (
 	"github.com/faiface/pixel/text"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/animation"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
+	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
 	"golang.org/x/image/colornames"
-	"golang.org/x/image/font/basicfont"
 )
 
 var (
 	// common
-	hudZ         = 999
-	shadowOffset = pixel.V(0.5, -0.5)
+	hudZ = config.MinWindowRenderZ - 1
 	// ammo
 	hudAmmoMarginBottomRight = pixel.V(-24, 24)
-	hudAmmoColor             = colornames.White
 	// armor and hp
 	hudHPMarginBottomLeft    = pixel.V(24, 24)
 	hudArmorMarginBottomLeft = pixel.V(188, 24)
 	hudHPIconMargin          = pixel.V(24, 20)
 	hudHPTextMrginLeft       = pixel.V(60, 0)
 	hudArmorTextMrginLeft    = pixel.V(64, 0)
-	hudHPColor               = colornames.White
 	// crosshair
 	crosshairColor = colornames.Red
 	// kill feed
@@ -54,19 +51,21 @@ type killFeedRow struct {
 }
 
 type Hud struct {
-	world            common.World
-	mag              int
-	ammo             int
-	hp               float64
-	armor            float64
-	respawnCountdown int
-	fps              int
-	ping             int
-	crosshair        *animation.Crosshair
-	killFeedRowImds  []*imdraw.IMDraw
-	killFeedRows     []*killFeedRow
-	killFeedTxts     []*text.Text
-	gameStatsText    *text.Text
+	world               common.World
+	mag                 int
+	ammo                int
+	hp                  float64
+	armor               float64
+	respawnCountdown    int
+	crosshair           *animation.Crosshair
+	killFeedRowImds     []*imdraw.IMDraw
+	killFeedRows        []*killFeedRow
+	killFeedTxts        []*text.Text
+	gameStatsText       *text.Text
+	hpTxt               *text.Text
+	armorTxt            *text.Text
+	ammoTxt             *text.Text
+	respawnCountdownTxt *text.Text
 }
 
 func NewHud(world common.World) common.Hud {
@@ -77,11 +76,15 @@ func NewHud(world common.World) common.Hud {
 		killFeedTxts = append(killFeedTxts, animation.NewText())
 	}
 	return &Hud{
-		world:           world,
-		crosshair:       animation.NewCrosshair(),
-		killFeedRowImds: killFeedRowImds,
-		killFeedTxts:    killFeedTxts,
-		gameStatsText:   animation.NewText(),
+		world:               world,
+		crosshair:           animation.NewCrosshair(),
+		killFeedRowImds:     killFeedRowImds,
+		killFeedTxts:        killFeedTxts,
+		gameStatsText:       animation.NewText(),
+		hpTxt:               animation.NewText(),
+		armorTxt:            animation.NewText(),
+		ammoTxt:             animation.NewText(),
+		respawnCountdownTxt: animation.NewText(),
 	}
 }
 
@@ -232,65 +235,53 @@ func (h *Hud) renderIcons(target pixel.Target, posView pixel.Vec) {
 }
 
 func (h *Hud) renderHP(target pixel.Target) {
-	pos := hudHPMarginBottomLeft
-	atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
-	txt := text.New(pos.Add(hudHPTextMrginLeft), atlas)
-	txt.Clear()
-	txt.LineHeight = atlas.LineHeight()
-	txt.Color = color.Black
-	fmt.Fprintf(txt, "%d", int(math.Ceil(h.hp)))
-	m := pixel.IM.Scaled(txt.Orig, 4)
-	txt.Draw(target, m.Moved(shadowOffset.Scaled(4)))
-	txt.Color = hudHPColor
-	fmt.Fprintf(txt, "\r%d", int(math.Ceil(h.hp)))
-	txt.Draw(target, m)
+	pos := hudHPMarginBottomLeft.Add(hudHPTextMrginLeft)
+	txt := h.hpTxt
+	animation.DrawShadowTextLeft(
+		txt,
+		target,
+		pos,
+		fmt.Sprintf("%d", int(math.Ceil(h.hp))),
+		4,
+	)
 }
 
 func (h *Hud) renderArmor(target pixel.Target) {
-	pos := hudArmorMarginBottomLeft
-	atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
-	txt := text.New(pos.Add(hudArmorTextMrginLeft), atlas)
-	txt.Clear()
-	txt.LineHeight = atlas.LineHeight()
-	txt.Color = color.Black
-	fmt.Fprintf(txt, "%d", int(math.Ceil(h.armor)))
-	m := pixel.IM.Scaled(txt.Orig, 4)
-	txt.Draw(target, m.Moved(shadowOffset.Scaled(4)))
-	txt.Color = hudHPColor
-	fmt.Fprintf(txt, "\r%d", int(math.Ceil(h.armor)))
-	txt.Draw(target, m)
+	pos := hudArmorMarginBottomLeft.Add(hudArmorTextMrginLeft)
+	txt := h.armorTxt
+	animation.DrawShadowTextLeft(
+		txt,
+		target,
+		pos,
+		fmt.Sprintf("%d", int(math.Ceil(h.armor))),
+		4,
+	)
 }
 
 func (h *Hud) renderAmmo(target pixel.Target) {
 	win := h.world.GetWindow()
 	pos := pixel.V(win.Bounds().W(), 0).Add(hudAmmoMarginBottomRight)
-	atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
-	txt := text.New(pos, atlas)
-	txt.Clear()
-	txt.LineHeight = atlas.LineHeight()
-	txt.Color = color.Black
-	fmt.Fprintf(txt, "%d / %d", h.mag, h.ammo)
-	m := pixel.IM.Moved(pixel.V(-txt.Bounds().W(), 0)).Scaled(txt.Orig, 4)
-	txt.Draw(target, m.Moved(shadowOffset.Scaled(4)))
-	txt.Color = hudAmmoColor
-	fmt.Fprintf(txt, "\r%d / %d", h.mag, h.ammo)
-	txt.Draw(target, m)
+	txt := h.ammoTxt
+	animation.DrawShadowTextLeft(
+		txt,
+		target,
+		pos,
+		fmt.Sprintf("%d / %d", h.mag, h.ammo),
+		4,
+	)
 }
 
 func (h *Hud) renderRespawnCountdown(target pixel.Target) {
 	if h.respawnCountdown > 0 {
 		pos := h.world.GetWindow().Bounds().Center()
-		atlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
-		txt := text.New(pos, atlas)
-		txt.Clear()
-		txt.LineHeight = atlas.LineHeight()
-		txt.Color = color.Black
-		fmt.Fprintf(txt, "%d", h.respawnCountdown)
-		m := pixel.IM.Moved(pixel.V(-txt.Bounds().W()/2, 0)).Scaled(txt.Bounds().Center(), 8)
-		txt.Draw(target, m.Moved(shadowOffset.Scaled(8)))
-		txt.Color = hudAmmoColor
-		fmt.Fprintf(txt, "\r%d", h.respawnCountdown)
-		txt.Draw(target, m)
+		txt := h.respawnCountdownTxt
+		animation.DrawStrokeTextCenter(
+			txt,
+			target,
+			pos,
+			fmt.Sprintf("%d", h.respawnCountdown),
+			8, nil, nil,
+		)
 	}
 }
 

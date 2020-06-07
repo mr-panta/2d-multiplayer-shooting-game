@@ -1,7 +1,6 @@
 package entity
 
 import (
-	"image/color"
 	"sync"
 	"time"
 
@@ -16,7 +15,6 @@ import (
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/sound"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/util"
-	"golang.org/x/image/colornames"
 )
 
 const (
@@ -45,14 +43,8 @@ const (
 	playerMaxPosError        = 250
 	playerNameOffset         = 8
 	playerInvulnerableTime   = 3 * time.Second
-	playerTopIconOffset      = 44
 	playerDropInitArmor      = 30
 	playerDropArmorRate      = 10
-)
-
-var (
-	playerNameTopColor       = color.RGBA{148, 0, 4, 255}
-	playerNameTopStrokeColor = colornames.White
 )
 
 type player struct {
@@ -63,6 +55,7 @@ type player struct {
 	weaponID           string
 	playerNameTxt      *text.Text
 	tickSnapshots      []*protocol.TickSnapshot
+	visibleCauseMap    map[string]bool
 	kill               int
 	death              int
 	streak             int
@@ -85,6 +78,7 @@ type player struct {
 	isTriggering       bool
 	isReloading        bool
 	isInvulnerable     bool
+	isVisible          bool
 	hp                 float64
 	armor              float64
 	maxMoveSpeed       float64
@@ -92,24 +86,26 @@ type player struct {
 	moveDir            pixel.Vec
 	cursorDir          pixel.Vec
 	lock               sync.RWMutex
+	visibleCauseLock   sync.RWMutex
 	colliderImd        *imdraw.IMDraw
 	shapeImd           *imdraw.IMDraw
 }
 
 func NewPlayer(world common.World, id string) common.Player {
 	return &player{
-		id:             id,
-		world:          world,
-		playerNameTxt:  animation.NewText(),
-		pos:            util.GetHighVec(),
-		maxMoveSpeed:   playerBaseMoveSpeed,
-		updateTime:     ticktime.GetServerTime(),
-		colliderImd:    imdraw.New(nil),
-		shapeImd:       imdraw.New(nil),
-		hp:             playerInitHP,
-		armor:          playerInitArmor,
-		respawnTime:    ticktime.GetServerTime(),
-		isInvulnerable: true,
+		id:              id,
+		world:           world,
+		playerNameTxt:   animation.NewText(),
+		pos:             util.GetHighVec(),
+		maxMoveSpeed:    playerBaseMoveSpeed,
+		updateTime:      ticktime.GetServerTime(),
+		colliderImd:     imdraw.New(nil),
+		shapeImd:        imdraw.New(nil),
+		hp:              playerInitHP,
+		armor:           playerInitArmor,
+		respawnTime:     ticktime.GetServerTime(),
+		visibleCauseMap: make(map[string]bool),
+		isInvulnerable:  true,
 	}
 }
 
@@ -148,10 +144,7 @@ func (p *player) GetCollider() (pixel.Rect, bool) {
 func (p *player) GetRenderObjects() (objs []common.RenderObject) {
 	objs = append(objs, common.NewRenderObject(playerZ, p.GetShape(), p.render))
 	if p.IsAlive() {
-		objs = append(objs,
-			common.NewRenderObject(playerNameZ, p.GetShape(), p.renderPlayerName),
-			common.NewRenderObject(playerNameZ-1, p.GetShape(), p.renderTopPlayerIcon),
-		)
+		objs = append(objs, common.NewRenderObject(playerNameZ, p.GetShape(), p.renderPlayerName))
 
 	}
 	// debug
@@ -226,7 +219,6 @@ func (p *player) ServerUpdate(tick int64) {
 			item := o.(common.Item)
 			if ok := item.UsedBy(p); ok {
 				p.pickupTime = now
-				p.world.GetObjectDB().Delete(item.GetID())
 			}
 		}
 		// Update weapon
@@ -358,6 +350,7 @@ func (p *player) ClientUpdate() {
 	p.hitVisibleTime = time.Duration(lastSS.HitVisibleMS) * time.Millisecond
 	p.triggerVisibleTime = time.Duration(lastSS.TriggerVisibleMS) * time.Millisecond
 	p.isInvulnerable = lastSS.IsInvulnerable
+	p.isVisible = lastSS.IsVisible
 	p.playerName = lastSS.PlayerName
 	// Update weapon
 	if weapon := p.GetWeapon(); weapon != nil {
@@ -373,6 +366,10 @@ func (p *player) ClientUpdate() {
 
 func (p *player) SetPos(pos pixel.Vec) {
 	p.pos = pos
+}
+
+func (p *player) GetPos() pixel.Vec {
+	return p.pos
 }
 
 func (p *player) SetInput(input *protocol.InputSnapshot) {
@@ -524,13 +521,33 @@ func (p *player) GetTriggerTime() time.Time {
 	return p.triggerTime
 }
 
+func (p *player) SetVisibleCause(id string, visible bool) {
+	p.visibleCauseLock.Lock()
+	defer p.visibleCauseLock.Unlock()
+	if visible {
+		p.visibleCauseMap[id] = true
+	} else {
+		delete(p.visibleCauseMap, id)
+	}
+	isVisible := false
+	for id := range p.visibleCauseMap {
+		obj, exists := p.world.GetObjectDB().SelectOne(id)
+		if exists && obj.Exists() {
+			isVisible = true
+		} else {
+			delete(p.visibleCauseMap, id)
+		}
+	}
+	p.isVisible = isVisible
+}
+
 func (p *player) IsVisible() bool {
 	now := ticktime.GetServerTime()
 	return !p.IsAlive() ||
 		now.Sub(p.hitTime) <= p.hitVisibleTime ||
 		now.Sub(p.triggerTime) <= p.triggerVisibleTime ||
 		now.Sub(p.meleeTime) <= playerVisibleTime ||
-		(p.getScoreboardPlace() == 1 && p.streak > 0)
+		p.isVisible
 }
 
 func (p *player) SetPlayerName(name string) {
@@ -569,24 +586,7 @@ func (p *player) renderPlayerName(target pixel.Target, viewPos pixel.Vec) {
 	}()
 	shape := p.GetShape()
 	pos := pixel.V(shape.Min.X+shape.W()/2, shape.Max.Y+playerNameOffset).Sub(viewPos)
-	if p.streak > 0 && p.getScoreboardPlace() == 1 {
-		animation.DrawStrokeTextCenter(p.playerNameTxt, target, pos, p.playerName, 2,
-			playerNameTopColor, playerNameTopStrokeColor)
-	} else {
-		animation.DrawStrokeTextCenter(p.playerNameTxt, target, pos, p.playerName, 2,
-			nil, nil)
-	}
-}
-
-func (p *player) renderTopPlayerIcon(target pixel.Target, viewPos pixel.Vec) {
-	if p.streak == 0 || p.getScoreboardPlace() != 1 {
-		return
-	}
-	shape := p.GetShape()
-	pos := pixel.V(shape.Min.X+shape.W()/2, shape.Max.Y+playerNameOffset).Sub(viewPos)
-	anim := animation.NewIconSkull()
-	anim.Pos = pos.Add(pixel.V(0, playerTopIconOffset))
-	anim.Draw(target)
+	animation.DrawStrokeTextCenter(p.playerNameTxt, target, pos, p.playerName, 2, nil, nil)
 }
 
 func (p *player) render(target pixel.Target, viewPos pixel.Vec) {
@@ -743,6 +743,7 @@ func (p *player) getSnapshotsByTime(t time.Time) *protocol.ObjectSnapshot {
 			HitVisibleMS:     ssB.HitVisibleMS,
 			TriggerVisibleMS: ssB.TriggerVisibleMS,
 			IsInvulnerable:   ssB.IsInvulnerable,
+			IsVisible:        ssB.IsVisible,
 		},
 	}
 }
@@ -794,6 +795,7 @@ func (p *player) getCurrentSnapshot() *protocol.ObjectSnapshot {
 			HitVisibleMS:     int(p.hitVisibleTime.Seconds() * 1000),
 			TriggerVisibleMS: int(p.triggerVisibleTime.Seconds() * 1000),
 			IsInvulnerable:   p.isInvulnerable,
+			IsVisible:        p.isVisible,
 		},
 	}
 }
@@ -820,14 +822,4 @@ func (p *player) die(firingPlayerID string, weaponID string) {
 		firingPlayer.IncreaseKill()
 	}
 	p.world.GetHud().AddKillFeedRow(firingPlayerID, p.id, weaponID)
-}
-
-func (p *player) getScoreboardPlace() int {
-	scoreboard := p.world.GetHud().GetScoreboardPlayers()
-	for i, row := range scoreboard {
-		if row.GetID() == p.GetID() {
-			return i + 1
-		}
-	}
-	return 0
 }

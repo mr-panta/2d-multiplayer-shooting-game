@@ -3,6 +3,7 @@ package animation
 import (
 	"fmt"
 	"image"
+	"image/color"
 	"os"
 	"path/filepath"
 
@@ -12,6 +13,7 @@ import (
 
 var (
 	objectSheet *pixel.PictureData
+	shadowColor = color.RGBA{0, 0, 0, 88}
 )
 
 func LoadAllSprites() (err error) {

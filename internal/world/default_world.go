@@ -45,6 +45,7 @@ type defaultWorld struct {
 	hud         common.Hud
 	fieldWidth  int
 	fieldHeight int
+	skullID     string
 	// client
 	win              *pixelgl.Window
 	toggleFPSLimit   func()
@@ -95,6 +96,7 @@ func NewDefaultWorld(clientProcessor common.ClientProcessor, id string) common.W
 		world.createTrees()
 		world.createTerrains()
 		world.createBoundaries()
+		world.createSkull()
 	}
 	return world
 }
@@ -217,6 +219,13 @@ func (w *defaultWorld) createBoundaries() {
 		Min: pixel.V(size.Max.X, size.Min.Y-defaultWorldBoundarySize),
 		Max: pixel.V(size.Max.X+defaultWorldBoundarySize, size.Max.Y+defaultWorldBoundarySize),
 	}))
+}
+
+func (w *defaultWorld) createSkull() {
+	w.skullID = w.objectDB.GetAvailableID()
+	skull := item.NewItemSkull(w, w.skullID)
+	skull.SetPos(w.getFreePos())
+	w.objectDB.Set(skull)
 }
 
 func (w *defaultWorld) getFreePos() pixel.Vec {

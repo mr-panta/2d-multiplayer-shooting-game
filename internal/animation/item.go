@@ -3,6 +3,8 @@ package animation
 import (
 	"image/color"
 
+	"github.com/faiface/pixel/imdraw"
+
 	"github.com/faiface/pixel"
 )
 
@@ -16,6 +18,7 @@ var (
 	itemWeaponSniperFrame = pixel.R(7*32, 0, 9*32, 64).Moved(itemFrameOffset)
 	itemArmorFrame        = pixel.R(9*32, 0, 11*32, 64).Moved(itemFrameOffset)
 	itemArmorBlueFrame    = pixel.R(11*32, 0, 13*32, 64).Moved(itemFrameOffset)
+	itemSkullFrame        = pixel.R(13*32, 1, 15*32, 63).Moved(itemFrameOffset)
 )
 
 func NewItemAmmo() *Item {
@@ -50,14 +53,30 @@ func NewItemArmorBlue() *Item {
 	return &Item{frame: itemArmorBlueFrame}
 }
 
+func NewItemSkull() *Item {
+	return &Item{
+		frame:     itemSkullFrame,
+		shadowImd: imdraw.New(nil),
+	}
+}
+
 type Item struct {
-	frame pixel.Rect
-	Pos   pixel.Vec
-	Color color.Color
+	frame     pixel.Rect
+	shadowImd *imdraw.IMDraw
+	Pos       pixel.Vec
+	Color     color.Color
 }
 
 func (i *Item) Draw(target pixel.Target) {
 	sprite := pixel.NewSprite(objectSheet, i.frame)
 	matrix := pixel.IM.Moved(i.Pos.Add(pixel.V(0, i.frame.H()/2)))
+	if i.shadowImd != nil {
+		i.shadowImd.Clear()
+		i.shadowImd.Color = shadowColor
+		i.shadowImd.Push(pixel.V(0, -i.frame.H()/2))
+		i.shadowImd.SetMatrix(matrix)
+		i.shadowImd.Ellipse(pixel.V(i.frame.W()/4, i.frame.H()/12), 0)
+		i.shadowImd.Draw(target)
+	}
 	sprite.DrawColorMask(target, matrix, i.Color)
 }

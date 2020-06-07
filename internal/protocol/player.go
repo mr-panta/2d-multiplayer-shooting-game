@@ -23,4 +23,5 @@ type PlayerSnapshot struct {
 	HitVisibleMS     int     `json:"hit_visible_ms,omitempty"`
 	TriggerVisibleMS int     `json:"trigger_visible_ms,omitempty"`
 	IsInvulnerable   bool    `json:"is_invulnerable,omitempty"`
+	IsVisible        bool    `json:"is_visible,omitempty"`
 }

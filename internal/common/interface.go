@@ -79,6 +79,7 @@ type Object interface {
 
 type Player interface {
 	Object
+	GetPos() pixel.Vec
 	SetPos(pos pixel.Vec)
 	SetMainPlayer()
 	GetPivot() pixel.Vec
@@ -97,6 +98,7 @@ type Player interface {
 	GetHitTime() time.Time
 	GetTriggerTime() time.Time
 	GetScopeRadius(dist float64) float64
+	SetVisibleCause(id string, visible bool)
 	IsVisible() bool
 	IsAlive() bool
 	SetPlayerName(name string)

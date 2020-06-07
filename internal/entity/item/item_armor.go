@@ -14,9 +14,8 @@ import (
 )
 
 var (
-	itemArmorShape  = pixel.R(0, 0, 38, 40)
-	itemArmorSize   = 30.
-	itemArmorXLSize = 100.
+	itemArmorShape    = pixel.R(0, 0, 38, 40)
+	itemArmorBlueSize = 100.
 )
 
 type ItemArmor struct {
@@ -40,48 +39,48 @@ func NewItemArmor(world common.World, id string, armor float64) *ItemArmor {
 	}
 }
 
-func (w *ItemArmor) GetID() string {
-	return w.id
+func (o *ItemArmor) GetID() string {
+	return o.id
 }
 
-func (w *ItemArmor) Destroy() {
-	w.isDestroyed = true
+func (o *ItemArmor) Destroy() {
+	o.isDestroyed = true
 }
 
-func (w *ItemArmor) Exists() bool {
-	return !w.isDestroyed
+func (o *ItemArmor) Exists() bool {
+	return !o.isDestroyed
 }
 
-func (w *ItemArmor) SetPos(pos pixel.Vec) {
-	w.pos = pos
+func (o *ItemArmor) SetPos(pos pixel.Vec) {
+	o.pos = pos
 }
 
-func (w *ItemArmor) GetShape() pixel.Rect {
-	return itemArmorShape.Moved(w.pos.Sub(pixel.V(itemArmorShape.W()/2, 0)))
+func (o *ItemArmor) GetShape() pixel.Rect {
+	return itemArmorShape.Moved(o.pos.Sub(pixel.V(itemArmorShape.W()/2, 0)))
 }
 
-func (w *ItemArmor) GetCollider() (pixel.Rect, bool) {
+func (o *ItemArmor) GetCollider() (pixel.Rect, bool) {
 	return pixel.ZR, false
 }
 
-func (w *ItemArmor) GetRenderObjects() []common.RenderObject {
-	return []common.RenderObject{common.NewRenderObject(itemZ, w.GetShape(), w.render)}
+func (o *ItemArmor) GetRenderObjects() []common.RenderObject {
+	return []common.RenderObject{common.NewRenderObject(itemZ, o.GetShape(), o.render)}
 }
 
-func (w *ItemArmor) SetSnapshot(tick int64, ss *protocol.ObjectSnapshot) {
-	w.lock.Lock()
-	defer w.lock.Unlock()
-	w.tickSnapshots = append(w.tickSnapshots, &protocol.TickSnapshot{
+func (o *ItemArmor) SetSnapshot(tick int64, ss *protocol.ObjectSnapshot) {
+	o.lock.Lock()
+	defer o.lock.Unlock()
+	o.tickSnapshots = append(o.tickSnapshots, &protocol.TickSnapshot{
 		Tick:     tick,
 		Snapshot: ss,
 	})
 }
 
-func (w *ItemArmor) GetSnapshot(tick int64) (ss *protocol.ObjectSnapshot) {
-	w.lock.RLock()
-	defer w.lock.RUnlock()
-	for i := len(w.tickSnapshots) - 1; i >= 0; i-- {
-		ts := w.tickSnapshots[i]
+func (o *ItemArmor) GetSnapshot(tick int64) (ss *protocol.ObjectSnapshot) {
+	o.lock.RLock()
+	defer o.lock.RUnlock()
+	for i := len(o.tickSnapshots) - 1; i >= 0; i-- {
+		ts := o.tickSnapshots[i]
 		if ts.Tick == tick {
 			ss = ts.Snapshot
 		} else if ts.Tick < tick {
@@ -89,97 +88,98 @@ func (w *ItemArmor) GetSnapshot(tick int64) (ss *protocol.ObjectSnapshot) {
 		}
 	}
 	if ss == nil {
-		ss = w.getCurrentSnapshot()
+		ss = o.getCurrentSnapshot()
 	}
 	return ss
 }
 
-func (w *ItemArmor) ServerUpdate(tick int64) {
-	w.SetSnapshot(tick, w.getCurrentSnapshot())
-	w.cleanTickSnapshots()
+func (o *ItemArmor) ServerUpdate(tick int64) {
+	o.SetSnapshot(tick, o.getCurrentSnapshot())
+	o.cleanTickSnapshots()
 	now := ticktime.GetServerTime()
-	if now.Sub(w.createTime) > itemLifeTime {
-		w.world.GetObjectDB().Delete(w.id)
-		w.isDestroyed = true
+	if now.Sub(o.createTime) > itemLifeTime {
+		o.world.GetObjectDB().Delete(o.id)
+		o.isDestroyed = true
 	}
 }
 
-func (w *ItemArmor) ClientUpdate() {
-	ss := w.getLerpSnapshot().Item.Armor
-	w.pos = ss.Pos.Convert()
-	w.armor = ss.Armor
-	w.cleanTickSnapshots()
+func (o *ItemArmor) ClientUpdate() {
+	ss := o.getLerpSnapshot().Item.Armor
+	o.pos = ss.Pos.Convert()
+	o.armor = ss.Armor
+	o.cleanTickSnapshots()
 }
 
-func (w *ItemArmor) UsedBy(p common.Player) (ok bool) {
-	return p.AddArmorHP(w.armor, 0)
+func (o *ItemArmor) UsedBy(p common.Player) (ok bool) {
+	o.world.GetObjectDB().Delete(o.GetID())
+	return p.AddArmorHP(o.armor, 0)
 }
 
-func (w *ItemArmor) GetType() int {
+func (o *ItemArmor) GetType() int {
 	return config.ItemObject
 }
 
-func (w *ItemArmor) cleanTickSnapshots() {
-	w.lock.Lock()
-	defer w.lock.Unlock()
-	if len(w.tickSnapshots) <= 1 {
+func (o *ItemArmor) cleanTickSnapshots() {
+	o.lock.Lock()
+	defer o.lock.Unlock()
+	if len(o.tickSnapshots) <= 1 {
 		return
 	}
 	t := ticktime.GetServerTime().Add(-config.LerpPeriod * 2)
 	tick := ticktime.GetTick(t)
 	index := 0
-	for i, ts := range w.tickSnapshots {
+	for i, ts := range o.tickSnapshots {
 		if ts.Tick >= tick {
 			index = i
 			break
 		}
 	}
 	if index > 0 {
-		w.tickSnapshots = w.tickSnapshots[index:]
+		o.tickSnapshots = o.tickSnapshots[index:]
 	}
 }
 
-func (w *ItemArmor) getCurrentSnapshot() *protocol.ObjectSnapshot {
+func (o *ItemArmor) getCurrentSnapshot() *protocol.ObjectSnapshot {
 	return &protocol.ObjectSnapshot{
-		ID:   w.GetID(),
-		Type: w.GetType(),
+		ID:   o.GetID(),
+		Type: o.GetType(),
 		Item: &protocol.ItemSnapshot{
 			Armor: &protocol.ItemArmorSnapshot{
-				Pos:   util.ConvertVec(w.pos),
-				Armor: w.armor,
+				Pos:   util.ConvertVec(o.pos),
+				Armor: o.armor,
 			},
 		},
 	}
 }
 
-func (w *ItemArmor) render(target pixel.Target, viewPos pixel.Vec) {
+func (o *ItemArmor) render(target pixel.Target, viewPos pixel.Vec) {
 	var anim *animation.Item
-	if w.armor >= itemArmorXLSize {
+	if o.armor >= itemArmorBlueSize {
 		anim = animation.NewItemArmorBlue()
 	} else {
 		anim = animation.NewItemArmor()
 	}
-	anim.Pos = w.pos.Sub(viewPos)
+	anim.Pos = o.pos.Sub(viewPos)
 	anim.Draw(target)
 }
 
-func (w *ItemArmor) getLerpSnapshot() *protocol.ObjectSnapshot {
-	return w.getSnapshotsByTime(ticktime.GetLerpTime())
+func (o *ItemArmor) getLerpSnapshot() *protocol.ObjectSnapshot {
+	return o.getSnapshotsByTime(ticktime.GetLerpTime())
 }
 
-func (w *ItemArmor) getSnapshotsByTime(t time.Time) *protocol.ObjectSnapshot {
-	w.lock.RLock()
-	defer w.lock.RUnlock()
-	a, b, d := protocol.GetSnapshotByTime(t, w.tickSnapshots)
+func (o *ItemArmor) getSnapshotsByTime(t time.Time) *protocol.ObjectSnapshot {
+	o.lock.RLock()
+	defer o.lock.RUnlock()
+	a, b, d := protocol.GetSnapshotByTime(t, o.tickSnapshots)
 	if a == nil || b == nil {
-		a = w.getCurrentSnapshot()
-		b = w.getCurrentSnapshot()
+		a = o.getCurrentSnapshot()
+		b = o.getCurrentSnapshot()
 	}
 	ssA := a.Item.Armor
 	ssB := b.Item.Armor
 	return &protocol.ObjectSnapshot{
-		ID:   w.GetID(),
-		Type: w.GetType(),
+		ID:   o.GetID(),
+		Type: o.GetType(),
 		Item: &protocol.ItemSnapshot{
 			Armor: &protocol.ItemArmorSnapshot{
 				Pos:   util.ConvertVec(pixel.Lerp(ssA.Pos.Convert(), ssB.Pos.Convert(), d)),

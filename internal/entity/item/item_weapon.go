@@ -39,48 +39,48 @@ func NewItemWeapon(world common.World, id string, weaponID string) *ItemWeapon {
 	}
 }
 
-func (w *ItemWeapon) GetID() string {
-	return w.id
+func (o *ItemWeapon) GetID() string {
+	return o.id
 }
 
-func (w *ItemWeapon) Destroy() {
-	w.isDestroyed = true
+func (o *ItemWeapon) Destroy() {
+	o.isDestroyed = true
 }
 
-func (w *ItemWeapon) Exists() bool {
-	return !w.isDestroyed
+func (o *ItemWeapon) Exists() bool {
+	return !o.isDestroyed
 }
 
-func (w *ItemWeapon) SetPos(pos pixel.Vec) {
-	w.pos = pos
+func (o *ItemWeapon) SetPos(pos pixel.Vec) {
+	o.pos = pos
 }
 
-func (w *ItemWeapon) GetShape() pixel.Rect {
-	return itemWeaponShape.Moved(w.pos.Sub(pixel.V(itemWeaponShape.W()/2, 0)))
+func (o *ItemWeapon) GetShape() pixel.Rect {
+	return itemWeaponShape.Moved(o.pos.Sub(pixel.V(itemWeaponShape.W()/2, 0)))
 }
 
-func (w *ItemWeapon) GetCollider() (pixel.Rect, bool) {
+func (o *ItemWeapon) GetCollider() (pixel.Rect, bool) {
 	return pixel.ZR, false
 }
 
-func (w *ItemWeapon) GetRenderObjects() []common.RenderObject {
-	return []common.RenderObject{common.NewRenderObject(itemZ, w.GetShape(), w.render)}
+func (o *ItemWeapon) GetRenderObjects() []common.RenderObject {
+	return []common.RenderObject{common.NewRenderObject(itemZ, o.GetShape(), o.render)}
 }
 
-func (w *ItemWeapon) SetSnapshot(tick int64, ss *protocol.ObjectSnapshot) {
-	w.lock.Lock()
-	defer w.lock.Unlock()
-	w.tickSnapshots = append(w.tickSnapshots, &protocol.TickSnapshot{
+func (o *ItemWeapon) SetSnapshot(tick int64, ss *protocol.ObjectSnapshot) {
+	o.lock.Lock()
+	defer o.lock.Unlock()
+	o.tickSnapshots = append(o.tickSnapshots, &protocol.TickSnapshot{
 		Tick:     tick,
 		Snapshot: ss,
 	})
 }
 
-func (w *ItemWeapon) GetSnapshot(tick int64) (ss *protocol.ObjectSnapshot) {
-	w.lock.RLock()
-	defer w.lock.RUnlock()
-	for i := len(w.tickSnapshots) - 1; i >= 0; i-- {
-		ts := w.tickSnapshots[i]
+func (o *ItemWeapon) GetSnapshot(tick int64) (ss *protocol.ObjectSnapshot) {
+	o.lock.RLock()
+	defer o.lock.RUnlock()
+	for i := len(o.tickSnapshots) - 1; i >= 0; i-- {
+		ts := o.tickSnapshots[i]
 		if ts.Tick == tick {
 			ss = ts.Snapshot
 		} else if ts.Tick < tick {
@@ -88,109 +88,110 @@ func (w *ItemWeapon) GetSnapshot(tick int64) (ss *protocol.ObjectSnapshot) {
 		}
 	}
 	if ss == nil {
-		ss = w.getCurrentSnapshot()
+		ss = o.getCurrentSnapshot()
 	}
 	return ss
 }
 
-func (w *ItemWeapon) ServerUpdate(tick int64) {
-	w.SetSnapshot(tick, w.getCurrentSnapshot())
-	w.cleanTickSnapshots()
+func (o *ItemWeapon) ServerUpdate(tick int64) {
+	o.SetSnapshot(tick, o.getCurrentSnapshot())
+	o.cleanTickSnapshots()
 	now := ticktime.GetServerTime()
-	if now.Sub(w.createTime) > itemLifeTime {
-		w.world.GetObjectDB().Delete(w.id)
-		w.world.GetObjectDB().Delete(w.weaponID)
-		w.isDestroyed = true
+	if now.Sub(o.createTime) > itemLifeTime {
+		o.world.GetObjectDB().Delete(o.id)
+		o.world.GetObjectDB().Delete(o.weaponID)
+		o.isDestroyed = true
 	}
 }
 
-func (w *ItemWeapon) ClientUpdate() {
-	ss := w.getLerpSnapshot().Item.Weapon
-	w.pos = ss.Pos.Convert()
-	w.weaponID = ss.WeaponID
-	if obj, exists := w.world.GetObjectDB().SelectOne(w.weaponID); exists {
+func (o *ItemWeapon) ClientUpdate() {
+	ss := o.getLerpSnapshot().Item.Weapon
+	o.pos = ss.Pos.Convert()
+	o.weaponID = ss.WeaponID
+	if obj, exists := o.world.GetObjectDB().SelectOne(o.weaponID); exists {
 		weapon := obj.(common.Weapon)
-		w.isSniper = weapon.GetWeaponType() == config.SniperWeapon
+		o.isSniper = weapon.GetWeaponType() == config.SniperWeapon
 	}
-	w.cleanTickSnapshots()
+	o.cleanTickSnapshots()
 }
 
-func (w *ItemWeapon) UsedBy(p common.Player) (ok bool) {
-	if o, exists := w.world.GetObjectDB().SelectOne(w.weaponID); exists &&
-		o.GetType() == config.WeaponObject && p.GetWeapon() == nil {
-		weapon := o.(common.Weapon)
+func (o *ItemWeapon) UsedBy(p common.Player) (ok bool) {
+	if obj, exists := o.world.GetObjectDB().SelectOne(o.weaponID); exists &&
+		obj.GetType() == config.WeaponObject && p.GetWeapon() == nil {
+		weapon := obj.(common.Weapon)
 		weapon.SetPlayerID(p.GetID())
 		p.SetWeapon(weapon)
+		o.world.GetObjectDB().Delete(o.GetID())
 		return true
 	}
 	return false
 }
 
-func (w *ItemWeapon) GetType() int {
+func (o *ItemWeapon) GetType() int {
 	return config.ItemObject
 }
 
-func (w *ItemWeapon) cleanTickSnapshots() {
-	w.lock.Lock()
-	defer w.lock.Unlock()
-	if len(w.tickSnapshots) <= 1 {
+func (o *ItemWeapon) cleanTickSnapshots() {
+	o.lock.Lock()
+	defer o.lock.Unlock()
+	if len(o.tickSnapshots) <= 1 {
 		return
 	}
 	t := ticktime.GetServerTime().Add(-config.LerpPeriod * 2)
 	tick := ticktime.GetTick(t)
 	index := 0
-	for i, ts := range w.tickSnapshots {
+	for i, ts := range o.tickSnapshots {
 		if ts.Tick >= tick {
 			index = i
 			break
 		}
 	}
 	if index > 0 {
-		w.tickSnapshots = w.tickSnapshots[index:]
+		o.tickSnapshots = o.tickSnapshots[index:]
 	}
 }
 
-func (w *ItemWeapon) getCurrentSnapshot() *protocol.ObjectSnapshot {
+func (o *ItemWeapon) getCurrentSnapshot() *protocol.ObjectSnapshot {
 	return &protocol.ObjectSnapshot{
-		ID:   w.GetID(),
-		Type: w.GetType(),
+		ID:   o.GetID(),
+		Type: o.GetType(),
 		Item: &protocol.ItemSnapshot{
 			Weapon: &protocol.ItemWeaponSnapshot{
-				WeaponID: w.weaponID,
-				Pos:      util.ConvertVec(w.pos),
+				WeaponID: o.weaponID,
+				Pos:      util.ConvertVec(o.pos),
 			},
 		},
 	}
 }
 
-func (w *ItemWeapon) render(target pixel.Target, viewPos pixel.Vec) {
+func (o *ItemWeapon) render(target pixel.Target, viewPos pixel.Vec) {
 	var anim *animation.Item
-	if w.isSniper {
+	if o.isSniper {
 		anim = animation.NewItemWeaponSniper()
 	} else {
 		anim = animation.NewItemWeapon()
 	}
-	anim.Pos = w.pos.Sub(viewPos)
+	anim.Pos = o.pos.Sub(viewPos)
 	anim.Draw(target)
 }
 
-func (w *ItemWeapon) getLerpSnapshot() *protocol.ObjectSnapshot {
-	return w.getSnapshotsByTime(ticktime.GetLerpTime())
+func (o *ItemWeapon) getLerpSnapshot() *protocol.ObjectSnapshot {
+	return o.getSnapshotsByTime(ticktime.GetLerpTime())
 }
 
-func (w *ItemWeapon) getSnapshotsByTime(t time.Time) *protocol.ObjectSnapshot {
-	w.lock.RLock()
-	defer w.lock.RUnlock()
-	a, b, d := protocol.GetSnapshotByTime(t, w.tickSnapshots)
+func (o *ItemWeapon) getSnapshotsByTime(t time.Time) *protocol.ObjectSnapshot {
+	o.lock.RLock()
+	defer o.lock.RUnlock()
+	a, b, d := protocol.GetSnapshotByTime(t, o.tickSnapshots)
 	if a == nil || b == nil {
-		a = w.getCurrentSnapshot()
-		b = w.getCurrentSnapshot()
+		a = o.getCurrentSnapshot()
+		b = o.getCurrentSnapshot()
 	}
 	ssA := a.Item.Weapon
 	ssB := b.Item.Weapon
 	return &protocol.ObjectSnapshot{
-		ID:   w.GetID(),
-		Type: w.GetType(),
+		ID:   o.GetID(),
+		Type: o.GetType(),
 		Item: &protocol.ItemSnapshot{
 			Weapon: &protocol.ItemWeaponSnapshot{
 				WeaponID: ssB.WeaponID,

@@ -108,6 +108,7 @@ func (o *ItemAmmoSM) ClientUpdate() {
 
 func (o *ItemAmmoSM) UsedBy(p common.Player) (ok bool) {
 	if p.GetWeapon() != nil && p.GetWeapon().AddAmmo(-2) {
+		o.world.GetObjectDB().Delete(o.GetID())
 		return true
 	}
 	return false

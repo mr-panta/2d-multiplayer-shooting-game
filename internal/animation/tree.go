@@ -97,7 +97,7 @@ func (t *Tree) drawShadow(target pixel.Target) {
 			matrix = matrix.ScaledXY(t.Pos, pixel.V(-1, 1))
 		}
 		t.shadowImd.Clear()
-		t.shadowImd.Color = characterShadowColor
+		t.shadowImd.Color = shadowColor
 		t.shadowImd.Push(t.shadowOffset)
 		t.shadowImd.SetMatrix(matrix)
 		t.shadowImd.Ellipse(t.shadow, 0)

@@ -37,7 +37,6 @@ var (
 	characterHitColor          = colornames.Red
 	characterArmorHitColor     = color.RGBA{0x1f, 0xa7, 0xff, 0xff}
 	characterInvulnerableColor = color.RGBA{160, 160, 160, 160}
-	characterShadowColor       = color.RGBA{0, 0, 0, 88}
 )
 
 const (
@@ -121,7 +120,7 @@ func (c *Character) draw(target pixel.Target) {
 func (c *Character) drawShadow(target pixel.Target) {
 	matrix := pixel.IM.Moved(c.Pos)
 	c.shadowImd.Clear()
-	c.shadowImd.Color = characterShadowColor
+	c.shadowImd.Color = shadowColor
 	c.shadowImd.Push(pixel.V(0, -characterHeight/2))
 	c.shadowImd.SetMatrix(matrix)
 	c.shadowImd.Ellipse(pixel.V(characterWidth/5, characterHeight/12), 0)

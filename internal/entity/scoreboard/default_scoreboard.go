@@ -155,7 +155,7 @@ func (s *DefaultScoreboard) renderScoreboard(target pixel.Target) {
 		pos = pos.Add(pixel.V(0, -defaultScoreboardLineHeight))
 		animation.DrawShadowTextLeft(s.scoreboardNameTxts[0], target, pos, "PLAYER", 1)
 		pos = pos.Add(pixel.V(defaultScoreboardWidth, 0))
-		animation.DrawShadowTextRight(s.scoreboardScoreTxts[0], target, pos, "REMAINING", 1)
+		animation.DrawShadowTextRight(s.scoreboardScoreTxts[0], target, pos, "COUNTDOWN", 1)
 	}
 	for i, player := range players {
 		pos := win.Bounds().Vertices()[1]

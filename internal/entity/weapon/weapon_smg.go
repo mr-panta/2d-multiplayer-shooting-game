@@ -21,10 +21,10 @@ import (
 const (
 	smgDropRate           = 20
 	smgWidth              = 80
-	smgBulletSpeed        = 1500
+	smgBulletSpeed        = 2000
 	smgMaxRange           = 1000
 	smgBulletLength       = 12
-	smgDamage             = 10
+	smgDamage             = 12
 	smgTriggerVisibleTime = time.Second
 	smgTriggerCooldown    = 100 * time.Millisecond
 	smgReloadCooldown     = 2 * time.Second
@@ -32,7 +32,7 @@ const (
 	smgMag                = 30
 	smgMaxScopeRadius     = 160
 	smgMaxScopeRange      = 600
-	smgRecoilAngle        = math.Pi / 180 * 10
+	smgRecoilAngle        = math.Pi / 180 * 6
 )
 
 type WeaponSMG struct {

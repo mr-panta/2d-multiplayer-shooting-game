@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mr-panta/go-logger"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
+	"github.com/mr-panta/go-logger"
 )
 
 func NewServer(tcpAddrA, tcpAddrB string, process Process) Server {
@@ -119,11 +119,15 @@ func (s *server) sendToClient(clientID string, data []byte) (err error) {
 	var conn *Connection
 	select {
 	case <-timeout:
+		s.clientLock.RUnlock()
+		s.clientLock.Lock()
 		if buffer, exists := s.clientBuffMap[clientID]; exists {
 			close(buffer)
 		}
 		delete(s.clientBuffMap, clientID)
 		delete(s.clientConnMap, clientID)
+		s.clientLock.Unlock()
+		s.clientLock.RLock()
 		return errors.New("no connection available")
 	case conn = <-pool:
 	}

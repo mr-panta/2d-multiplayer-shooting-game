@@ -49,12 +49,14 @@ func Random(world common.World, id string) common.Weapon {
 		return NewWeaponSniper(world, id)
 	}
 	dropRates := []int{
+		sniperDropRate,
 		pistolDropRate,
 		shotgunDropRate,
 		smgDropRate,
 		m4DropRate,
 	}
 	newFnList := []newFunc{
+		NewWeaponSniper,
 		NewWeaponPistol,
 		NewWeaponShotgun,
 		NewWeaponSMG,

@@ -144,8 +144,10 @@ func (p *player) GetCollider() (pixel.Rect, bool) {
 func (p *player) GetRenderObjects() (objs []common.RenderObject) {
 	objs = append(objs, common.NewRenderObject(playerZ, p.GetShape(), p.render))
 	if p.IsAlive() {
-		objs = append(objs, common.NewRenderObject(playerNameZ, p.GetShape(), p.renderPlayerName))
-
+		objs = append(
+			objs,
+			common.NewRenderObject(config.MinWindowRenderZ, p.GetShape(), p.renderPlayerName),
+		)
 	}
 	// debug
 	if config.EnvDebug() {

@@ -8,7 +8,7 @@ import (
 	"golang.org/x/image/colornames"
 )
 
-const Version = "0.0.11"
+const Version = "0.1.0"
 
 // default
 const (
@@ -31,6 +31,12 @@ const (
 	PlayerTimeOut   = 10 * time.Second
 	BufferSize      = 1000
 	LogFile         = "data.log"
+)
+
+// world
+const (
+	MinWindowRenderZ     = 100
+	DefaultWorldInitTime = 5 * time.Second
 )
 
 // network

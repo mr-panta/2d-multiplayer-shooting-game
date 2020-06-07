@@ -45,5 +45,5 @@ func (i *Icon) Draw(target pixel.Target) {
 		matrix = matrix.Scaled(pixel.ZV, i.Size)
 	}
 	matrix = matrix.Moved(i.Pos)
-	sprite.Draw(target, matrix)
+	sprite.DrawColorMask(target, matrix, i.Color)
 }

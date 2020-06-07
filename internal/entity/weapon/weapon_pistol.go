@@ -19,17 +19,17 @@ import (
 )
 
 const (
-	pistolDropRate           = 40
+	pistolDropRate           = 20
 	pistolWidth              = 72
 	pistolBulletSpeed        = 2000
 	pistolMaxRange           = 800
 	pistolBulletLength       = 8
-	pistolDamage             = 15
+	pistolDamage             = 40
 	pistolTriggerVisibleTime = time.Second
 	pistolTriggerCooldown    = 400 * time.Millisecond
 	pistolReloadCooldown     = 2 * time.Second
-	pistolAmmo               = 40
-	pistolMag                = 20
+	pistolAmmo               = 16
+	pistolMag                = 8
 	pistolMaxScopeRadius     = 140
 	pistolMaxScopeRange      = 400
 	pistolRecoilAngle        = math.Pi / 180 * 4

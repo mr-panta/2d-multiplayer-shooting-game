@@ -20,7 +20,6 @@ var (
 type ItemWeapon struct {
 	id            string
 	weaponID      string
-	isSniper      bool
 	world         common.World
 	pos           pixel.Vec
 	createTime    time.Time
@@ -108,10 +107,6 @@ func (o *ItemWeapon) ClientUpdate() {
 	ss := o.getLerpSnapshot().Item.Weapon
 	o.pos = ss.Pos.Convert()
 	o.weaponID = ss.WeaponID
-	if obj, exists := o.world.GetObjectDB().SelectOne(o.weaponID); exists {
-		weapon := obj.(common.Weapon)
-		o.isSniper = weapon.GetWeaponType() == config.SniperWeapon
-	}
 	o.cleanTickSnapshots()
 }
 
@@ -165,12 +160,7 @@ func (o *ItemWeapon) getCurrentSnapshot() *protocol.ObjectSnapshot {
 }
 
 func (o *ItemWeapon) render(target pixel.Target, viewPos pixel.Vec) {
-	var anim *animation.Item
-	if o.isSniper {
-		anim = animation.NewItemWeaponSniper()
-	} else {
-		anim = animation.NewItemWeapon()
-	}
+	anim := animation.NewItemWeapon()
 	anim.Pos = o.pos.Sub(viewPos)
 	anim.Draw(target)
 }

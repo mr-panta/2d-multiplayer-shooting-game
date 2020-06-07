@@ -1,21 +1,35 @@
 package item
 
 import (
+	"fmt"
+	"image/color"
 	"sync"
 	"time"
 
 	"github.com/faiface/pixel"
+	"github.com/faiface/pixel/text"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/animation"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/util"
+	"golang.org/x/image/colornames"
+)
+
+const (
+	itemSkullBlinkDiv = 3
 )
 
 var (
-	itemSkullShape    = pixel.R(0, 0, 38, 43)
-	itemSkullInitTime = 99 * time.Second
+	itemSkullShape                = pixel.R(0, 0, 38, 43)
+	itemSkullIconOffset           = pixel.V(0, 180)
+	itemSkullIconOutScreenOffsets = []pixel.Vec{
+		pixel.V(-itemSkullShape.W()/2, 0),
+		pixel.V(0, itemSkullShape.H()/2),
+		pixel.V(itemSkullShape.W()/2, 0),
+		pixel.V(0, -itemSkullShape.H()/2),
+	}
 )
 
 type itemSkullRecord struct {
@@ -35,6 +49,7 @@ type ItemSkull struct {
 	lock          sync.RWMutex
 	// render
 	remainingTime time.Duration
+	winnerTxt     *text.Text
 }
 
 func NewItemSkull(world common.World, id string) *ItemSkull {
@@ -43,6 +58,7 @@ func NewItemSkull(world common.World, id string) *ItemSkull {
 		world:     world,
 		pos:       util.GetHighVec(),
 		recordMap: make(map[string]*itemSkullRecord),
+		winnerTxt: animation.NewText(),
 	}
 }
 
@@ -70,8 +86,21 @@ func (o *ItemSkull) GetCollider() (pixel.Rect, bool) {
 	return pixel.ZR, false
 }
 
-func (o *ItemSkull) GetRenderObjects() []common.RenderObject {
-	return []common.RenderObject{common.NewRenderObject(itemZ, o.GetShape(), o.render)}
+func (o *ItemSkull) GetRenderObjects() (objs []common.RenderObject) {
+	player := o.world.GetMainPlayer()
+	if player == nil {
+		return nil
+	}
+	p := player.GetPivot()
+	shape := pixel.Rect{Min: p, Max: p}
+	objs = append(objs, common.NewRenderObject(itemZ+1, shape, o.renderIcon))
+	if player := o.getPlayer(); !(player != nil && player.IsAlive()) {
+		objs = append(objs, common.NewRenderObject(itemZ, o.GetShape(), o.render))
+	}
+	if o.remainingTime <= 0 {
+		objs = append(objs, common.NewRenderObject(config.MinWindowRenderZ+1, shape, o.renderWinner))
+	}
+	return objs
 }
 
 func (o *ItemSkull) SetSnapshot(tick int64, ss *protocol.ObjectSnapshot) {
@@ -103,6 +132,12 @@ func (o *ItemSkull) GetSnapshot(tick int64) (ss *protocol.ObjectSnapshot) {
 func (o *ItemSkull) ServerUpdate(tick int64) {
 	if player := o.getPlayer(); player != nil {
 		if player.IsAlive() {
+			if record, exists := o.getRecord(o.playerID); exists {
+				now := ticktime.GetServerTime()
+				if remainingTime := record.remainingTime - now.Sub(record.pickupTime); remainingTime <= 0 {
+					o.world.Destroy()
+				}
+			}
 			o.pos = player.GetPos()
 		} else {
 			if record, exists := o.getRecord(o.playerID); exists {
@@ -146,7 +181,7 @@ func (o *ItemSkull) UsedBy(player common.Player) (ok bool) {
 	record, exists := o.getRecord(o.playerID)
 	if !exists {
 		record = &itemSkullRecord{
-			remainingTime: itemSkullInitTime,
+			remainingTime: config.DefaultWorldInitTime,
 		}
 	}
 	record.pickupTime = ticktime.GetServerTime()
@@ -183,6 +218,24 @@ func (o *ItemSkull) GetType() int {
 	return config.ItemObject
 }
 
+func (o *ItemSkull) GetRemainingTimeMap() map[string]time.Duration {
+	o.recordLock.RLock()
+	defer o.recordLock.RUnlock()
+	now := ticktime.GetServerTime()
+	remainingTimeMap := make(map[string]time.Duration)
+	for playerID, record := range o.recordMap {
+		remainingTime := record.remainingTime
+		if record.pickupTime.After(record.dropTime) {
+			remainingTime -= now.Sub(record.pickupTime)
+		}
+		if remainingTime < 0 {
+			remainingTime = 0
+		}
+		remainingTimeMap[playerID] = remainingTime
+	}
+	return remainingTimeMap
+}
+
 func (o *ItemSkull) cleanTickSnapshots() {
 	o.lock.Lock()
 	defer o.lock.Unlock()
@@ -204,6 +257,8 @@ func (o *ItemSkull) cleanTickSnapshots() {
 }
 
 func (o *ItemSkull) getCurrentSnapshot() *protocol.ObjectSnapshot {
+	o.recordLock.RLock()
+	defer o.recordLock.RUnlock()
 	recordMap := make(map[string]*protocol.ItemSkullRecord)
 	for playerID, record := range o.recordMap {
 		recordMap[playerID] = &protocol.ItemSkullRecord{
@@ -226,14 +281,62 @@ func (o *ItemSkull) getCurrentSnapshot() *protocol.ObjectSnapshot {
 }
 
 func (o *ItemSkull) render(target pixel.Target, viewPos pixel.Vec) {
-	if player := o.getPlayer(); player != nil && player.IsAlive() {
-		anim := animation.NewIconSkull()
-		anim.Pos = player.GetPos().Add(pixel.V(0, 180)).Sub(viewPos)
-		anim.Draw(target)
-	} else {
-		anim := animation.NewItemSkull()
-		anim.Pos = o.pos.Sub(viewPos)
-		anim.Draw(target)
+	anim := animation.NewItemSkull()
+	anim.Pos = o.pos.Sub(viewPos)
+	anim.Draw(target)
+}
+
+func (o *ItemSkull) renderIcon(target pixel.Target, viewPos pixel.Vec) {
+	mainPlayer := o.world.GetMainPlayer()
+	if mainPlayer == nil {
+		return
+	}
+	winBound := o.world.GetWindow().Bounds()
+	winBound = pixel.Rect{
+		Min: winBound.Min.Add(pixel.V(1, 1)),
+		Max: winBound.Max.Sub(pixel.V(1, 1)),
+	}
+	pos := o.pos
+	if player := o.getPlayer(); player != nil {
+		pos = o.getPlayer().GetPos().Add(itemSkullIconOffset)
+	}
+	pos = pos.Sub(viewPos)
+	mpPos := mainPlayer.GetPos().Add(itemSkullIconOffset).Sub(viewPos)
+	var c color.Color
+	if !winBound.Contains(pos) {
+		line := pixel.L(pos, mpPos)
+		edges := winBound.Edges()
+		for i, edge := range edges {
+			if v, ok := line.Intersect(edge); ok {
+				pos = v.Sub(itemSkullIconOutScreenOffsets[i])
+			}
+		}
+		ratio := uint8((ticktime.GetServerTimeMS() / itemSkullBlinkDiv) % 256)
+		c = &color.RGBA{R: ratio, G: ratio, B: ratio, A: ratio}
+	} else if player := o.getPlayer(); player == nil {
+		return
+	}
+	anim := animation.NewIconSkull()
+	anim.Pos = pos
+	anim.Color = c
+	anim.Draw(target)
+}
+
+func (o *ItemSkull) renderWinner(target pixel.Target, viewPos pixel.Vec) {
+	win := o.world.GetWindow()
+	smooth := win.Smooth()
+	win.SetSmooth(false)
+	defer win.SetSmooth(smooth)
+	if player := o.getPlayer(); player != nil {
+		animation.DrawStrokeTextCenter(
+			o.winnerTxt,
+			target,
+			win.Bounds().Center(),
+			fmt.Sprintf("WINNER: %s", player.GetPlayerName()),
+			4,
+			colornames.White,
+			colornames.Black,
+		)
 	}
 }
 
@@ -244,31 +347,4 @@ func (o *ItemSkull) getLastSnapshot() *protocol.ObjectSnapshot {
 		return o.tickSnapshots[len(o.tickSnapshots)-1].Snapshot
 	}
 	return o.getCurrentSnapshot()
-}
-
-func (o *ItemSkull) getLerpSnapshot() *protocol.ObjectSnapshot {
-	return o.getSnapshotsByTime(ticktime.GetLerpTime())
-}
-
-func (o *ItemSkull) getSnapshotsByTime(t time.Time) *protocol.ObjectSnapshot {
-	o.lock.RLock()
-	defer o.lock.RUnlock()
-	a, b, d := protocol.GetSnapshotByTime(t, o.tickSnapshots)
-	if a == nil || b == nil {
-		a = o.getCurrentSnapshot()
-		b = o.getCurrentSnapshot()
-	}
-	ssA := a.Item.Skull
-	ssB := b.Item.Skull
-	return &protocol.ObjectSnapshot{
-		ID:   o.GetID(),
-		Type: o.GetType(),
-		Item: &protocol.ItemSnapshot{
-			Skull: &protocol.ItemSkullSnapshot{
-				Pos:       util.ConvertVec(pixel.Lerp(ssA.Pos.Convert(), ssB.Pos.Convert(), d)),
-				PlayerID:  ssB.PlayerID,
-				RecordMap: ssB.RecordMap,
-			},
-		},
-	}
 }

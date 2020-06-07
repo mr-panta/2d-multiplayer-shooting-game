@@ -17,13 +17,14 @@ import (
 )
 
 const (
+	sniperDropRate           = 20
 	sniperWidth              = 196
-	sniperBulletSpeed        = 4000
-	sniperMaxRange           = 4000
+	sniperBulletSpeed        = 3200
+	sniperMaxRange           = 3200
 	sniperBulletLength       = 12
-	sniperDamage             = 100
+	sniperDamage             = 80
 	sniperTriggerVisibleTime = 2 * time.Second
-	sniperTriggerCooldown    = 2000 * time.Millisecond
+	sniperTriggerCooldown    = 1000 * time.Millisecond
 	sniperReloadCooldown     = 3 * time.Second
 	sniperAmmo               = 10
 	sniperMag                = 5

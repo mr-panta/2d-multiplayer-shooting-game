@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"image/color"
 	"math"
-	"sort"
 	"time"
 
 	"github.com/faiface/pixel"
@@ -12,7 +11,6 @@ import (
 	"github.com/faiface/pixel/text"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/animation"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
-	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
 	"golang.org/x/image/colornames"
@@ -35,16 +33,6 @@ var (
 	hudHPColor               = colornames.White
 	// crosshair
 	crosshairColor = colornames.Red
-	// scoreboard
-	scoreboardPadding          = 12.
-	scoreboardWidth            = 160.
-	scoreboardMarginLeft       = 12.
-	scoreboardMarginTop        = 8.
-	scoreboardMarginBottom     = 8.
-	scoreboardLineHeight       = 16.
-	scoreboardLimit            = 10
-	scoreboardPlayerNameLength = 10
-	scoreboardBGColor          = color.RGBA{0, 0, 0, 127}
 	// kill feed
 	killFeedLimit           = 32
 	killFeedLifeTime        = 10 * time.Second
@@ -54,6 +42,8 @@ var (
 	killFeedRowMarginTop    = 4.
 	killFeedRowMarginBottom = 6.
 	killFeedBGColor         = color.RGBA{0, 0, 0, 127}
+	// game stats
+	hudGameStatsOffset = pixel.V(8, 14)
 )
 
 type killFeedRow struct {
@@ -64,20 +54,19 @@ type killFeedRow struct {
 }
 
 type Hud struct {
-	world               common.World
-	mag                 int
-	ammo                int
-	hp                  float64
-	armor               float64
-	respawnCountdown    int
-	crosshair           *animation.Crosshair
-	scoreboardImd       *imdraw.IMDraw
-	killFeedRowImds     []*imdraw.IMDraw
-	killFeedRows        []*killFeedRow
-	killFeedTxts        []*text.Text
-	scoreboardPlayers   []common.Player
-	scoreboardNameTxts  []*text.Text
-	scoreboardScoreTxts []*text.Text
+	world            common.World
+	mag              int
+	ammo             int
+	hp               float64
+	armor            float64
+	respawnCountdown int
+	fps              int
+	ping             int
+	crosshair        *animation.Crosshair
+	killFeedRowImds  []*imdraw.IMDraw
+	killFeedRows     []*killFeedRow
+	killFeedTxts     []*text.Text
+	gameStatsText    *text.Text
 }
 
 func NewHud(world common.World) common.Hud {
@@ -87,20 +76,12 @@ func NewHud(world common.World) common.Hud {
 		killFeedRowImds = append(killFeedRowImds, imdraw.New(nil))
 		killFeedTxts = append(killFeedTxts, animation.NewText())
 	}
-	scoreboardNameTxts := []*text.Text{}
-	scoreboardScoreTxts := []*text.Text{}
-	for i := 0; i < scoreboardLimit*2; i++ {
-		scoreboardNameTxts = append(scoreboardNameTxts, animation.NewText())
-		scoreboardScoreTxts = append(scoreboardScoreTxts, animation.NewText())
-	}
 	return &Hud{
-		world:               world,
-		crosshair:           animation.NewCrosshair(),
-		scoreboardImd:       imdraw.New(nil),
-		killFeedRowImds:     killFeedRowImds,
-		killFeedTxts:        killFeedTxts,
-		scoreboardNameTxts:  scoreboardNameTxts,
-		scoreboardScoreTxts: scoreboardScoreTxts,
+		world:           world,
+		crosshair:       animation.NewCrosshair(),
+		killFeedRowImds: killFeedRowImds,
+		killFeedTxts:    killFeedTxts,
+		gameStatsText:   animation.NewText(),
 	}
 }
 
@@ -117,16 +98,10 @@ func (h *Hud) ClientUpdate() {
 	h.updateAmmo()
 	h.updateArmorHP()
 	h.updateRespawnCountdown()
-	h.updateScoreboard()
 }
 
 func (h *Hud) ServerUpdate() {
-	h.updateScoreboard()
 	h.updateKillFeed()
-}
-
-func (h *Hud) GetScoreboardPlayers() []common.Player {
-	return h.scoreboardPlayers
 }
 
 func (h *Hud) GetKillFeedSnapshot() *protocol.KillFeedSnapshot {
@@ -197,38 +172,6 @@ func (h *Hud) updateRespawnCountdown() {
 	h.respawnCountdown = countdown
 }
 
-func (h *Hud) updateScoreboard() {
-	players := []common.Player{}
-	for _, obj := range h.world.GetObjectDB().SelectAll() {
-		if obj.GetType() == config.PlayerObject {
-			players = append(players, obj.(common.Player))
-		}
-	}
-	sort.Slice(players, func(i, j int) bool {
-		// i
-		iName := players[i].GetPlayerName()
-		iKill, iDeath, iStreak, iMaxStreak := players[i].GetStats()
-		// j
-		jName := players[j].GetPlayerName()
-		jKill, jDeath, jStreak, jMaxStreak := players[j].GetStats()
-		// compare
-		if iStreak != jStreak {
-			return iStreak > jStreak
-		}
-		if iMaxStreak != jMaxStreak {
-			return iMaxStreak > jMaxStreak
-		}
-		if iKill != jKill {
-			return iKill > jKill
-		}
-		if iDeath != jDeath {
-			return iDeath < jDeath
-		}
-		return iName < jName
-	})
-	h.scoreboardPlayers = players
-}
-
 func (h *Hud) updateKillFeed() {
 	rows := []*killFeedRow{}
 	now := ticktime.GetServerTime()
@@ -255,8 +198,8 @@ func (h *Hud) Render(target pixel.Target) {
 	h.renderArmor(target)
 	h.renderRespawnCountdown(target)
 	h.renderCursor(target)
-	h.renderScoreboard(target)
 	h.renderKillFeed(target)
+	h.renderFPS(target)
 }
 
 func (h *Hud) GetRenderObjects() []common.RenderObject {
@@ -357,85 +300,6 @@ func (h *Hud) renderCursor(target pixel.Target) {
 	h.crosshair.Draw(target)
 }
 
-func (h *Hud) getScoreboard() (players []common.Player, mainPlayer common.Player, mainPlayerPlace int) {
-	for i, player := range h.scoreboardPlayers {
-		if i < scoreboardLimit {
-			players = append(players, player)
-		} else if player.GetID() == h.world.GetMainPlayerID() {
-			mainPlayer = player
-			mainPlayerPlace = i + 1
-		}
-	}
-	return players, mainPlayer, mainPlayerPlace
-}
-
-func (h *Hud) renderScoreboard(target pixel.Target) {
-	win := h.world.GetWindow()
-	players, mainPlayer, mainPlayerPlace := h.getScoreboard()
-	{
-		pos := win.Bounds().Vertices()[1]
-		pos = pos.Add(pixel.V(
-			scoreboardPadding,
-			-scoreboardPadding,
-		))
-		height := scoreboardLineHeight*float64(len(players)+1) + scoreboardMarginTop*2 + scoreboardMarginBottom
-		if mainPlayer != nil {
-			height += scoreboardLineHeight
-		}
-		h.scoreboardImd.Clear()
-		h.scoreboardImd.Color = scoreboardBGColor
-		h.scoreboardImd.EndShape = imdraw.RoundEndShape
-		h.scoreboardImd.Push(pos, pos.Add(pixel.V(scoreboardWidth+scoreboardMarginLeft*2, -height)))
-		h.scoreboardImd.Rectangle(0)
-		h.scoreboardImd.Draw(win)
-	}
-	{
-		//columns
-		pos := win.Bounds().Vertices()[1]
-		pos = pos.Add(pixel.V(
-			scoreboardPadding+scoreboardMarginLeft,
-			-scoreboardPadding-scoreboardMarginTop,
-		))
-		pos = pos.Add(pixel.V(0, -scoreboardLineHeight))
-		animation.DrawShadowTextLeft(h.scoreboardNameTxts[0], target, pos, "PLAYER", 1)
-		pos = pos.Add(pixel.V(scoreboardWidth, 0))
-		animation.DrawShadowTextRight(h.scoreboardScoreTxts[0], target, pos, "STREAK", 1)
-	}
-	for i, player := range players {
-		pos := win.Bounds().Vertices()[1]
-		pos = pos.Add(pixel.V(
-			scoreboardPadding+scoreboardMarginLeft,
-			-scoreboardPadding-scoreboardMarginTop,
-		))
-		pos = pos.Add(pixel.V(0, -float64(i+2)*scoreboardLineHeight))
-		playerName := player.GetPlayerName()
-		if len(playerName) > scoreboardPlayerNameLength {
-			playerName = playerName[:scoreboardPlayerNameLength] + "..."
-		}
-		animation.DrawShadowTextLeft(h.scoreboardNameTxts[i+1], target, pos, fmt.Sprintf("%d. %s", i+1, playerName), 1)
-		_, _, streak, _ := player.GetStats()
-		pos = pos.Add(pixel.V(scoreboardWidth, 0))
-		animation.DrawShadowTextRight(h.scoreboardScoreTxts[i+1], target, pos, fmt.Sprint(streak), 1)
-	}
-	if mainPlayerPlace > 0 && mainPlayer != nil {
-		playerLen := len(players)
-		pos := win.Bounds().Vertices()[1]
-		pos = pos.Add(pixel.V(
-			scoreboardPadding+scoreboardMarginLeft,
-			-scoreboardPadding-scoreboardMarginTop,
-		))
-		pos = pos.Add(pixel.V(0, -float64(playerLen+2)*scoreboardLineHeight))
-		playerName := mainPlayer.GetPlayerName()
-		if len(playerName) > scoreboardPlayerNameLength {
-			playerName = playerName[:scoreboardPlayerNameLength] + "..."
-		}
-		animation.DrawShadowTextLeft(h.scoreboardNameTxts[scoreboardLimit+1], target, pos, fmt.Sprintf("%d. %s", mainPlayerPlace, playerName), 1)
-		_, _, streak, _ := mainPlayer.GetStats()
-		pos = pos.Add(pixel.V(scoreboardWidth, 0))
-		animation.DrawShadowTextRight(h.scoreboardScoreTxts[scoreboardLimit+1], target, pos, fmt.Sprint(streak), 1)
-	}
-}
-
 func (h *Hud) renderKillFeed(target pixel.Target) {
 	index := 0
 	for _, row := range h.killFeedRows {
@@ -443,6 +307,19 @@ func (h *Hud) renderKillFeed(target pixel.Target) {
 			index++
 		}
 	}
+}
+
+func (h *Hud) renderFPS(target pixel.Target) {
+	fps := ticktime.GetFPS()
+	ping := ticktime.GetPing() / 1000000
+	win := h.world.GetWindow()
+	animation.DrawShadowTextRight(
+		h.gameStatsText,
+		target,
+		win.Bounds().Vertices()[2].Sub(hudGameStatsOffset),
+		fmt.Sprintf("PING:%d FPS:%d", ping, fps),
+		1,
+	)
 }
 
 func (h *Hud) renderKillFeedRow(target pixel.Target, i int, row *killFeedRow) bool {

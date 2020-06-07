@@ -10,6 +10,7 @@ var (
 	startTime time.Time
 	diff      time.Duration
 	ping      time.Duration
+	fps       int
 )
 
 func SetServerTime(t time.Time, p time.Duration) {
@@ -56,4 +57,12 @@ func IsZeroTime(t time.Time) bool {
 
 func GetServerTimeMS() int64 {
 	return GetServerTime().UnixNano() / 1000000
+}
+
+func SetFPS(v int) {
+	fps = v
+}
+
+func GetFPS() int {
+	return fps
 }

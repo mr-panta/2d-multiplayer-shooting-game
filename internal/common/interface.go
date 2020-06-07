@@ -41,6 +41,7 @@ type World interface {
 	SpawnPlayer(playerID string, playerName string)
 	GetSnapshot(all bool) (tick int64, snapshot *protocol.WorldSnapshot)
 	SetInputSnapshot(playerID string, snapshot *protocol.InputSnapshot)
+	Destroy()
 }
 
 // Processors
@@ -158,7 +159,6 @@ type Hud interface {
 	GetKillFeedSnapshot() *protocol.KillFeedSnapshot
 	SetKillFeedSnapshot(snapshot *protocol.KillFeedSnapshot)
 	AddKillFeedRow(killerPlayerID, victimPlayerID, weaponID string)
-	GetScoreboardPlayers() []Player
 }
 
 type Scope interface {

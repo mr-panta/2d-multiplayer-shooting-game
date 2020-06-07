@@ -51,8 +51,6 @@ func (p *serverProcessor) UpdateWorld() {
 		waitTime := time.Until(tickTime)
 		<-time.NewTimer(waitTime).C
 		if exists := p.world.ServerUpdate(tick); !exists {
-			tick = 0
-			ticktime.SetServerStartTime(time.Now())
 			p.resetWorld()
 		}
 	}

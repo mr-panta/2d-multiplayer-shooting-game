@@ -13,6 +13,7 @@ import (
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/entity"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/entity/item"
+	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/entity/scoreboard"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/entity/weapon"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/sound"
@@ -26,15 +27,15 @@ var (
 )
 
 const (
-	minNextItemPerd              = 10
-	maxNextItemPerd              = 20
-	defaultWorldFieldWidth       = 8
-	defaultWorldFieldHeight      = 8
-	defaultWorldTreeAmount       = 0
-	defaultWorldTerrainAmount    = 12
-	defaultWorldMinSpawnDist     = 48
-	defaultWorldMinWindowRenderZ = 1000
-	defaultWorldBoundarySize     = 200
+	minNextItemPerd             = 10
+	maxNextItemPerd             = 20
+	defaultWorldFieldWidth      = 16
+	defaultWorldFieldHeight     = 16
+	defaultWorldTreeAmount      = 0
+	defaultWorldTerrainAmount   = 12
+	defaultWorldMinSpawnDist    = 48
+	defaultWorldBoundarySize    = 200
+	defaultWorldRestartCooldown = 5 * time.Second
 )
 
 type defaultWorld struct {
@@ -43,6 +44,7 @@ type defaultWorld struct {
 	destroyed   bool
 	objectDB    common.ObjectDB
 	hud         common.Hud
+	scoreboard  *scoreboard.DefaultScoreboard
 	fieldWidth  int
 	fieldHeight int
 	skullID     string
@@ -58,12 +60,12 @@ type defaultWorld struct {
 	cameraPos        pixel.Vec
 	scope            common.Scope
 	water            common.Water
-	fps              int
 	frameCount       int
 	fpsUpdateTime    time.Time
 	// server
 	tick         int64
 	nextItemTime time.Time
+	destroyTime  time.Time
 }
 
 func NewDefaultWorld(clientProcessor common.ClientProcessor, id string) common.World {
@@ -83,6 +85,7 @@ func NewDefaultWorld(clientProcessor common.ClientProcessor, id string) common.W
 	}
 	// common
 	world.hud = entity.NewHud(world)
+	world.scoreboard = scoreboard.NewDefaultScoreboard(world)
 	if clientProcessor != nil {
 		// client
 		world.win = clientProcessor.GetWindow()
@@ -161,8 +164,9 @@ func (w *defaultWorld) getSizeRect() pixel.Rect {
 // Server
 
 func (w *defaultWorld) ServerUpdate(tick int64) bool {
+	now := ticktime.GetServerTime()
 	if w.destroyed {
-		return false
+		return !(now.Sub(w.destroyTime) >= defaultWorldRestartCooldown)
 	}
 	w.tick = tick
 	// Item
@@ -175,6 +179,7 @@ func (w *defaultWorld) ServerUpdate(tick int64) bool {
 	}
 	// Kill feed
 	w.hud.ServerUpdate()
+	w.scoreboard.ServerUpdate()
 	return true
 }
 
@@ -199,6 +204,11 @@ func (w *defaultWorld) GetSnapshot(all bool) (int64, *protocol.WorldSnapshot) {
 		)
 	}
 	return w.tick, snapshot
+}
+
+func (w *defaultWorld) Destroy() {
+	w.destroyed = true
+	w.destroyTime = ticktime.GetServerTime()
 }
 
 func (w *defaultWorld) createBoundaries() {
@@ -365,6 +375,7 @@ func (w *defaultWorld) ClientUpdate() bool {
 		o.ClientUpdate()
 	}
 	w.hud.ClientUpdate()
+	w.scoreboard.ClientUpdate()
 	w.scope.Update()
 	return true
 }
@@ -410,7 +421,7 @@ func (w *defaultWorld) Render() {
 	defaultSmoothObjects := []common.RenderObject{}
 	nonSmoothObjects := []common.RenderObject{}
 	for _, obj := range renderObjects {
-		if obj.GetZ() >= defaultWorldMinWindowRenderZ {
+		if obj.GetZ() >= config.MinWindowRenderZ {
 			windownRenderObjects = append(windownRenderObjects, obj)
 		} else if obj.GetZ() >= 0 {
 			defaultSmoothObjects = append(defaultSmoothObjects, obj)
@@ -439,6 +450,7 @@ func (w *defaultWorld) Render() {
 	}
 	// Render hud
 	w.hud.Render(w.win)
+	w.scoreboard.Render(w.win)
 	// Update FPS
 	w.updateFPS()
 }
@@ -518,10 +530,9 @@ func (w *defaultWorld) updateFPS() {
 	w.frameCount++
 	now := ticktime.GetServerTime()
 	if now.Sub(w.fpsUpdateTime) >= time.Second {
-		w.fps = w.frameCount
+		ticktime.SetFPS(w.frameCount)
 		w.frameCount = 0
 		w.fpsUpdateTime = now
-		// fmt.Printf("FPS:%d|PING:%d\n", w.fps, ticktime.GetPing()/1000000)
 	}
 }
 
@@ -649,6 +660,10 @@ func (w *defaultWorld) addItem(ss *protocol.ObjectSnapshot) common.Item {
 	logger.Debugf(nil, "add_item:%s", ss.ID)
 	item := item.New(w, ss.ID, ss)
 	w.objectDB.Set(item)
+	if ss.Item.Skull != nil {
+		w.skullID = ss.ID
+		w.scoreboard.SetSkullID(ss.ID)
+	}
 	return item
 }
 

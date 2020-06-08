@@ -23,13 +23,13 @@ var (
 	weaponSniperFrame  = pixel.R(3*32, 1, 8*32, 63).Moved(weaponOffset)
 	weaponSniperOffset = pixel.V(-24, 0)
 	// pistol
-	weaponPistolFrame  = pixel.R(11*32, 1, 12*32, 63).Moved(weaponOffset)
-	weaponPistolOffset = pixel.V(-24, 0)
-	// pistol
-	weaponSMGFrame  = pixel.R(12*32, 1, 14*32, 63).Moved(weaponOffset)
+	weaponPistolFrame  = pixel.R(11*32, 1, 13*32, 63).Moved(weaponOffset)
+	weaponPistolOffset = pixel.V(-20, 0)
+	// smg
+	weaponSMGFrame  = pixel.R(13*32, 1, 15*32, 63).Moved(weaponOffset)
 	weaponSMGOffset = pixel.V(-12, 0)
 	// knife
-	weaponKnifeFrame  = pixel.R(14*32, 1, 16*32, 63).Moved(weaponOffset)
+	weaponKnifeFrame  = pixel.R(15*32, 1, 17*32, 63).Moved(weaponOffset)
 	weaponKnifeOffset = pixel.V(-19, 0)
 )
 

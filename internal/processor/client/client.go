@@ -92,13 +92,7 @@ func (p *clientProcessor) Run() {
 }
 
 func (p *clientProcessor) StartWorld(hostIP, playerName string) (err error) {
-	if playerName == "" {
-		playerName = p.playerName
-	}
 	p.playerName = playerName
-	if hostIP == "" {
-		hostIP = p.hostIP
-	}
 	p.hostIP = hostIP
 	// Create network
 	success := false
@@ -137,7 +131,7 @@ func (p *clientProcessor) startUpdateLoop(restartCount int) {
 			p.win.UpdateInput()
 			if exists := p.world.ClientUpdate(); !exists {
 				_ = p.client.Close()
-				if err := p.StartWorld("", ""); err != nil {
+				if err := p.StartWorld(p.hostIP, p.playerName); err != nil {
 					p.world = nil
 					p.started = false
 				}

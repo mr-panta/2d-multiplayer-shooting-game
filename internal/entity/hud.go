@@ -262,7 +262,7 @@ func (h *Hud) renderAmmo(target pixel.Target) {
 	win := h.world.GetWindow()
 	pos := pixel.V(win.Bounds().W(), 0).Add(hudAmmoMarginBottomRight)
 	txt := h.ammoTxt
-	animation.DrawShadowTextLeft(
+	animation.DrawShadowTextRight(
 		txt,
 		target,
 		pos,

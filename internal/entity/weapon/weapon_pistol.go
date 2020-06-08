@@ -20,19 +20,19 @@ import (
 
 const (
 	pistolDropRate           = 20
-	pistolWidth              = 72
-	pistolBulletSpeed        = 2000
-	pistolMaxRange           = 800
+	pistolWidth              = 100
+	pistolBulletSpeed        = 2400
+	pistolMaxRange           = 1200
 	pistolBulletLength       = 8
 	pistolDamage             = 40
 	pistolTriggerVisibleTime = time.Second
-	pistolTriggerCooldown    = 400 * time.Millisecond
+	pistolTriggerCooldown    = 500 * time.Millisecond
 	pistolReloadCooldown     = 2 * time.Second
 	pistolAmmo               = 16
 	pistolMag                = 8
-	pistolMaxScopeRadius     = 140
-	pistolMaxScopeRange      = 400
-	pistolRecoilAngle        = math.Pi / 180 * 4
+	pistolMaxScopeRadius     = 200
+	pistolMaxScopeRange      = 450
+	pistolRecoilAngle        = math.Pi / 180 * 3
 )
 
 type WeaponPistol struct {

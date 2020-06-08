@@ -32,8 +32,8 @@ const (
 	shotgunAmmo               = 16
 	shotgunMag                = 8
 	shotgunMaxScopeRadius     = 200
-	shotgunMaxScopeRange      = 450
-	shotgunRecoilAngle        = math.Pi / 180 * 60
+	shotgunMaxScopeRange      = 400
+	shotgunRecoilAngle        = math.Pi / 180 * 52
 )
 
 type WeaponShotgun struct {

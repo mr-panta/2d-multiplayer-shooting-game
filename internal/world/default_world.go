@@ -696,7 +696,7 @@ func (w *defaultWorld) addTree(ss *protocol.ObjectSnapshot) common.Tree {
 }
 
 func (w *defaultWorld) addTerrain(ss *protocol.ObjectSnapshot) common.Terrain {
-	logger.Debugf(nil, "add_tree:%s", ss.ID)
+	logger.Debugf(nil, "add_terrain:%s", ss.ID)
 	terrain := entity.NewTerrain(w, ss.ID)
 	w.objectDB.Set(terrain)
 	return terrain

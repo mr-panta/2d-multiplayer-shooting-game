@@ -12,6 +12,9 @@ type RawInput struct {
 	PressedRightKey         bool
 	PressedReloadKey        bool
 	PressedDropKey          bool
+	PressedUse1stItemKey    bool
+	PressedUse2ndItemKey    bool
+	PressedUse3rdItemKey    bool
 	PressedToggleMuteKey    bool
 	PressedVolumeUpKey      bool
 	PressedVolumeDownKey    bool

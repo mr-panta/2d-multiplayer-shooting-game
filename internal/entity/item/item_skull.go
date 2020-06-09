@@ -233,6 +233,14 @@ func (o *ItemSkull) getPlayer(playerID string) common.Player {
 	return obj.(common.Player)
 }
 
+func (o *ItemSkull) CollectedBy(p common.Player) (ok bool) {
+	return false
+}
+
+func (o *ItemSkull) GetItemType() int {
+	return config.InstanceUsedItem
+}
+
 func (o *ItemSkull) GetType() int {
 	return config.ItemObject
 }

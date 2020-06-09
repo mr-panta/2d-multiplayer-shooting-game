@@ -25,7 +25,6 @@ const (
 	playerBaseMoveSpeed      = 360
 	playerFrameTime          = 150
 	playerZ                  = 10
-	playerNameZ              = 1000
 	playerDropRange          = 64
 	playerDropDiff           = 40
 	playerInitHP             = 100
@@ -46,6 +45,8 @@ const (
 	playerInvulnerableTime   = 3 * time.Second
 	playerDropInitArmor      = 30
 	playerDropArmorRate      = 10
+	playerItemSlotLen        = 3
+	playerItemDropRadius     = 50
 )
 
 type player struct {
@@ -55,6 +56,7 @@ type player struct {
 	playerSubfix       string
 	meleeWeaponID      string
 	weaponID           string
+	itemIDs            [playerItemSlotLen]string
 	playerNameTxt      *text.Text
 	tickSnapshots      []*protocol.TickSnapshot
 	visibleCauseMap    map[string]bool
@@ -81,6 +83,7 @@ type player struct {
 	isReloading        bool
 	isInvulnerable     bool
 	isVisible          bool
+	isUsingItems       [playerItemSlotLen]bool
 	hp                 float64
 	armor              float64
 	maxMoveSpeed       float64
@@ -221,8 +224,31 @@ func (p *player) ServerUpdate(tick int64) {
 				continue
 			}
 			item := o.(common.Item)
-			if ok := item.UsedBy(p); ok {
-				p.pickupTime = now
+			switch item.GetItemType() {
+			case config.InstanceUsedItem:
+				if ok := item.UsedBy(p); ok {
+					p.pickupTime = now
+				}
+			case config.CollectibleItem:
+				for i, itemID := range p.itemIDs {
+					if itemID == "" && item.CollectedBy(p) {
+						p.itemIDs[i] = item.GetID()
+						p.pickupTime = now
+						break
+					}
+				}
+			}
+		}
+		// Use item
+		for i, usingItem := range p.isUsingItems {
+			if itemID := p.itemIDs[i]; usingItem && itemID != "" {
+				obj, exists := p.world.GetObjectDB().SelectOne(itemID)
+				if !exists {
+					itemID = ""
+				} else if item := obj.(common.Item); item.UsedBy(p) {
+					itemID = ""
+				}
+				p.itemIDs[i] = itemID
 			}
 		}
 		// Update weapon
@@ -402,6 +428,9 @@ func (p *player) SetInput(input *protocol.InputSnapshot) {
 	p.isTriggering = input.Fire
 	p.isReloading = input.Reload
 	p.isMeleeing = input.Melee
+	p.isUsingItems[0] = input.Use1stItem
+	p.isUsingItems[1] = input.Use2ndItem
+	p.isUsingItems[2] = input.Use3rdItem
 }
 
 func (p *player) SetMainPlayer() {
@@ -824,7 +853,7 @@ func (p *player) die(firingPlayerID string, weaponID string) {
 	armor := float64(streak*playerDropArmorRate + playerDropInitArmor)
 	itemID := p.world.GetObjectDB().GetAvailableID()
 	itemArmor := item.NewItemArmor(p.world, itemID, armor)
-	itemArmor.SetPos(p.pos.Add(pixel.V(0, -1)))
+	itemArmor.SetPos(p.getRandomNearPos())
 	p.world.GetObjectDB().Set(itemArmor)
 	// Drop weapon
 	p.DropWeapon()
@@ -834,4 +863,14 @@ func (p *player) die(firingPlayerID string, weaponID string) {
 		firingPlayer.IncreaseKill()
 	}
 	p.world.GetHud().AddKillFeedRow(firingPlayerID, p.id, weaponID)
+}
+
+func (p *player) getRandomNearPos() pixel.Vec {
+	rect := pixel.R(
+		p.pos.X-playerItemDropRadius,
+		p.pos.Y-playerItemDropRadius,
+		p.pos.X+playerItemDropRadius,
+		p.pos.Y+playerItemDropRadius,
+	)
+	return util.RandomVec(rect)
 }

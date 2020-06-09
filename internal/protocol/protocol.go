@@ -61,16 +61,19 @@ type WorldSnapshot struct {
 }
 
 type InputSnapshot struct {
-	CursorDir *Vec `json:"cursor_dir,omitempty"`
-	Fire      bool `json:"fire,omitempty"`
-	Melee     bool `json:"melee,omitempty"`
-	Focus     bool `json:"focus,omitempty"`
-	Up        bool `json:"up,omitempty"`
-	Left      bool `json:"left,omitempty"`
-	Down      bool `json:"down,omitempty"`
-	Right     bool `json:"right,omitempty"`
-	Reload    bool `json:"reload,omitempty"`
-	Drop      bool `json:"drop,omitempty"`
+	CursorDir  *Vec `json:"cursor_dir,omitempty"`
+	Fire       bool `json:"fire,omitempty"`
+	Melee      bool `json:"melee,omitempty"`
+	Focus      bool `json:"focus,omitempty"`
+	Up         bool `json:"up,omitempty"`
+	Left       bool `json:"left,omitempty"`
+	Down       bool `json:"down,omitempty"`
+	Right      bool `json:"right,omitempty"`
+	Reload     bool `json:"reload,omitempty"`
+	Drop       bool `json:"drop,omitempty"`
+	Use1stItem bool `json:"use_1st_item,omitempty"`
+	Use2ndItem bool `json:"use_2nd_item,omitempty"`
+	Use3rdItem bool `json:"use_3rd_item,omitempty"`
 }
 
 type KillFeedSnapshot struct {

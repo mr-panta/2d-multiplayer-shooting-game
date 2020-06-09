@@ -115,6 +115,14 @@ func (o *ItemArmor) UsedBy(p common.Player) (ok bool) {
 	return p.AddArmorHP(o.armor, 0)
 }
 
+func (o *ItemArmor) CollectedBy(p common.Player) (ok bool) {
+	return false
+}
+
+func (o *ItemArmor) GetItemType() int {
+	return config.InstanceUsedItem
+}
+
 func (o *ItemArmor) GetType() int {
 	return config.ItemObject
 }

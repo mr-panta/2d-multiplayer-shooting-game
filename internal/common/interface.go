@@ -109,7 +109,9 @@ type Player interface {
 
 type Item interface {
 	Object
+	GetItemType() int
 	SetPos(pos pixel.Vec)
+	CollectedBy(p Player) (ok bool)
 	UsedBy(p Player) (ok bool)
 }
 

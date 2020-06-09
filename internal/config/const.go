@@ -57,6 +57,9 @@ const (
 	RightKey         = pixelgl.KeyD
 	ReloadKey        = pixelgl.KeyR
 	DropKey          = pixelgl.KeyG
+	Use1stItemKey    = pixelgl.Key1
+	Use2ndItemKey    = pixelgl.Key2
+	Use3rdItemKey    = pixelgl.Key3
 	ToggleMuteKey    = pixelgl.KeyM
 	VolumeUpKey      = pixelgl.KeyUp
 	VolumeDownKey    = pixelgl.KeyDown
@@ -117,3 +120,9 @@ var TreeTypes = []string{
 
 // terrain
 const TerrainTypeAmount = 5
+
+// item type
+const (
+	InstanceUsedItem = 1
+	CollectibleItem  = 2
+)

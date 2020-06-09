@@ -29,9 +29,9 @@ var (
 const (
 	minNextItemPerd             = 10
 	maxNextItemPerd             = 20
-	defaultWorldFieldWidth      = 24
-	defaultWorldFieldHeight     = 24
-	defaultWorldTreeAmount      = 24
+	defaultWorldFieldWidth      = 8
+	defaultWorldFieldHeight     = 8
+	defaultWorldTreeAmount      = 0
 	defaultWorldTerrainAmount   = 12
 	defaultWorldMinSpawnDist    = 48
 	defaultWorldBoundarySize    = 200
@@ -548,15 +548,18 @@ func (w *defaultWorld) GetInputSnapshot() *protocol.InputSnapshot {
 	}
 	pivot := player.GetPivot().Sub(w.GetCameraViewPos())
 	inputSS := &protocol.InputSnapshot{
-		CursorDir: util.ConvertVec(w.currRawInput.MousePos.Sub(pivot)),
-		Fire:      w.currRawInput.PressedFireKey,
-		Melee:     w.currRawInput.PressedMeleeKey,
-		Up:        w.currRawInput.PressedUpKey,
-		Left:      w.currRawInput.PressedLeftKey,
-		Down:      w.currRawInput.PressedDownKey,
-		Right:     w.currRawInput.PressedRightKey,
-		Reload:    !w.prevRawInput.PressedReloadKey && w.currRawInput.PressedReloadKey,
-		Drop:      !w.prevRawInput.PressedDropKey && w.currRawInput.PressedDropKey,
+		CursorDir:  util.ConvertVec(w.currRawInput.MousePos.Sub(pivot)),
+		Fire:       w.currRawInput.PressedFireKey,
+		Melee:      w.currRawInput.PressedMeleeKey,
+		Up:         w.currRawInput.PressedUpKey,
+		Left:       w.currRawInput.PressedLeftKey,
+		Down:       w.currRawInput.PressedDownKey,
+		Right:      w.currRawInput.PressedRightKey,
+		Reload:     !w.prevRawInput.PressedReloadKey && w.currRawInput.PressedReloadKey,
+		Drop:       !w.prevRawInput.PressedDropKey && w.currRawInput.PressedDropKey,
+		Use1stItem: !w.prevRawInput.PressedUse1stItemKey && w.currRawInput.PressedUse1stItemKey,
+		Use2ndItem: !w.prevRawInput.PressedUse2ndItemKey && w.currRawInput.PressedUse2ndItemKey,
+		Use3rdItem: !w.prevRawInput.PressedUse3rdItemKey && w.currRawInput.PressedUse3rdItemKey,
 	}
 	w.prevRawInput = w.currRawInput
 	w.currRawInput = &common.RawInput{}
@@ -575,6 +578,9 @@ func (w *defaultWorld) getRawInput() *common.RawInput {
 		PressedRightKey:         w.win.Pressed(config.RightKey),
 		PressedReloadKey:        w.win.Pressed(config.ReloadKey),
 		PressedDropKey:          w.win.Pressed(config.DropKey),
+		PressedUse1stItemKey:    w.win.Pressed(config.Use1stItemKey),
+		PressedUse2ndItemKey:    w.win.Pressed(config.Use2ndItemKey),
+		PressedUse3rdItemKey:    w.win.Pressed(config.Use3rdItemKey),
 		PressedToggleMuteKey:    w.win.Pressed(config.ToggleMuteKey),
 		PressedVolumeUpKey:      w.win.Pressed(config.VolumeUpKey),
 		PressedVolumeDownKey:    w.win.Pressed(config.VolumeDownKey),
@@ -586,15 +592,18 @@ func (w *defaultWorld) getRawInput() *common.RawInput {
 func (w *defaultWorld) updateRawInput() {
 	rawInput := w.getRawInput()
 	currRawInput := &common.RawInput{
-		MousePos:         rawInput.MousePos,
-		PressedFireKey:   rawInput.PressedFireKey || w.currRawInput.PressedFireKey,
-		PressedMeleeKey:  rawInput.PressedMeleeKey || w.currRawInput.PressedMeleeKey,
-		PressedUpKey:     rawInput.PressedUpKey || w.currRawInput.PressedUpKey,
-		PressedLeftKey:   rawInput.PressedLeftKey || w.currRawInput.PressedLeftKey,
-		PressedDownKey:   rawInput.PressedDownKey || w.currRawInput.PressedDownKey,
-		PressedRightKey:  rawInput.PressedRightKey || w.currRawInput.PressedRightKey,
-		PressedReloadKey: rawInput.PressedReloadKey || w.currRawInput.PressedReloadKey,
-		PressedDropKey:   rawInput.PressedDropKey || w.currRawInput.PressedDropKey,
+		MousePos:             rawInput.MousePos,
+		PressedFireKey:       rawInput.PressedFireKey || w.currRawInput.PressedFireKey,
+		PressedMeleeKey:      rawInput.PressedMeleeKey || w.currRawInput.PressedMeleeKey,
+		PressedUpKey:         rawInput.PressedUpKey || w.currRawInput.PressedUpKey,
+		PressedLeftKey:       rawInput.PressedLeftKey || w.currRawInput.PressedLeftKey,
+		PressedDownKey:       rawInput.PressedDownKey || w.currRawInput.PressedDownKey,
+		PressedRightKey:      rawInput.PressedRightKey || w.currRawInput.PressedRightKey,
+		PressedReloadKey:     rawInput.PressedReloadKey || w.currRawInput.PressedReloadKey,
+		PressedDropKey:       rawInput.PressedDropKey || w.currRawInput.PressedDropKey,
+		PressedUse1stItemKey: rawInput.PressedUse1stItemKey || w.currRawInput.PressedUse1stItemKey,
+		PressedUse2ndItemKey: rawInput.PressedUse2ndItemKey || w.currRawInput.PressedUse2ndItemKey,
+		PressedUse3rdItemKey: rawInput.PressedUse3rdItemKey || w.currRawInput.PressedUse3rdItemKey,
 	}
 	w.currRawInput = currRawInput
 }

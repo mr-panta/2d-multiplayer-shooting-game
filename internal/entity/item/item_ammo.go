@@ -114,6 +114,14 @@ func (o *ItemAmmo) UsedBy(p common.Player) (ok bool) {
 	return false
 }
 
+func (o *ItemAmmo) CollectedBy(p common.Player) (ok bool) {
+	return false
+}
+
+func (o *ItemAmmo) GetItemType() int {
+	return config.InstanceUsedItem
+}
+
 func (o *ItemAmmo) GetType() int {
 	return config.ItemObject
 }

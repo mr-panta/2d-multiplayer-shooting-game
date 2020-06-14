@@ -89,7 +89,8 @@ type Player interface {
 	SetMeleeWeapon(w Weapon)
 	GetWeapon() Weapon
 	SetWeapon(w Weapon)
-	DropWeapon()
+	GetCursorDir() pixel.Vec
+	Die(firingPlayerID string, weaponID string)
 	IncreaseKill()
 	GetStats() (kill, death, streak, maxStreak int)
 	AddDamage(firingPlayerID, weaponID string, damage float64)
@@ -111,7 +112,7 @@ type Item interface {
 	Object
 	GetItemType() int
 	SetPos(pos pixel.Vec)
-	CollectedBy(p Player) (ok bool)
+	CollectedBy(p Player, index int) (ok bool)
 	UsedBy(p Player) (ok bool)
 }
 

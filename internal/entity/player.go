@@ -45,7 +45,7 @@ const (
 	playerInvulnerableTime   = 3 * time.Second
 	playerDropInitArmor      = 30
 	playerDropArmorRate      = 10
-	playerItemSlotLen        = 3
+	playerItemSlotLen        = 2
 	playerItemDropRadius     = 50
 )
 
@@ -231,7 +231,7 @@ func (p *player) ServerUpdate(tick int64) {
 				}
 			case config.CollectibleItem:
 				for i, itemID := range p.itemIDs {
-					if itemID == "" && item.CollectedBy(p) {
+					if itemID == "" && item.CollectedBy(p, i) {
 						p.itemIDs[i] = item.GetID()
 						p.pickupTime = now
 						break
@@ -267,7 +267,7 @@ func (p *player) ServerUpdate(tick int64) {
 			weapon.SetDir(p.cursorDir)
 			// Interact weapon
 			if p.isDropping {
-				p.DropWeapon()
+				p.dropWeapon()
 				p.isDropping = false
 			}
 			if now.Sub(p.meleeTime) > playerMeleeTime {
@@ -430,7 +430,6 @@ func (p *player) SetInput(input *protocol.InputSnapshot) {
 	p.isMeleeing = input.Melee
 	p.isUsingItems[0] = input.Use1stItem
 	p.isUsingItems[1] = input.Use2ndItem
-	p.isUsingItems[2] = input.Use3rdItem
 }
 
 func (p *player) SetMainPlayer() {
@@ -494,7 +493,7 @@ func (p *player) AddDamage(firingPlayerID string, weaponID string, damage float6
 	p.hp -= damage
 	p.hitTime = ticktime.GetServerTime()
 	if p.hp <= 0 {
-		p.die(firingPlayerID, weaponID)
+		p.Die(firingPlayerID, weaponID)
 	}
 }
 
@@ -531,7 +530,7 @@ func (p *player) GetScopeRadius(dist float64) float64 {
 	return playerMaxScopeRadius * (1.0 - (dist / playerMaxScopeRange))
 }
 
-func (p *player) DropWeapon() {
+func (p *player) dropWeapon() {
 	if weapon := p.GetWeapon(); weapon != nil {
 		p.SetWeapon(nil)
 		weapon.SetPlayerID("")
@@ -544,6 +543,10 @@ func (p *player) DropWeapon() {
 		item.SetPos(pos)
 		p.world.GetObjectDB().Set(item)
 	}
+}
+
+func (p *player) GetCursorDir() pixel.Vec {
+	return p.cursorDir
 }
 
 func (p *player) GetHitTime() time.Time {
@@ -841,7 +844,7 @@ func (p *player) getCurrentSnapshot() *protocol.ObjectSnapshot {
 	}
 }
 
-func (p *player) die(firingPlayerID string, weaponID string) {
+func (p *player) Die(firingPlayerID string, weaponID string) {
 	streak := p.streak
 	// Set status
 	p.death++
@@ -856,13 +859,28 @@ func (p *player) die(firingPlayerID string, weaponID string) {
 	itemArmor.SetPos(p.getRandomNearPos())
 	p.world.GetObjectDB().Set(itemArmor)
 	// Drop weapon
-	p.DropWeapon()
+	p.dropWeapon()
+	// Drop item
+	for i, itemID := range p.itemIDs {
+		if itemID == "" {
+			continue
+		}
+		obj, exists := p.world.GetObjectDB().SelectOne(itemID)
+		if !exists {
+			continue
+		}
+		item := obj.(common.Item)
+		item.SetPos(p.getRandomNearPos())
+		p.itemIDs[i] = ""
+	}
 	// Add kill feed
 	if obj, exists := p.world.GetObjectDB().SelectOne(firingPlayerID); exists {
 		firingPlayer := obj.(common.Player)
 		firingPlayer.IncreaseKill()
 	}
-	p.world.GetHud().AddKillFeedRow(firingPlayerID, p.id, weaponID)
+	if firingPlayerID != "" {
+		p.world.GetHud().AddKillFeedRow(firingPlayerID, p.id, weaponID)
+	}
 }
 
 func (p *player) getRandomNearPos() pixel.Vec {

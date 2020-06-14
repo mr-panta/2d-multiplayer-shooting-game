@@ -115,7 +115,7 @@ func (o *ItemArmor) UsedBy(p common.Player) (ok bool) {
 	return p.AddArmorHP(o.armor, 0)
 }
 
-func (o *ItemArmor) CollectedBy(p common.Player) (ok bool) {
+func (o *ItemArmor) CollectedBy(p common.Player, index int) (ok bool) {
 	return false
 }
 

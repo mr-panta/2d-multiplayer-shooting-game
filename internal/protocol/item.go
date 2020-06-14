@@ -1,11 +1,12 @@
 package protocol
 
 type ItemSnapshot struct {
-	Weapon *ItemWeaponSnapshot `json:"weapon,omitempty"`
-	Ammo   *ItemAmmoSnapshot   `json:"ammo,omitempty"`
-	AmmoSM *ItemAmmoSMSnapshot `json:"ammo_sm,omitempty"`
-	Armor  *ItemArmorSnapshot  `json:"armor,omitempty"`
-	Skull  *ItemSkullSnapshot  `json:"skull,omitempty"`
+	Weapon   *ItemWeaponSnapshot   `json:"weapon,omitempty"`
+	Ammo     *ItemAmmoSnapshot     `json:"ammo,omitempty"`
+	AmmoSM   *ItemAmmoSMSnapshot   `json:"ammo_sm,omitempty"`
+	Armor    *ItemArmorSnapshot    `json:"armor,omitempty"`
+	Skull    *ItemSkullSnapshot    `json:"skull,omitempty"`
+	LandMine *ItemLandMineSnapshot `json:"land_mine,omitempty"`
 }
 
 type ItemWeaponSnapshot struct {
@@ -36,4 +37,11 @@ type ItemSkullSnapshot struct {
 	Pos       *Vec                        `json:"pos,omitempty"`
 	PlayerID  string                      `json:"player_id,omitempty"`
 	RecordMap map[string]*ItemSkullRecord `json:"item_skull_record,omitempty"`
+}
+
+type ItemLandMineSnapshot struct {
+	Pos       *Vec   `json:"pos,omitempty"`
+	PlayerID  string `json:"player_id,omitempty"`
+	SlotIndex int    `json:"slot_index,omitempty"`
+	IsActive  bool   `json:"is_active,omitempty"`
 }

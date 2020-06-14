@@ -114,7 +114,7 @@ func (o *ItemAmmo) UsedBy(p common.Player) (ok bool) {
 	return false
 }
 
-func (o *ItemAmmo) CollectedBy(p common.Player) (ok bool) {
+func (o *ItemAmmo) CollectedBy(p common.Player, index int) (ok bool) {
 	return false
 }
 

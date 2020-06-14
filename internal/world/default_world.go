@@ -299,6 +299,7 @@ func (w *defaultWorld) spawnItem() (nextItemTime time.Time) {
 		w.spawnWeaponItem,
 		w.spawnAmmoItem,
 		w.spawnAmmoSMItem,
+		w.spawnLandMineItem,
 	}
 	for _, fn := range spawnItemFnList {
 		item := fn()
@@ -328,6 +329,11 @@ func (w *defaultWorld) spawnAmmoItem() common.Item {
 func (w *defaultWorld) spawnAmmoSMItem() common.Item {
 	itemID := w.objectDB.GetAvailableID()
 	return item.NewItemAmmoSM(w, itemID)
+}
+
+func (w *defaultWorld) spawnLandMineItem() common.Item {
+	itemID := w.objectDB.GetAvailableID()
+	return item.NewItemLandMine(w, itemID)
 }
 
 // Props

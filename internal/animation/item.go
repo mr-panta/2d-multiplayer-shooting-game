@@ -3,9 +3,8 @@ package animation
 import (
 	"image/color"
 
-	"github.com/faiface/pixel/imdraw"
-
 	"github.com/faiface/pixel"
+	"github.com/faiface/pixel/imdraw"
 )
 
 var (
@@ -19,6 +18,8 @@ var (
 	itemArmorFrame        = pixel.R(9*32, 0, 11*32, 64).Moved(itemFrameOffset)
 	itemArmorBlueFrame    = pixel.R(11*32, 0, 13*32, 64).Moved(itemFrameOffset)
 	itemSkullFrame        = pixel.R(13*32, 1, 15*32, 63).Moved(itemFrameOffset)
+	itemMysteryFrame      = pixel.R(15*32, 1, 17*32, 63).Moved(itemFrameOffset)
+	itemLandMineFrame     = pixel.R(17*32, 1, 19*32, 63).Moved(itemFrameOffset)
 )
 
 func NewItemAmmo() *Item {
@@ -58,6 +59,14 @@ func NewItemSkull() *Item {
 		frame:     itemSkullFrame,
 		shadowImd: imdraw.New(nil),
 	}
+}
+
+func NewItemMystery() *Item {
+	return &Item{frame: itemMysteryFrame}
+}
+
+func NewItemLandMine() *Item {
+	return &Item{frame: itemLandMineFrame}
 }
 
 type Item struct {

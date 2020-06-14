@@ -80,7 +80,7 @@ func (p *serverProcessor) CleanWorld() {
 			if now.Sub(lastActiveTime) > config.PlayerTimeOut {
 				if o, exists := p.world.GetObjectDB().SelectOne(playerID); exists {
 					player := o.(common.Player)
-					player.DropWeapon()
+					player.Die("", "")
 				}
 				p.world.GetObjectDB().Delete(playerID)
 			}

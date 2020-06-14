@@ -233,7 +233,7 @@ func (o *ItemSkull) getPlayer(playerID string) common.Player {
 	return obj.(common.Player)
 }
 
-func (o *ItemSkull) CollectedBy(p common.Player) (ok bool) {
+func (o *ItemSkull) CollectedBy(p common.Player, index int) (ok bool) {
 	return false
 }
 

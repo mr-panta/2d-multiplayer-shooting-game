@@ -245,6 +245,10 @@ func (o *ItemSkull) GetType() int {
 	return config.ItemObject
 }
 
+func (o *ItemSkull) GetIcon() *animation.Icon {
+	return nil
+}
+
 func (o *ItemSkull) GetRemainingTimeMap() map[string]time.Duration {
 	o.recordLock.RLock()
 	defer o.recordLock.RUnlock()

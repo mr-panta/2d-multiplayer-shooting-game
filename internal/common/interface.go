@@ -5,6 +5,7 @@ import (
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
+	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/animation"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
 )
 
@@ -106,6 +107,7 @@ type Player interface {
 	SetPlayerName(name string)
 	GetPlayerName() string
 	SetPlayerSubfix(subfix string)
+	GetItems() []Item
 }
 
 type Item interface {
@@ -114,6 +116,7 @@ type Item interface {
 	SetPos(pos pixel.Vec)
 	CollectedBy(p Player, index int) (ok bool)
 	UsedBy(p Player) (ok bool)
+	GetIcon() *animation.Icon
 }
 
 type Weapon interface {

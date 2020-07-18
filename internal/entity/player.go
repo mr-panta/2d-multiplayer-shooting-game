@@ -366,6 +366,7 @@ func (p *player) ClientUpdate() {
 	}
 	// Set status
 	lastSS := p.getLastSnapshot().Player
+	p.setItemIDs(lastSS.ItemIDs)
 	p.kill = lastSS.Kill
 	p.death = lastSS.Death
 	p.streak = lastSS.Streak
@@ -602,6 +603,16 @@ func (p *player) GetStats() (kill, death, streak, maxStreak int) {
 	return p.kill, p.death, p.streak, p.maxStreak
 }
 
+func (p *player) GetItems() (items []common.Item) {
+	items = make([]common.Item, len(p.itemIDs))
+	for i, itemID := range p.itemIDs {
+		if obj, exists := p.world.GetObjectDB().SelectOne(itemID); exists {
+			items[i] = obj.(common.Item)
+		}
+	}
+	return items
+}
+
 func (p *player) getShapeByPos(pos pixel.Vec) pixel.Rect {
 	min := pos.Sub(pixel.V(playerShapeWidth, 0).Scaled(0.5))
 	max := pos.Add(pixel.V(playerShapeWidth/2, playerShapeHeigth))
@@ -768,6 +779,7 @@ func (p *player) getSnapshotsByTime(t time.Time) *protocol.ObjectSnapshot {
 			PlayerName:       ssB.PlayerName,
 			MeleeWeaponID:    ssB.MeleeWeaponID,
 			WeaponID:         ssB.WeaponID,
+			ItemIDs:          ssB.ItemIDs,
 			Kill:             ssB.Kill,
 			Death:            ssB.Death,
 			Streak:           ssB.Streak,
@@ -812,6 +824,25 @@ func (p *player) cleanTickSnapshots() {
 	}
 }
 
+func (p *player) getItemIDs() []string {
+	itemIDs := []string{}
+	for _, itemID := range p.itemIDs {
+		itemIDs = append(itemIDs, itemID)
+	}
+	return itemIDs
+}
+
+func (p *player) setItemIDs(itemIDs []string) {
+	itemIDArray := [playerItemSlotLen]string{}
+	for i := 0; i < playerItemSlotLen; i++ {
+		if len(itemIDs) <= i {
+			break
+		}
+		itemIDArray[i] = itemIDs[i]
+	}
+	p.itemIDs = itemIDArray
+}
+
 func (p *player) getCurrentSnapshot() *protocol.ObjectSnapshot {
 	return &protocol.ObjectSnapshot{
 		ID:   p.id,
@@ -820,6 +851,7 @@ func (p *player) getCurrentSnapshot() *protocol.ObjectSnapshot {
 			PlayerName:       p.playerName,
 			MeleeWeaponID:    p.meleeWeaponID,
 			WeaponID:         p.weaponID,
+			ItemIDs:          p.getItemIDs(),
 			Kill:             p.kill,
 			Death:            p.death,
 			Streak:           p.streak,

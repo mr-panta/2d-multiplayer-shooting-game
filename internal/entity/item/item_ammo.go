@@ -126,6 +126,10 @@ func (o *ItemAmmo) GetType() int {
 	return config.ItemObject
 }
 
+func (o *ItemAmmo) GetIcon() *animation.Icon {
+	return nil
+}
+
 func (o *ItemAmmo) cleanTickSnapshots() {
 	o.lock.Lock()
 	defer o.lock.Unlock()

@@ -1,3 +1,6 @@
+setup:
+	go mod download
+
 build/client:
 	make build/client/macos
 	make build/client/windows

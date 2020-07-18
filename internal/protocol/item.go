@@ -40,8 +40,9 @@ type ItemSkullSnapshot struct {
 }
 
 type ItemLandMineSnapshot struct {
-	Pos       *Vec   `json:"pos,omitempty"`
-	PlayerID  string `json:"player_id,omitempty"`
-	SlotIndex int    `json:"slot_index,omitempty"`
-	IsActive  bool   `json:"is_active,omitempty"`
+	Pos        *Vec   `json:"pos,omitempty"`
+	PlayerID   string `json:"player_id,omitempty"`
+	SlotIndex  int    `json:"slot_index,omitempty"`
+	IsActive   bool   `json:"is_active,omitempty"`
+	IsExploded bool   `json:"is_exploded,omitempty"`
 }

@@ -28,6 +28,11 @@ var (
 	hudHPIconMargin          = pixel.V(24, 20)
 	hudHPTextMrginLeft       = pixel.V(60, 0)
 	hudArmorTextMrginLeft    = pixel.V(64, 0)
+	// inventory
+	hudInventoryMarginBottomLeft = pixel.V(24, 44)
+	hudInventoryMargin           = pixel.V(48, 64)
+	hudFirstItem                 = pixel.V(47, 118)
+	hudSecondItem                = pixel.V(98, 108)
 	// crosshair
 	crosshairColor = colornames.Red
 	// kill feed
@@ -231,6 +236,32 @@ func (h *Hud) renderIcons(target pixel.Target, posView pixel.Vec) {
 		icon := animation.NewIconShield()
 		icon.Pos = pos.Add(hudHPIconMargin)
 		icon.Draw(target)
+	}
+	// Render inventory
+	{
+		pos := hudInventoryMarginBottomLeft
+		icon := animation.NewIconInventory()
+		icon.Pos = pos.Add(hudInventoryMargin)
+		icon.Draw(target)
+	}
+	// Render items
+	h.renderItems(target)
+}
+
+func (h *Hud) renderItems(target pixel.Target) {
+	player := h.getPlayer()
+	items := player.GetItems()
+	if item := items[0]; item != nil {
+		if icon := item.GetIcon(); icon != nil {
+			icon.Pos = hudFirstItem
+			icon.Draw(target)
+		}
+	}
+	if item := items[1]; item != nil {
+		if icon := item.GetIcon(); icon != nil {
+			icon.Pos = hudSecondItem
+			icon.Draw(target)
+		}
 	}
 }
 

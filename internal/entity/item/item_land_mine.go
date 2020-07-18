@@ -9,6 +9,7 @@ import (
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/common"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/config"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/protocol"
+	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/sound"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/ticktime"
 	"github.com/mr-panta/2d-multiplayer-shooting-game/internal/util"
 )
@@ -19,9 +20,10 @@ var (
 )
 
 const (
-	itemLandMineDropRange = 72
-	itemLandMineDamage    = 120.0
-	itemLandMineRadius    = 300.0
+	itemLandMineDropRange  = 72
+	itemLandMineDamage     = 120.0
+	itemLandMineRadius     = 300.0
+	itemLandMineEffectTime = 500 * time.Millisecond
 )
 
 type ItemLandMine struct {
@@ -29,9 +31,11 @@ type ItemLandMine struct {
 	playerID      string
 	world         common.World
 	pos           pixel.Vec
+	effect        *animation.Effect
 	createTime    time.Time
 	deleteTime    time.Time
 	slotIndex     int
+	isExploded    bool
 	isVisible     bool
 	isAcitve      bool
 	isDestroyed   bool
@@ -45,6 +49,7 @@ func NewItemLandMine(world common.World, id string) *ItemLandMine {
 		world:      world,
 		pos:        util.GetHighVec(),
 		createTime: ticktime.GetServerTime(),
+		effect:     animation.NewEffectExplosion(),
 	}
 }
 
@@ -106,7 +111,8 @@ func (o *ItemLandMine) GetSnapshot(tick int64) (ss *protocol.ObjectSnapshot) {
 }
 
 func (o *ItemLandMine) ServerUpdate(tick int64) {
-	if !o.isDestroyed && o.isAcitve {
+	now := ticktime.GetServerTime()
+	if o.isAcitve && !o.isExploded {
 		isTriggered := false
 		players := []common.Player{}
 		playerDamages := []float64{}
@@ -131,11 +137,10 @@ func (o *ItemLandMine) ServerUpdate(tick int64) {
 			for i, player := range players {
 				player.AddDamage(o.playerID, o.id, playerDamages[i])
 			}
-			o.isDestroyed = true
-			o.deleteTime = ticktime.GetServerTime().Add(config.LerpPeriod * 2)
+			o.isExploded = true
+			o.deleteTime = now.Add(itemLandMineEffectTime + config.LerpPeriod*2)
 		}
 	}
-	now := ticktime.GetServerTime()
 	if (!ticktime.IsZeroTime(o.deleteTime) && now.Sub(o.deleteTime) > 0) ||
 		(now.Sub(o.createTime) > itemLifeTime && o.playerID == "" && !o.isAcitve) {
 		o.world.GetObjectDB().Delete(o.id)
@@ -150,6 +155,14 @@ func (o *ItemLandMine) ClientUpdate() {
 	o.playerID = ss.PlayerID
 	o.slotIndex = ss.SlotIndex
 	o.isAcitve = ss.IsActive
+	if !o.isExploded && ss.IsExploded {
+		o.isExploded = true
+		o.effect.Start()
+		if mainPlayer := o.world.GetMainPlayer(); mainPlayer != nil {
+			dist := o.world.GetMainPlayer().GetPivot().Sub(o.pos).Len()
+			sound.PlayItemExplosion(dist)
+		}
+	}
 	collider, _ := o.GetCollider()
 	o.isVisible = o.world.GetScope().Intersects(collider)
 	o.cleanTickSnapshots()
@@ -181,6 +194,10 @@ func (o *ItemLandMine) GetType() int {
 	return config.ItemObject
 }
 
+func (o *ItemLandMine) GetIcon() *animation.Icon {
+	return animation.NewIconLandMine()
+}
+
 func (o *ItemLandMine) cleanTickSnapshots() {
 	o.lock.Lock()
 	defer o.lock.Unlock()
@@ -207,10 +224,11 @@ func (o *ItemLandMine) getCurrentSnapshot() *protocol.ObjectSnapshot {
 		Type: o.GetType(),
 		Item: &protocol.ItemSnapshot{
 			LandMine: &protocol.ItemLandMineSnapshot{
-				Pos:       util.ConvertVec(o.pos),
-				PlayerID:  o.playerID,
-				SlotIndex: o.slotIndex,
-				IsActive:  o.isAcitve,
+				Pos:        util.ConvertVec(o.pos),
+				PlayerID:   o.playerID,
+				SlotIndex:  o.slotIndex,
+				IsActive:   o.isAcitve,
+				IsExploded: o.isExploded,
 			},
 		},
 	}
@@ -220,18 +238,18 @@ func (o *ItemLandMine) render(target pixel.Target, viewPos pixel.Vec) {
 	if o.isDestroyed {
 		return
 	}
-	if o.isAcitve {
+	switch {
+	case o.isExploded:
+		o.effect.Pos = o.pos.Sub(viewPos)
+		o.effect.Draw(target)
+	case o.isAcitve:
 		if o.isVisible {
 			anim := animation.NewItemLandMine()
 			anim.Pos = o.pos.Sub(viewPos)
 			anim.Draw(target)
 		}
-	} else if o.playerID == "" {
+	case o.playerID == "":
 		anim := animation.NewItemMystery()
-		anim.Pos = o.pos.Sub(viewPos)
-		anim.Draw(target)
-	} else {
-		anim := animation.NewIconLandMine()
 		anim.Pos = o.pos.Sub(viewPos)
 		anim.Draw(target)
 	}
@@ -254,10 +272,11 @@ func (o *ItemLandMine) getSnapshotsByTime(t time.Time) *protocol.ObjectSnapshot 
 		Type: o.GetType(),
 		Item: &protocol.ItemSnapshot{
 			LandMine: &protocol.ItemLandMineSnapshot{
-				Pos:       ssB.Pos,
-				PlayerID:  ssB.PlayerID,
-				SlotIndex: ssB.SlotIndex,
-				IsActive:  ssB.IsActive,
+				Pos:        ssB.Pos,
+				PlayerID:   ssB.PlayerID,
+				SlotIndex:  ssB.SlotIndex,
+				IsActive:   ssB.IsActive,
+				IsExploded: ssB.IsExploded,
 			},
 		},
 	}

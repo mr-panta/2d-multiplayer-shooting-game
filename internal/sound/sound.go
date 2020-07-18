@@ -45,6 +45,7 @@ func LoadAllSounds() (err error) {
 		loadWeaponSMGSounds,
 		loadWeaponPistolSounds,
 		loadWeaponKnifeSounds,
+		loadItemSounds,
 	}
 	for _, fn := range fnList {
 		if err = fn(assetPath); err != nil {

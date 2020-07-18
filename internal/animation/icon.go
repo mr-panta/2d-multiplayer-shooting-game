@@ -11,8 +11,8 @@ var (
 	iconSkullFrame     = pixel.R(0, 1, 64, 63).Moved(iconFrameOffset)
 	iconHeartFrame     = pixel.R(64, 1, 2*64, 63).Moved(iconFrameOffset)
 	iconShieldFrame    = pixel.R(2*64, 1, 3*64, 63).Moved(iconFrameOffset)
-	iconInventoryFrame = pixel.R(3*64, 1, 5*64, 63).Moved(iconFrameOffset)
-	iconLandMineFrame  = pixel.R(5*64, 1, 6*64, 63).Moved(iconFrameOffset)
+	iconInventoryFrame = pixel.R(6*32, 1, 9*32, 63).Moved(iconFrameOffset)
+	iconLandMineFrame  = pixel.R(9*32, 1, 10*32, 63).Moved(iconFrameOffset)
 )
 
 type Icon struct {

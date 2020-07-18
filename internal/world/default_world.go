@@ -1,6 +1,7 @@
 package world
 
 import (
+	"context"
 	"image/color"
 	"math/rand"
 	"sort"
@@ -305,7 +306,7 @@ func (w *defaultWorld) spawnItem() (nextItemTime time.Time) {
 		item := fn()
 		item.SetPos(w.getFreePos())
 		w.objectDB.Set(item)
-		logger.Debugf(nil, "spawn_item:%s", item.GetID())
+		logger.Debugf(context.Background(), "spawn_item:%s", item.GetID())
 	}
 	// Random next item time
 	n := rand.Int()%(maxNextItemPerd-minNextItemPerd) + minNextItemPerd
@@ -316,7 +317,7 @@ func (w *defaultWorld) spawnWeaponItem() common.Item {
 	weaponID := w.objectDB.GetAvailableID()
 	weapon := weapon.Random(w, weaponID)
 	w.objectDB.Set(weapon)
-	logger.Debugf(nil, "spawn_weapon:%s", weaponID)
+	logger.Debugf(context.Background(), "spawn_weapon:%s", weaponID)
 	itemID := w.objectDB.GetAvailableID()
 	return item.NewItemWeapon(w, itemID, weaponID)
 }
@@ -341,7 +342,7 @@ func (w *defaultWorld) spawnLandMineItem() common.Item {
 func (w *defaultWorld) createTrees() {
 	for i := 0; i < defaultWorldTreeAmount; i++ {
 		treeID := w.objectDB.GetAvailableID()
-		logger.Debugf(nil, "create_tree:%s", treeID)
+		logger.Debugf(context.Background(), "create_tree:%s", treeID)
 		tree := entity.NewTree(w, treeID)
 		w.objectDB.Set(tree)
 		pos := w.getFreePos()
@@ -355,7 +356,7 @@ func (w *defaultWorld) createTrees() {
 func (w *defaultWorld) createTerrains() {
 	for i := 0; i < defaultWorldTerrainAmount; i++ {
 		terrainID := w.objectDB.GetAvailableID()
-		logger.Debugf(nil, "create_terrain:%s", terrainID)
+		logger.Debugf(context.Background(), "create_terrain:%s", terrainID)
 		terrain := entity.NewTerrain(w, terrainID)
 		w.objectDB.Set(terrain)
 		pos := w.getFreePos()
@@ -467,7 +468,7 @@ func (w *defaultWorld) SetSnapshot(tick int64, snapshot *protocol.WorldSnapshot)
 			w.destroyed = true
 			w.destroyTime = ticktime.GetServerTime()
 		}
-		logger.Debugf(nil, "get different world id, current_id=%s, new_id", w.GetID(), snapshot.ID)
+		logger.Debugf(context.Background(), "get different world id, current_id=%s, new_id", w.GetID(), snapshot.ID)
 		return
 	}
 	w.fieldWidth = snapshot.FieldWidth
@@ -526,7 +527,7 @@ func (w *defaultWorld) addObject(ss *protocol.ObjectSnapshot) (o common.Object) 
 }
 
 func (w *defaultWorld) removeObject(id string) {
-	logger.Debugf(nil, "remove_object:%s", id)
+	logger.Debugf(context.Background(), "remove_object:%s", id)
 	w.objectDB.Delete(id)
 }
 
@@ -637,13 +638,12 @@ func (w *defaultWorld) updateSetting() {
 	if !w.prevSettingInput.PressedToggleFPSLimit && w.currSettingInput.PressedToggleFPSLimit {
 		w.toggleFPSLimit()
 	}
-
 }
 
 // Player
 
 func (w *defaultWorld) SetMainPlayerID(playerID string) {
-	logger.Debugf(nil, "main_player_id:%s", playerID)
+	logger.Debugf(context.Background(), "main_player_id:%s", playerID)
 	w.mainPlayerID = playerID
 }
 
@@ -652,7 +652,7 @@ func (w *defaultWorld) GetMainPlayerID() string {
 }
 
 func (w *defaultWorld) addPlayer(ss *protocol.ObjectSnapshot) common.Player {
-	logger.Debugf(nil, "add_player:%s", ss.ID)
+	logger.Debugf(context.Background(), "add_player:%s", ss.ID)
 	player := entity.NewPlayer(w, ss.ID)
 	if ss.ID == w.mainPlayerID {
 		player.SetMainPlayer()
@@ -675,7 +675,7 @@ func (w *defaultWorld) GetMainPlayer() common.Player {
 // Item
 
 func (w *defaultWorld) addItem(ss *protocol.ObjectSnapshot) common.Item {
-	logger.Debugf(nil, "add_item:%s", ss.ID)
+	logger.Debugf(context.Background(), "add_item:%s", ss.ID)
 	item := item.New(w, ss.ID, ss)
 	w.objectDB.Set(item)
 	if ss.Item.Skull != nil {
@@ -688,14 +688,14 @@ func (w *defaultWorld) addItem(ss *protocol.ObjectSnapshot) common.Item {
 // Weapon
 
 func (w *defaultWorld) addWeapon(snapshot *protocol.ObjectSnapshot) common.Weapon {
-	logger.Debugf(nil, "add_weapon:%s", snapshot.ID)
+	logger.Debugf(context.Background(), "add_weapon:%s", snapshot.ID)
 	weapon := weapon.New(w, snapshot.ID, snapshot)
 	w.objectDB.Set(weapon)
 	return weapon
 }
 
 func (w *defaultWorld) addBullet(snapshot *protocol.ObjectSnapshot) common.Bullet {
-	logger.Debugf(nil, "add_bullet:%s", snapshot.ID)
+	logger.Debugf(context.Background(), "add_bullet:%s", snapshot.ID)
 	bullet := weapon.NewBullet(w, snapshot.ID)
 	w.objectDB.Set(bullet)
 	return bullet
@@ -704,21 +704,21 @@ func (w *defaultWorld) addBullet(snapshot *protocol.ObjectSnapshot) common.Bulle
 // Props
 
 func (w *defaultWorld) addTree(ss *protocol.ObjectSnapshot) common.Tree {
-	logger.Debugf(nil, "add_tree:%s", ss.ID)
+	logger.Debugf(context.Background(), "add_tree:%s", ss.ID)
 	tree := entity.NewTree(w, ss.ID)
 	w.objectDB.Set(tree)
 	return tree
 }
 
 func (w *defaultWorld) addTerrain(ss *protocol.ObjectSnapshot) common.Terrain {
-	logger.Debugf(nil, "add_terrain:%s", ss.ID)
+	logger.Debugf(context.Background(), "add_terrain:%s", ss.ID)
 	terrain := entity.NewTerrain(w, ss.ID)
 	w.objectDB.Set(terrain)
 	return terrain
 }
 
 func (w *defaultWorld) addBoundary(ss *protocol.ObjectSnapshot) common.Boundary {
-	logger.Debugf(nil, "add_boundary:%s", ss.ID)
+	logger.Debugf(context.Background(), "add_boundary:%s", ss.ID)
 	boundary := entity.NewBoundary(w, ss.ID, pixel.ZR)
 	w.objectDB.Set(boundary)
 	return boundary

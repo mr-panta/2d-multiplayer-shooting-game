@@ -30,10 +30,10 @@ var (
 const (
 	minNextItemPerd             = 10
 	maxNextItemPerd             = 20
-	defaultWorldFieldWidth      = 8
-	defaultWorldFieldHeight     = 8
-	defaultWorldTreeAmount      = 0
-	defaultWorldTerrainAmount   = 12
+	defaultWorldFieldWidth      = 20
+	defaultWorldFieldHeight     = 20
+	defaultWorldTreeAmount      = 16
+	defaultWorldTerrainAmount   = 8
 	defaultWorldMinSpawnDist    = 48
 	defaultWorldBoundarySize    = 200
 	defaultWorldRestartCooldown = 5 * time.Second

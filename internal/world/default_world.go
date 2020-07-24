@@ -297,9 +297,24 @@ type spawnItemFn func() common.Item
 func (w *defaultWorld) spawnItem() (nextItemTime time.Time) {
 	// Create item
 	spawnItemFnList := []spawnItemFn{
-		w.spawnWeaponItem,
-		w.spawnAmmoItem,
-		w.spawnAmmoSMItem,
+		// w.spawnWeaponItem,
+		// w.spawnAmmoItem,
+		// w.spawnAmmoSMItem,
+		w.spawnLandMineItem,
+		w.spawnLandMineItem,
+		w.spawnLandMineItem,
+		w.spawnLandMineItem,
+		w.spawnLandMineItem,
+		w.spawnLandMineItem,
+		w.spawnLandMineItem,
+		w.spawnLandMineItem,
+		w.spawnLandMineItem,
+		w.spawnLandMineItem,
+		w.spawnLandMineItem,
+		w.spawnLandMineItem,
+		w.spawnLandMineItem,
+		w.spawnLandMineItem,
+		w.spawnLandMineItem,
 		w.spawnLandMineItem,
 	}
 	for _, fn := range spawnItemFnList {
